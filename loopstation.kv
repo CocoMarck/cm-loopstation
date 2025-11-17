@@ -1,25 +1,10 @@
 #:kivy 2.3.1
 
-<LoopstationCircle>
-    size: 32, 32
-    canvas:
-        Ellipse:
-            pos: self.pos
-            size: self.size
 
 <LoopstationWindow>:
-    # Atributos
-    circle: loopstation_circle
-
     # Textos
     Label:
         font_size: 16
         center_x: root.width / 2
         top: root.top - 16
         text: "Loopstation Application"
-
-    # Imagenes Objetos
-    LoopstationCircle:
-        id: loopstation_circle
-        x: self.parent.width*0.4
-        y: self.parent.height*0.75
