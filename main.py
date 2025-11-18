@@ -7,10 +7,26 @@ from kivy.properties import (
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.clock import Clock
+from kivy.core.audio import SoundLoader
 
+# Constantes necesarias
+VOLUME = float(0.2)
 FPS = float(60)
-BPM_TO_SECONDS = 60
+BPM_TO_SECONDS = int(60)
 
+## Sonido
+TEMPO_SOUNDS = [
+    SoundLoader.load('./resources/audio/tempo/tempo-1.ogg'),
+    SoundLoader.load('./resources/audio/tempo/tempo-2.ogg'),
+    SoundLoader.load('./resources/audio/tempo/tempo-3.ogg')
+]
+for sound in TEMPO_SOUNDS:
+    sound.volume = VOLUME
+
+
+
+
+#
 class LoopstationCircle(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -32,10 +48,10 @@ class LoopstationCircle(Widget):
 
 class LoopstationWindow(Widget):
     # Variables para el metrnomo
-    bpm = BPM_TO_SECONDS / 120
+    bpm = 120
     tempos = 4 # Cantidad de tiempos
     count_tempos = 0 # Contador de tiempos
-    tempo = FPS*bpm # Tiempo individual.
+    tempo = FPS * (BPM_TO_SECONDS / bpm) # Tiempo individual.
     count = 0
 
     # Para dibujar el tempo
@@ -70,40 +86,49 @@ class LoopstationWindow(Widget):
     # Actualizar todo
     def update(self, dt):
         '''
-        Relacionado con el metronomo.
+        Para la sincronización
         '''
+
+        # Relacionado con el metronomo.
         change_time = self.count == self.tempo
 
-        # Cambio de tempo
+        ## Cambio de tempo
         if change_time:
             print(f"Cambio de tiempo: {self.count}")
             self.count = 0
             self.count_tempos += 1
 
-        # Fin de compas
+        ## Ultimo tempo
+        last_tempo = self.count == 0 and self.count_tempos == self.tempos-1
+        if last_tempo:
+            print(f"Ultimo tempo.")
+
+        ## Fin de compas
         change_compass = self.count_tempos == self.tempos
         if change_compass:
             print(f"Fin de compass: {self.tempos}")
-            #self.count = 0
+            self.count = 0
             self.count_tempos = 0
 
-        # Inicio de compas
-        init_compass = self.count == 0 and self.count_tempos == 0
-        if init_compass:
+        ## Inicio de compas| Inicio de primer tempo
+        first_tempo = self.count == 0 and self.count_tempos == 0
+        if first_tempo:
             print("Compas iniciado")
 
-        # Contador de tempo
+        ## Contador de tempo
         self.count += 1
 
 
         '''
         Visual de metronomo
         '''
-        # Cambiar de color
+        first_tempo = self.count_tempos == 0
+
+        # Visual | Cambiar de color
         RGB_OFF_TEMPO = [1,1,1]
         RGB_FIRST_TEMPO = [0,1,0]
         RGB_TEMPO = [1,0,0]
-        if self.count_tempos == 0:
+        if first_tempo:
             rgb = RGB_FIRST_TEMPO
         else:
             rgb = RGB_TEMPO
@@ -116,6 +141,15 @@ class LoopstationWindow(Widget):
                 self.circles[index].color.r = RGB_OFF_TEMPO[0]
                 self.circles[index].color.g = RGB_OFF_TEMPO[1]
                 self.circles[index].color.b = RGB_OFF_TEMPO[2]
+
+        # Sonido | Tempo
+        if change_time:
+            if first_tempo:
+                TEMPO_SOUNDS[0].play()
+            elif last_tempo:
+                TEMPO_SOUNDS[1].play()
+            else:
+                TEMPO_SOUNDS[2].play()
 
 
 
