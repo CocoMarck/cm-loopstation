@@ -15,18 +15,26 @@ FPS = float(60)
 BPM_TO_SECONDS = int(60)
 
 ## Sonido
+SOUNDS = []
 TEMPO_SOUNDS = [
     SoundLoader.load('./resources/audio/tempo/tempo-1.ogg'),
     SoundLoader.load('./resources/audio/tempo/tempo-2.ogg'),
     SoundLoader.load('./resources/audio/tempo/tempo-3.ogg')
 ]
-for sound in TEMPO_SOUNDS:
+SOUNDS.extend(TEMPO_SOUNDS)
+SAMPLE_SOUNDS = [
+    SoundLoader.load('./resources/audio/sample/loop-01-party.ogg'),
+    SoundLoader.load('./resources/audio/sample/loop-02-macaco.ogg')
+]
+SOUNDS.extend(SAMPLE_SOUNDS)
+
+for sound in SOUNDS:
     sound.volume = VOLUME
 
 
 
 
-#
+# Objeto criculos del metronomo
 class LoopstationCircle(Widget):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -46,10 +54,12 @@ class LoopstationCircle(Widget):
         self.ellipse.pos = self.pos
         self.ellipse.size = self.size
 
+
+# Ventana, el loop del porgrama
 class LoopstationWindow(Widget):
     # Variables para el metrnomo
     bpm = 120
-    tempos = 4 # Cantidad de tiempos
+    tempos = 3 # Cantidad de tiempos
     count_tempos = 0 # Contador de tiempos
     tempo = FPS * (BPM_TO_SECONDS / bpm) # Tiempo individual.
     count = 0
@@ -57,20 +67,42 @@ class LoopstationWindow(Widget):
     # Para dibujar el tempo
     circles = []
 
-    # Posicionar metronomo
-    def init_metronome(self):
-        # Establecer circulos
-        self.circles.clear()
-        for x in range(0, self.tempos):
-            circle = LoopstationCircle()
-            self.circles.append( circle )
-            self.add_widget(circle)
+    # Cambio de tempo y sonidotos
+    change_tempo = False
+    change_compass = False
+    first_tempo = False
+    last_tempo = False
+    init_tempo = False
+
+    # Diccionario para sonidos a reproducir
+    sound_name = str
+    sounds = {
+        "party": [SAMPLE_SOUNDS[0], False],
+        "macaco": [SAMPLE_SOUNDS[1], False]
+    }
+
 
     def on_size(self, *args):
         '''
         Se llama automáticamente cada vez que cambia el tamaño del widget
         '''
         self.set_circle_position(0)
+
+    def debug(self, text):
+        print(text)
+
+    # Posicionar metronomo
+    def init_metronome(self):
+        # Establecer circulos
+        self.circles.clear()
+        for x in range(0, self.tempos+1):
+            circle = LoopstationCircle()
+            self.circles.append( circle )
+            self.add_widget(circle)
+
+        # Pruebas
+        self.sound_name = "party"
+        self.play_sound()
 
     def set_circle_position(self, dt):
         # Posicionar
@@ -83,6 +115,17 @@ class LoopstationWindow(Widget):
 
 
 
+    def play_sound(self):
+        if self.sound_name in self.sounds.keys():
+            self.sounds[self.sound_name][1] = True
+
+    def stop_sound(self):
+        if self.sound_name in self.sounds.keys:
+            self.sounds[self.sound_name][1] = False
+
+
+
+
     # Actualizar todo
     def update(self, dt):
         '''
@@ -90,47 +133,42 @@ class LoopstationWindow(Widget):
         '''
 
         # Relacionado con el metronomo.
-        change_time = self.count == self.tempo
+        self.change_tempo = self.count == self.tempo
 
         ## Cambio de tempo
-        if change_time:
-            print(f"Cambio de tiempo: {self.count}")
+        if self.change_tempo:
             self.count = 0
             self.count_tempos += 1
 
-        ## Ultimo tempo
-        last_tempo = self.count == 0 and self.count_tempos == self.tempos-1
-        if last_tempo:
-            print(f"Ultimo tempo.")
+        ## Inicio de tempo
+        self.init_tempo = self.count == 0
 
         ## Fin de compas
-        change_compass = self.count_tempos == self.tempos
-        if change_compass:
-            print(f"Fin de compass: {self.tempos}")
+        self.change_compass = self.count_tempos == self.tempos+1
+        if self.change_compass:
             self.count = 0
             self.count_tempos = 0
 
-        ## Inicio de compas| Inicio de primer tempo
-        first_tempo = self.count == 0 and self.count_tempos == 0
-        if first_tempo:
-            print("Compas iniciado")
+        # Inicio de tempo | Tipo de inicio de tempo
+        self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
+        if self.init_tempo:
+            self.first_tempo = self.count_tempos == 0
+            self.last_tempo = self.count_tempos == self.tempos
+            self.other_tempo = not(self.first_tempo and self.last_tempo)
 
-        ## Contador de tempo
-        self.count += 1
 
 
-        '''
-        Visual de metronomo
-        '''
-        first_tempo = self.count_tempos == 0
 
-        # Visual | Cambiar de color
+
+        # Metronomo | Visual | Cambiar de color
         RGB_OFF_TEMPO = [1,1,1]
         RGB_FIRST_TEMPO = [0,1,0]
         RGB_TEMPO = [1,0,0]
-        if first_tempo:
+        if self.count_tempos == 0:
+            # Aun en primer tempo | Mostrar en verde
             rgb = RGB_FIRST_TEMPO
         else:
+            # Otro tipo de tempo
             rgb = RGB_TEMPO
         self.circles[self.count_tempos].color.r = rgb[0]
         self.circles[self.count_tempos].color.g = rgb[1]
@@ -138,18 +176,47 @@ class LoopstationWindow(Widget):
 
         for index in range(0, len(self.circles)):
             if self.count_tempos != index:
+                # Circulos no perteneciente al tempo | Apagado
                 self.circles[index].color.r = RGB_OFF_TEMPO[0]
                 self.circles[index].color.g = RGB_OFF_TEMPO[1]
                 self.circles[index].color.b = RGB_OFF_TEMPO[2]
 
-        # Sonido | Tempo
-        if change_time:
-            if first_tempo:
-                TEMPO_SOUNDS[0].play()
-            elif last_tempo:
-                TEMPO_SOUNDS[1].play()
-            else:
-                TEMPO_SOUNDS[2].play()
+        # Metronomo | Sonido
+        # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
+        if self.first_tempo:
+            TEMPO_SOUNDS[0].play()
+        elif self.last_tempo:
+            TEMPO_SOUNDS[1].play()
+        elif self.other_tempo:
+            TEMPO_SOUNDS[2].play()
+
+
+        # Sonidos grabados y samples
+        ## Reproducir o no sonido
+        for sound, loop in self.sounds.values():
+            if loop:
+                if sound.state == "stop" and self.first_tempo:
+                    # Reproducir
+                    self.debug(f"Reproducir sonido: '{sound.source}'")
+                    sound.play
+
+
+        # Contador de tempo
+        self.count += 1
+
+
+        # Debug
+        ## Debug | Cambio de compas
+        if self.change_compass:
+            self.debug(f"\nFin de compas de {self.tempos+1} tempos\n")
+
+        ## Debug | Cambio de tempos
+        if self.first_tempo:
+            self.debug("Primer tempo")
+        elif self.last_tempo:
+            self.debug("Ultimo tempo")
+        elif self.other_tempo:
+            self.debug(f"Tempo: {self.count_tempos+1}")
 
 
 
