@@ -198,7 +198,7 @@ class LoopstationWindow(Widget):
                 if sound.state == "stop" and self.first_tempo:
                     # Reproducir
                     self.debug(f"Reproducir sonido: '{sound.source}'")
-                    sound.play
+                    sound.play()
 
 
         # Contador de tempo
