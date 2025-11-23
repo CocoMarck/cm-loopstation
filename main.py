@@ -93,6 +93,9 @@ class LoopstationWindow(Widget):
 
     # Grabar
     microphone_recorder = MicrophoneRecorder( output_filename="./tmp/audio-test.wav" )
+    record_files_count = 0
+    record_files_limit = 1
+    record_limit = False
     record_count = 0
     record = False
 
@@ -120,8 +123,8 @@ class LoopstationWindow(Widget):
             self.add_widget(circle)
 
         # Pruebas
-        self.sound_name = "party"
-        self.play_sound()
+        #self.sound_name = "party"
+        #self.play_sound()
 
     def set_circle_position(self, dt):
         # Posicionar
@@ -174,16 +177,20 @@ class LoopstationWindow(Widget):
 
         self.first_frame_of_recording = self.record and self.record_count == 0
 
-        if self.first_frame_of_recording:
-            ## El metronomo al inicio
-            self.count = 0
-            self.count_tempos = 0
+        #if self.first_frame_of_recording:
+            ## Forzar el metronomo al inicio, grabar de una
+        #    self.count = 0
+        #    self.count_tempos = 0
 
         ## Cuenta los frames que sucedan al grabar
         if self.record:
             self.record_count += 1
         else:
             self.record_count = 0
+
+        ## Limite de record
+        self.record_limit = self.record_files_count >= self.record_files_limit
+
 
         # Inicio de tempo | Tipo de inicio de tempo
         self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
@@ -194,10 +201,17 @@ class LoopstationWindow(Widget):
 
 
         # Grabar
-        if self.first_frame_of_recording:
+        if self.first_frame_of_recording and not self.record_limit:
             self.microphone_recorder.record()
-        if self.record == False:
+            self.record_files_count += 1
+        if self.record == False and self.microphone_recorder.state == "record":
             self.microphone_recorder.stop()
+            self.sounds.update(
+             {
+              self.record_files_count:
+              [ SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME), True ]
+             }
+            )
 
 
         # Reproducir o no sonido

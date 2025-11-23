@@ -153,6 +153,8 @@ class MicrophoneRecorder():
         # Terminar instancia de PyAudio
         self.audio.terminate()
 
+        self.state = self.__states[0]
+
         self.debug("info", "Grabación sin limite terminada")
 
 
