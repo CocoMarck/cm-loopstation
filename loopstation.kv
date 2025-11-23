@@ -2,9 +2,18 @@
 
 
 <LoopstationWindow>:
+    record_button: toggle_button_record
+
     # Textos
     Label:
         font_size: 16
-        x: root.width * 0.45
+        center_x: root.width * 0.5
         y: root.height * 0.8
         text: "Loopstation Application"
+
+    ToggleButton:
+        id: toggle_button_record
+        font_size: 16
+        center_x: root.width * 0.5
+        center_y: root.height * 0.5
+        text: "Grabar"

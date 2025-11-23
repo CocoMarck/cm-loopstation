@@ -1,3 +1,4 @@
+# Kivy
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -8,6 +9,9 @@ from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.core.audio import SoundLoader
+
+# Grabador de microfonillo
+from core.microphone_recorder import MicrophoneRecorder
 
 # Constantes necesarias
 VOLUME = float(0.2)
@@ -57,6 +61,12 @@ class LoopstationCircle(Widget):
 
 # Ventana, el loop del porgrama
 class LoopstationWindow(Widget):
+    '''
+    El tempo de preferencia que sea un entero.
+    '''
+    # Objetos del `archivo.kv`
+    record_button = ObjectProperty(None)
+
     # Variables para el metrnomo
     bpm = 120
     tempos = 3 # Cantidad de tiempos
@@ -81,6 +91,14 @@ class LoopstationWindow(Widget):
         "macaco": [SAMPLE_SOUNDS[1], False]
     }
 
+    # Grabar
+    microphone_recorder = MicrophoneRecorder( output_filename="./tmp/audio-test.wav" )
+    record_count = 0
+    record = False
+
+    # Debug
+    verbose = True
+
 
     def on_size(self, *args):
         '''
@@ -89,7 +107,8 @@ class LoopstationWindow(Widget):
         self.set_circle_position(0)
 
     def debug(self, text):
-        print(text)
+        if self.verbose:
+            print(text)
 
     # Posicionar metronomo
     def init_metronome(self):
@@ -133,7 +152,7 @@ class LoopstationWindow(Widget):
         '''
 
         # Relacionado con el metronomo.
-        self.change_tempo = self.count == self.tempo
+        self.change_tempo = self.count >= self.tempo
 
         ## Cambio de tempo
         if self.change_tempo:
@@ -149,6 +168,23 @@ class LoopstationWindow(Widget):
             self.count = 0
             self.count_tempos = 0
 
+
+        # Grabar | Sonidos grabados
+        self.record = self.record_button.state == "down"
+
+        self.first_frame_of_recording = self.record and self.record_count == 0
+
+        if self.first_frame_of_recording:
+            ## El metronomo al inicio
+            self.count = 0
+            self.count_tempos = 0
+
+        ## Cuenta los frames que sucedan al grabar
+        if self.record:
+            self.record_count += 1
+        else:
+            self.record_count = 0
+
         # Inicio de tempo | Tipo de inicio de tempo
         self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
         if self.init_tempo:
@@ -156,6 +192,25 @@ class LoopstationWindow(Widget):
             self.last_tempo = self.count_tempos == self.tempos
             self.other_tempo = not(self.first_tempo and self.last_tempo)
 
+
+        # Grabar
+        if self.first_frame_of_recording:
+            self.microphone_recorder.record()
+        if self.record == False:
+            self.microphone_recorder.stop()
+
+
+        # Reproducir o no sonido
+        debug_play_sounds = []
+        for sound, loop in self.sounds.values():
+            if loop:
+                if self.first_frame_of_recording:
+                    sound.stop()
+                    sound.play()
+                elif sound.state == "stop" and self.first_tempo:
+                    # Reproducir
+                    debug_play_sounds.append(sound.source)
+                    sound.play()
 
 
 
@@ -170,45 +225,38 @@ class LoopstationWindow(Widget):
         else:
             # Otro tipo de tempo
             rgb = RGB_TEMPO
-        self.circles[self.count_tempos].color.r = rgb[0]
-        self.circles[self.count_tempos].color.g = rgb[1]
-        self.circles[self.count_tempos].color.b = rgb[2]
+        self.circles[self.count_tempos].color.rgb = rgb
 
-        for index in range(0, len(self.circles)):
+        for index in range( 0, len(self.circles) ):
             if self.count_tempos != index:
                 # Circulos no perteneciente al tempo | Apagado
-                self.circles[index].color.r = RGB_OFF_TEMPO[0]
-                self.circles[index].color.g = RGB_OFF_TEMPO[1]
-                self.circles[index].color.b = RGB_OFF_TEMPO[2]
+                self.circles[index].color.rgb = RGB_OFF_TEMPO
+
+
+
 
         # Metronomo | Sonido
         # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
         if self.first_tempo:
             TEMPO_SOUNDS[0].play()
-        elif self.last_tempo:
-            TEMPO_SOUNDS[1].play()
-        elif self.other_tempo:
+        elif self.last_tempo or self.other_tempo:
             TEMPO_SOUNDS[2].play()
-
-
-        # Sonidos grabados y samples
-        ## Reproducir o no sonido
-        for sound, loop in self.sounds.values():
-            if loop:
-                if sound.state == "stop" and self.first_tempo:
-                    # Reproducir
-                    self.debug(f"Reproducir sonido: '{sound.source}'")
-                    sound.play()
 
 
         # Contador de tempo
         self.count += 1
 
 
+
+
         # Debug
         ## Debug | Cambio de compas
         if self.change_compass:
-            self.debug(f"\nFin de compas de {self.tempos+1} tempos\n")
+            self.debug(f"--Fin de compas de {self.tempos+1} tempos--")
+
+        ## Debug | Reproducir sonidos
+        for name in debug_play_sounds:
+            self.debug(f"++Reproducir: '{name}'++")
 
         ## Debug | Cambio de tempos
         if self.first_tempo:
@@ -217,6 +265,10 @@ class LoopstationWindow(Widget):
             self.debug("Ultimo tempo")
         elif self.other_tempo:
             self.debug(f"Tempo: {self.count_tempos+1}")
+
+        ## Debug | Boton grabador
+        if self.record:
+            self.debug(f"@@Grabando | Frame {self.record_count}@@")
 
 
 
