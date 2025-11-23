@@ -72,6 +72,7 @@ class MicrophoneRecorder():
         Grabar
         '''
         # Inicializar stream
+        self.audio = pyaudio.PyAudio() # Necesaria para grabar
         try:
             self.stream = self.audio.open(
              format=self.FORMAT, rate=self.RATE, input=True,
@@ -123,7 +124,7 @@ class MicrophoneRecorder():
         Inicia la grabación de un nuevo hilo
         '''
         if self.thread is not None and self.thread.is_alive():
-            debug("warning", "La grabación ya está en curso")
+            self.debug("warning", "La grabación ya está en curso")
             return
 
         self._is_recording.set() # Activa el flag de grabación

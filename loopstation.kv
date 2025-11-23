@@ -3,6 +3,7 @@
 
 <LoopstationWindow>:
     record_button: toggle_button_record
+    label_timer: timer_text
 
     # Textos
     Label:
@@ -11,6 +12,13 @@
         y: root.height * 0.8
         text: "Loopstation Application"
 
+    Label:
+        id: timer_text
+        center_x: root.width * 0.75
+        y: root.height * 0.75
+        text: "Timer 0"
+
+    # Botonsillos
     ToggleButton:
         id: toggle_button_record
         font_size: 16

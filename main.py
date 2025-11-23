@@ -35,6 +35,8 @@ SOUNDS.extend(SAMPLE_SOUNDS)
 for sound in SOUNDS:
     sound.volume = VOLUME
 
+TEMP_DIR = "./tmp"
+
 
 
 
@@ -66,6 +68,7 @@ class LoopstationWindow(Widget):
     '''
     # Objetos del `archivo.kv`
     record_button = ObjectProperty(None)
+    label_timer = ObjectProperty(None)
 
     # Variables para el metrnomo
     bpm = 120
@@ -92,12 +95,18 @@ class LoopstationWindow(Widget):
     }
 
     # Grabar
-    microphone_recorder = MicrophoneRecorder( output_filename="./tmp/audio-test.wav" )
+    microphone_recorder = MicrophoneRecorder( output_filename=f"{TEMP_DIR}/audio-test-1.wav" )
     record_files_count = 0
-    record_files_limit = 1
+    record_files_limit = 4
     record_limit = False
     record_count = 0
     record = False
+
+    # Temporizador
+    timer_completed = False
+    timer_in_seconds = 10
+    timer_in_fps = timer_in_seconds*FPS
+    timer_count = 0
 
     # Debug
     verbose = True
@@ -175,21 +184,31 @@ class LoopstationWindow(Widget):
         # Grabar | Sonidos grabados
         self.record = self.record_button.state == "down"
 
-        self.first_frame_of_recording = self.record and self.record_count == 0
+        self.first_frame_of_recording = (
+         self.record and self.timer_completed and self.record_count == 0
+        )
 
         #if self.first_frame_of_recording:
             ## Forzar el metronomo al inicio, grabar de una
-        #    self.count = 0
-        #    self.count_tempos = 0
+            #self.count = 0
+            #self.count_tempos = 0
 
         ## Cuenta los frames que sucedan al grabar
-        if self.record:
+        if self.record and self.timer_completed:
             self.record_count += 1
         else:
             self.record_count = 0
 
         ## Limite de record
         self.record_limit = self.record_files_count >= self.record_files_limit
+
+        # Timer
+        self.timer_completed = self.timer_count >= self.timer_in_fps
+        if self.record:
+            if not self.timer_completed:
+                self.timer_count += 1
+        else:
+            self.timer_count = 0
 
 
         # Inicio de tempo | Tipo de inicio de tempo
@@ -205,11 +224,17 @@ class LoopstationWindow(Widget):
             self.microphone_recorder.record()
             self.record_files_count += 1
         if self.record == False and self.microphone_recorder.state == "record":
+            ## Guardar archivo
+            self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
+                f"{TEMP_DIR}/audio-test-{self.record_files_count}.wav"
+            )
+
             self.microphone_recorder.stop()
+            sound_microphone = SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME)
+            sound_microphone.volume = VOLUME
             self.sounds.update(
              {
-              self.record_files_count:
-              [ SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME), True ]
+              self.record_files_count: [ sound_microphone, True ]
              }
             )
 
@@ -227,9 +252,17 @@ class LoopstationWindow(Widget):
                     sound.play()
 
 
+        # Sonido | Metrónomo
+        # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
+        if self.first_tempo:
+            TEMPO_SOUNDS[0].play()
+        elif self.last_tempo or self.other_tempo:
+            TEMPO_SOUNDS[2].play()
 
 
-        # Metronomo | Visual | Cambiar de color
+
+
+        # Visual | Métrononmo | Cambiar de color
         RGB_OFF_TEMPO = [1,1,1]
         RGB_FIRST_TEMPO = [0,1,0]
         RGB_TEMPO = [1,0,0]
@@ -247,14 +280,8 @@ class LoopstationWindow(Widget):
                 self.circles[index].color.rgb = RGB_OFF_TEMPO
 
 
-
-
-        # Metronomo | Sonido
-        # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
-        if self.first_tempo:
-            TEMPO_SOUNDS[0].play()
-        elif self.last_tempo or self.other_tempo:
-            TEMPO_SOUNDS[2].play()
+        ## Visual timer
+        self.label_timer.text = f"Timer { round((self.timer_in_fps-self.timer_count)/FPS) }"
 
 
         # Contador de tempo
@@ -281,7 +308,7 @@ class LoopstationWindow(Widget):
             self.debug(f"Tempo: {self.count_tempos+1}")
 
         ## Debug | Boton grabador
-        if self.record:
+        if self.first_frame_of_recording:
             self.debug(f"@@Grabando | Frame {self.record_count}@@")
 
 
