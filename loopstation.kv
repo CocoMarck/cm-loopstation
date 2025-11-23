@@ -1,9 +1,9 @@
 #:kivy 2.3.1
 
-
 <LoopstationWindow>:
     record_button: toggle_button_record
     label_timer: timer_text
+    label_tracks: tracks_text
 
     # Textos
     Label:
@@ -18,10 +18,71 @@
         y: root.height * 0.75
         text: "Timer 0"
 
+    Label:
+        id: tracks_text
+        center_x: root.width * 0.15
+        y: root.height * 0.75
+        text: "Tracks 0"
+
     # Botonsillos
     ToggleButton:
         id: toggle_button_record
-        font_size: 16
+        width: 100
+        height: 30
         center_x: root.width * 0.5
-        center_y: root.height * 0.5
+        y: root.height * 0.65
         text: "Grabar"
+
+
+
+    # Widgets | Opciones de reproducción
+    BoxLayout:
+        orientation: "vertical"
+        width: root.width*1.0
+        height: root.height * 0.12
+
+        center_x: root.width * 0.5
+        y: root.height * 0.5
+
+        BoxLayout:
+            orientation: "horizontal"
+
+            Button:
+                text: 'Reiniciar'
+
+            Button:
+                text: 'Iniciar'
+
+            Button:
+                text: 'Parar'
+
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                text: "Seleccionar todas las pistas"
+
+            CheckBox:
+
+
+
+
+    # Scroll | Contenedor de Pistas
+    ScrollView:
+        do_scroll_x: True
+        do_scroll_y: True
+
+        width: root.width*0.75
+        height: root.height * 0.25
+
+        center_x: root.width * 0.5
+        y: root.height * 0.1
+
+        # CheckBox Tracks
+        BoxLayout:
+            orientation: "vertical"
+
+            Label:
+                text: "Aca estan todas las pistas"
+
+            BoxLayout:
+                orientation: "horizontal"

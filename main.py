@@ -69,6 +69,7 @@ class LoopstationWindow(Widget):
     # Objetos del `archivo.kv`
     record_button = ObjectProperty(None)
     label_timer = ObjectProperty(None)
+    label_tracks = ObjectProperty(None)
 
     # Variables para el metrnomo
     bpm = 120
@@ -282,6 +283,9 @@ class LoopstationWindow(Widget):
 
         ## Visual timer
         self.label_timer.text = f"Timer { round((self.timer_in_fps-self.timer_count)/FPS) }"
+
+        ## Visual pistas
+        self.label_tracks.text = f"Tracks {self.record_files_count}"
 
 
         # Contador de tempo
