@@ -2,6 +2,9 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
@@ -70,6 +73,7 @@ class LoopstationWindow(Widget):
     record_button = ObjectProperty(None)
     label_timer = ObjectProperty(None)
     label_tracks = ObjectProperty(None)
+    vbox_tracks = ObjectProperty(None)
 
     # Variables para el metrnomo
     bpm = 120
@@ -109,6 +113,11 @@ class LoopstationWindow(Widget):
     timer_in_fps = timer_in_seconds*FPS
     timer_count = 0
 
+    # Diccionario | Contenedor de tracks
+    dict_hbox_tracks = {}
+    for key in sounds.keys():
+        dict_hbox_tracks.update( {key: None} )
+
     # Debug
     verbose = True
 
@@ -132,10 +141,6 @@ class LoopstationWindow(Widget):
             self.circles.append( circle )
             self.add_widget(circle)
 
-        # Pruebas
-        #self.sound_name = "party"
-        #self.play_sound()
-
     def set_circle_position(self, dt):
         # Posicionar
         first_position = [self.width * 0.4, self.height * 0.75]
@@ -154,6 +159,44 @@ class LoopstationWindow(Widget):
     def stop_sound(self):
         if self.sound_name in self.sounds.keys:
             self.sounds[self.sound_name][1] = False
+
+
+    def set_dict_hbox_tracks(self):
+        self.dict_hbox_tracks.clear()
+        for key in self.sounds.keys():
+            self.dict_hbox_tracks.update( {key: None} )
+
+
+    def set_widget_tracks(self):
+        '''
+        Agragar widgets al scroll
+
+        Se llama al inicio del probrama, y cada stop de grabación.
+        '''
+        self.set_dict_hbox_tracks()
+        self.vbox_tracks.clear_widgets()
+        for key in self.sounds.keys():
+            hbox = BoxLayout(orientation="horizontal")
+
+            label = Label( text=str(key) )
+            hbox.add_widget(label)
+
+            checkbox = CheckBox()
+            hbox.add_widget(checkbox)
+
+            self.vbox_tracks.add_widget( hbox )
+            self.dict_hbox_tracks[key] = hbox
+        print(self.dict_hbox_tracks)
+
+
+
+    def init_the_essential(self):
+        self.init_metronome()
+        self.set_widget_tracks()
+
+        # Pruebas
+        #self.sound_name = "party"
+        #self.play_sound()
 
 
 
@@ -224,7 +267,10 @@ class LoopstationWindow(Widget):
         if self.first_frame_of_recording and not self.record_limit:
             self.microphone_recorder.record()
             self.record_files_count += 1
-        if self.record == False and self.microphone_recorder.state == "record":
+        if (
+            self.record == False and self.microphone_recorder.state == "record"
+            and self.first_tempo
+        ):
             ## Guardar archivo
             self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
                 f"{TEMP_DIR}/audio-test-{self.record_files_count}.wav"
@@ -238,6 +284,9 @@ class LoopstationWindow(Widget):
               self.record_files_count: [ sound_microphone, True ]
              }
             )
+
+            ## Actualizar lista de pistas
+            self.set_widget_tracks()
 
 
         # Reproducir o no sonido
@@ -325,7 +374,7 @@ Window.resizable = True
 class LoopstationApp(App):
     def build(self):
         loopstation = LoopstationWindow()
-        loopstation.init_metronome()
+        loopstation.init_the_essential()
         Clock.schedule_interval(loopstation.update, 1.0/FPS)
         return loopstation
 

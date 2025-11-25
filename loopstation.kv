@@ -4,6 +4,7 @@
     record_button: toggle_button_record
     label_timer: timer_text
     label_tracks: tracks_text
+    vbox_tracks: scroll_vbox
 
     # Textos
     Label:
@@ -72,14 +73,16 @@
         do_scroll_y: True
 
         width: root.width*0.75
-        height: root.height * 0.25
+        height: root.height * 0.4
 
         center_x: root.width * 0.5
         y: root.height * 0.1
 
         # CheckBox Tracks
         BoxLayout:
+            id: scroll_vbox
             orientation: "vertical"
+
 
             Label:
                 text: "Aca estan todas las pistas"
