@@ -300,7 +300,7 @@ class LoopstationWindow(Widget):
         self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
         if self.init_tempo:
             self.first_tempo = self.count_tempos == 0
-            self.last_tempo = self.count_tempos == self.tempos
+            self.last_tempo = self.count_tempos == self.tempos-1
             self.other_tempo = not(self.first_tempo and self.last_tempo)
 
 
@@ -330,7 +330,7 @@ class LoopstationWindow(Widget):
             self.record_files_count += 1
         if (
             self.record == False and self.microphone_recorder.state == "record"
-            and self.last_tempo
+            and self.first_tempo
         ):
             ## Guardar archivo
             self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
@@ -340,7 +340,7 @@ class LoopstationWindow(Widget):
             self.microphone_recorder.stop()
             sound_microphone = SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME)
             sound_microphone.volume = VOLUME
-            self.save_sound( self.record_files_count, sound_microphone, True )
+            self.save_sound( str(self.record_files_count), sound_microphone, True )
 
             ## Actualizar lista de pistas
             self.set_widget_tracks()
@@ -377,8 +377,8 @@ class LoopstationWindow(Widget):
 
                 ## Alcanzo el limite
                 if (
-                    self.get_sound_reached_repetition_limit(key) and self.first_tempo
-                    or self.first_frame_of_recording
+                    (self.get_sound_reached_repetition_limit(key) and self.first_tempo) or
+                    self.first_frame_of_recording
                 ):
                     debug_add_sounds = True
                     self.sound_count_repeated_times[key] = 0
@@ -468,6 +468,7 @@ class LoopstationWindow(Widget):
             if play:
                 self.sounds[key][1] = True
                 self.set_widget_tracks()
+                self.sound_count_repeated_times[key] = 0
             elif stop:
                 self.sounds[key][1] = False
                 self.set_widget_tracks()
