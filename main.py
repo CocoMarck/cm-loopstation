@@ -1,7 +1,7 @@
 # Kivy
-from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -13,12 +13,20 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 from kivy.core.audio import SoundLoader
 
+# Primer forzar FPS
+from kivy.config import Config
+Config.set('graphics', 'vsync', '1')
+Config.set('graphics', 'maxfps', '60')
+
+# App
+from kivy.app import App
+
 # Grabador de microfonillo
 from core.microphone_recorder import MicrophoneRecorder
 
 # Constantes necesarias
 VOLUME = float(0.2)
-FPS = float(60)
+FPS = float(81)
 BPM_TO_SECONDS = int(60)
 
 ## Sonido
@@ -31,7 +39,9 @@ TEMPO_SOUNDS = [
 SOUNDS.extend(TEMPO_SOUNDS)
 SAMPLE_SOUNDS = [
     SoundLoader.load('./resources/audio/sample/loop-01-party.ogg'),
-    SoundLoader.load('./resources/audio/sample/loop-02-macaco.ogg')
+    SoundLoader.load('./resources/audio/sample/loop-02-macaco.ogg'),
+    SoundLoader.load('./resources/audio/sample/loop-03-do-scale.ogg'),
+    SoundLoader.load('./resources/audio/sample/loop-04-metro.ogg')
 ]
 SOUNDS.extend(SAMPLE_SOUNDS)
 
@@ -74,6 +84,9 @@ class LoopstationWindow(Widget):
     label_timer = ObjectProperty(None)
     label_tracks = ObjectProperty(None)
     vbox_tracks = ObjectProperty(None)
+    button_play = ObjectProperty(None)
+    button_stop = ObjectProperty(None)
+    button_restart = ObjectProperty(None)
 
     # Variables para el metrnomo
     bpm = 120
@@ -96,7 +109,9 @@ class LoopstationWindow(Widget):
     sound_name = str
     sounds = {
         "party": [SAMPLE_SOUNDS[0], False],
-        "macaco": [SAMPLE_SOUNDS[1], False]
+        "macaco": [SAMPLE_SOUNDS[1], False],
+        "do-scale": [SAMPLE_SOUNDS[2], False],
+        "metro": [SAMPLE_SOUNDS[3], False]
     }
 
     # Grabar
@@ -181,12 +196,21 @@ class LoopstationWindow(Widget):
             label = Label( text=str(key) )
             hbox.add_widget(label)
 
+            loop = self.sounds[key][1]
+            if loop:
+                state = "down"
+                text = "play"
+            else:
+                state = "normal"
+                text = "stop"
+            togglebutton = ToggleButton( text=text, state=state )
+            hbox.add_widget( togglebutton )
+
             checkbox = CheckBox()
             hbox.add_widget(checkbox)
 
             self.vbox_tracks.add_widget( hbox )
             self.dict_hbox_tracks[key] = hbox
-        print(self.dict_hbox_tracks)
 
 
 
@@ -225,23 +249,20 @@ class LoopstationWindow(Widget):
             self.count_tempos = 0
 
 
+        # Inicio de tempo | Tipo de inicio de tempo
+        self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
+        if self.init_tempo:
+            self.first_tempo = self.count_tempos == 0
+            self.last_tempo = self.count_tempos == self.tempos
+            self.other_tempo = not(self.first_tempo and self.last_tempo)
+
+
         # Grabar | Sonidos grabados
         self.record = self.record_button.state == "down"
 
         self.first_frame_of_recording = (
-         self.record and self.timer_completed and self.record_count == 0
+         self.record and self.timer_completed and self.record_count == 0 and self.first_tempo
         )
-
-        #if self.first_frame_of_recording:
-            ## Forzar el metronomo al inicio, grabar de una
-            #self.count = 0
-            #self.count_tempos = 0
-
-        ## Cuenta los frames que sucedan al grabar
-        if self.record and self.timer_completed:
-            self.record_count += 1
-        else:
-            self.record_count = 0
 
         ## Limite de record
         self.record_limit = self.record_files_count >= self.record_files_limit
@@ -255,21 +276,14 @@ class LoopstationWindow(Widget):
             self.timer_count = 0
 
 
-        # Inicio de tempo | Tipo de inicio de tempo
-        self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
-        if self.init_tempo:
-            self.first_tempo = self.count_tempos == 0
-            self.last_tempo = self.count_tempos == self.tempos
-            self.other_tempo = not(self.first_tempo and self.last_tempo)
-
-
-        # Grabar
+        # Grabar o guardar grabación
         if self.first_frame_of_recording and not self.record_limit:
+            # Grabando
             self.microphone_recorder.record()
             self.record_files_count += 1
         if (
             self.record == False and self.microphone_recorder.state == "record"
-            and self.first_tempo
+            and self.last_tempo
         ):
             ## Guardar archivo
             self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
@@ -287,6 +301,13 @@ class LoopstationWindow(Widget):
 
             ## Actualizar lista de pistas
             self.set_widget_tracks()
+
+
+        # Grabar | Cuenta los frames que sucedan al grabar
+        if self.microphone_recorder.state == "record":
+            self.record_count += 1
+        else:
+            self.record_count = 0
 
 
         # Reproducir o no sonido
@@ -308,6 +329,66 @@ class LoopstationWindow(Widget):
             TEMPO_SOUNDS[0].play()
         elif self.last_tempo or self.other_tempo:
             TEMPO_SOUNDS[2].play()
+
+
+
+        # Tracks | Opciones de reproducción
+        for key in self.dict_hbox_tracks.keys():
+            hbox = self.dict_hbox_tracks[key]
+
+            checkbox, togglebutton, label = None, None, None
+
+            number = 0
+            for child in hbox.children:
+                # 2 label, 1 togglebutton, 0 checkbox
+                if number == 0:
+                    checkbox = child
+                elif number == 1:
+                    togglebutton = child
+                elif number == 2:
+                    label = child
+                number += 1
+
+            active = checkbox.state == "down"
+
+            ## Determinar si esta activado, y se preciona un botonazo para opciones generales.
+            general_play = False
+            general_stop = False
+            general_restart = False
+            '''
+            if active:
+                if general_play:
+                    togglebutton.state = "down"
+                elif general_stop:
+                    togglebutton.state = "normal"
+                restart = general_restart
+            '''
+
+            ## Determinar opciones, loop o restart
+            loop = togglebutton.state == "down"
+            restart = False
+
+            ## Reproducir, parar o reiniciar
+            if restart:
+                self.sounds[key][1] = False
+                sound.stop()
+
+            sound_loop = self.sounds[key][1]
+            sound = self.sounds[key][0]
+
+            play = loop and not sound_loop
+            stop = not loop and sound_loop
+            restart = False
+
+            if play:
+                self.sounds[key][1] = True
+                self.set_widget_tracks()
+            elif stop:
+                self.sounds[key][1] = False
+                self.set_widget_tracks()
+                sound.stop()
+
+
 
 
 

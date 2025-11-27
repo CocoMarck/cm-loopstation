@@ -6,6 +6,10 @@
     label_tracks: tracks_text
     vbox_tracks: scroll_vbox
 
+    button_play: play
+    button_stop: stop
+    button_restart: restart
+
     # Textos
     Label:
         font_size: 16
@@ -49,13 +53,16 @@
             orientation: "horizontal"
 
             Button:
-                text: 'Reiniciar'
-
-            Button:
+                id: play
                 text: 'Iniciar'
 
             Button:
+                id: stop
                 text: 'Parar'
+
+            Button:
+                id: restart
+                text: 'Reiniciar'
 
         BoxLayout:
             orientation: "horizontal"
