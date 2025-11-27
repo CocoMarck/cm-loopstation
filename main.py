@@ -90,10 +90,11 @@ class LoopstationWindow(Widget):
 
     # Variables para el metrnomo
     bpm = 120
-    tempos = 3 # Cantidad de tiempos
+    tempos = 4 # Cantidad de tiempos
     count_tempos = 0 # Contador de tiempos
     tempo = FPS * (BPM_TO_SECONDS / bpm) # Tiempo individual.
     count = 0
+    compass = 0
 
     # Para dibujar el tempo
     circles = []
@@ -107,12 +108,8 @@ class LoopstationWindow(Widget):
 
     # Diccionario para sonidos a reproducir
     sound_name = str
-    sounds = {
-        "party": [SAMPLE_SOUNDS[0], False],
-        "macaco": [SAMPLE_SOUNDS[1], False],
-        "do-scale": [SAMPLE_SOUNDS[2], False],
-        "metro": [SAMPLE_SOUNDS[3], False]
-    }
+    sounds = {}
+    sound_count_repeated_times = {}
 
     # Grabar
     microphone_recorder = MicrophoneRecorder( output_filename=f"{TEMP_DIR}/audio-test-1.wav" )
@@ -125,7 +122,7 @@ class LoopstationWindow(Widget):
     # Temporizador
     timer_completed = False
     timer_in_seconds = 10
-    timer_in_fps = timer_in_seconds*FPS
+    timer_in_fps = 0
     timer_count = 0
 
     # Diccionario | Contenedor de tracks
@@ -151,7 +148,7 @@ class LoopstationWindow(Widget):
     def init_metronome(self):
         # Establecer circulos
         self.circles.clear()
-        for x in range(0, self.tempos+1):
+        for x in range(0, self.tempos):
             circle = LoopstationCircle()
             self.circles.append( circle )
             self.add_widget(circle)
@@ -214,8 +211,58 @@ class LoopstationWindow(Widget):
 
 
 
+    def update_compass(self):
+        self.compass = self.tempo * self.tempos
+
+    def update_timer(self):
+        self.timer_in_fps = self.timer_in_seconds*FPS
+
+    def init_sound_count_repeated_times(self):
+        for key in self.sounds.keys():
+            self.sound_count_repeated_times.update( {key: 0} )
+
+    def get_sound_repetition_limit(self, name):
+        return self.sounds[name][2]*self.compass
+
+    def get_sound_reached_repetition_limit(self, name):
+        limit = self.get_sound_repetition_limit(name)
+        count = self.sound_count_repeated_times[name]
+        return count >= limit
+
+
+    def save_sound( self, name:str, sound:SoundLoader, loop=False ):
+        good_name = isinstance(name, str)
+        good_sound = True #isinstance(sound, SoundLoader)
+        good_loop = isinstance(loop, bool)
+
+        save = good_name and good_sound and good_loop
+        if save:
+            repeated_times = ( sound.length / (self.compass/FPS) )
+            self.sounds.update( {name: [sound, loop, repeated_times]} )
+
+        self.init_sound_count_repeated_times()
+
+        return save
+
+
+
     def init_the_essential(self):
         self.init_metronome()
+
+        # Obtener datos adecuados
+        self.update_compass()
+        self.update_timer()
+
+        # Agregar samples
+        self.save_sound( "party", SAMPLE_SOUNDS[0], False )
+        self.save_sound( "macaco", SAMPLE_SOUNDS[1], False )
+        self.save_sound( "do-scale", SAMPLE_SOUNDS[2], False )
+        self.save_sound( "metro", SAMPLE_SOUNDS[3], False )
+
+        # Establecer contador de repetición
+        self.init_sound_count_repeated_times()
+
+        # Reproductor de pistas
         self.set_widget_tracks()
 
         # Pruebas
@@ -243,7 +290,7 @@ class LoopstationWindow(Widget):
         self.init_tempo = self.count == 0
 
         ## Fin de compas
-        self.change_compass = self.count_tempos == self.tempos+1
+        self.change_compass = self.count_tempos == self.tempos
         if self.change_compass:
             self.count = 0
             self.count_tempos = 0
@@ -293,11 +340,7 @@ class LoopstationWindow(Widget):
             self.microphone_recorder.stop()
             sound_microphone = SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME)
             sound_microphone.volume = VOLUME
-            self.sounds.update(
-             {
-              self.record_files_count: [ sound_microphone, True ]
-             }
-            )
+            self.save_sound( self.record_files_count, sound_microphone, True )
 
             ## Actualizar lista de pistas
             self.set_widget_tracks()
@@ -312,15 +355,57 @@ class LoopstationWindow(Widget):
 
         # Reproducir o no sonido
         debug_play_sounds = []
-        for sound, loop in self.sounds.values():
-            if loop:
+        for key in self.sounds.keys():
+            # Variables necesarias
+            sound, loop, repeated_times = self.sounds[key]
+
+            # Reproducción Modo contador de repeticione
+            ## Determinar el contar o no
+            count_play = repeated_times > 0
+
+            if count_play and loop:
+                ## Repeticiones | Sonido se reproduce, contador de reprodución
+                #if add_seconds:
+                debug_add_sounds = False
+                if sound.state == "stop" and self.first_tempo:
+                    sound.play()
+                    debug_add_sounds = True
+
+                if sound.state == "play":
+                    self.sound_count_repeated_times[key] += 1
+                count = self.sound_count_repeated_times[key]
+
+                ## Alcanzo el limite
+                if (
+                    self.get_sound_reached_repetition_limit(key) and self.first_tempo
+                    or self.first_frame_of_recording
+                ):
+                    debug_add_sounds = True
+                    self.sound_count_repeated_times[key] = 0
+                    sound.stop()
+                    sound.play()
+
+                ## Debug | Determinar agregar soniditos
+                if debug_add_sounds:
+                    debug_play_sounds.append(
+                     [
+                      sound.source, count, self.get_sound_repetition_limit(key)
+                     ]
+                    )
+
+            # Reproducción por unicamente detección de tempo
+            if loop and not count_play:
                 if self.first_frame_of_recording:
                     sound.stop()
                     sound.play()
                 elif sound.state == "stop" and self.first_tempo:
                     # Reproducir
-                    debug_play_sounds.append(sound.source)
+                    debug_play_sounds.append( [sound.source, 0, 0] )
                     sound.play()
+
+
+
+
 
 
         # Sonido | Metrónomo
@@ -427,11 +512,17 @@ class LoopstationWindow(Widget):
         # Debug
         ## Debug | Cambio de compas
         if self.change_compass:
-            self.debug(f"--Fin de compas de {self.tempos+1} tempos--")
+            self.debug(f"--Fin de compas de {self.tempos} tempos--")
 
         ## Debug | Reproducir sonidos
-        for name in debug_play_sounds:
-            self.debug(f"++Reproducir: '{name}'++")
+        for source, count, limit in debug_play_sounds:
+            self.debug(
+             (
+              f"++Reproducir: '{source}'++\n"
+              f"++Contador: {count}++\n"
+              f"++Limite: {limit}++"
+             )
+            )
 
         ## Debug | Cambio de tempos
         if self.first_tempo:
@@ -439,7 +530,7 @@ class LoopstationWindow(Widget):
         elif self.last_tempo:
             self.debug("Ultimo tempo")
         elif self.other_tempo:
-            self.debug(f"Tempo: {self.count_tempos+1}")
+            self.debug(f"Tempo: {self.count_tempos}")
 
         ## Debug | Boton grabador
         if self.first_frame_of_recording:
