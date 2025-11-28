@@ -5,6 +5,7 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.slider import Slider
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
@@ -94,7 +95,7 @@ class LoopstationWindow(Widget):
     count_tempos = 0 # Contador de tiempos
     tempo = FPS * (BPM_TO_SECONDS / bpm) # Tiempo individual.
     count = 0
-    compass = 0
+    compass_in_fps = 0
 
     # Para dibujar el tempo
     circles = []
@@ -126,9 +127,8 @@ class LoopstationWindow(Widget):
     timer_count = 0
 
     # Diccionario | Contenedor de tracks
-    dict_hbox_tracks = {}
-    for key in sounds.keys():
-        dict_hbox_tracks.update( {key: None} )
+    dict_track_options = {}
+    dict_track_values = {}
 
     # Debug
     verbose = True
@@ -173,10 +173,10 @@ class LoopstationWindow(Widget):
             self.sounds[self.sound_name][1] = False
 
 
-    def set_dict_hbox_tracks(self):
-        self.dict_hbox_tracks.clear()
+    def set_dict_track_options(self):
+        self.dict_track_options.clear()
         for key in self.sounds.keys():
-            self.dict_hbox_tracks.update( {key: None} )
+            self.dict_track_options.update( {key: []} )
 
 
     def set_widget_tracks(self):
@@ -185,34 +185,67 @@ class LoopstationWindow(Widget):
 
         Se llama al inicio del probrama, y cada stop de grabación.
         '''
-        self.set_dict_hbox_tracks()
+        self.set_dict_track_options()
         self.vbox_tracks.clear_widgets()
         for key in self.sounds.keys():
+            sound_values = self.sounds[key]
+
             hbox = BoxLayout(orientation="horizontal")
 
             label = Label( text=str(key) )
             hbox.add_widget(label)
 
-            loop = self.sounds[key][1]
-            if loop:
+            if sound_values['loop']:
+                state, text = "down", "play"
+            else:
+                state, text= "normal", "stop"
+            togglebutton_play = ToggleButton( text=text, state=state )
+            hbox.add_widget( togglebutton_play )
+
+            if sound_values['mute']:
                 state = "down"
-                text = "play"
             else:
                 state = "normal"
-                text = "stop"
-            togglebutton = ToggleButton( text=text, state=state )
-            hbox.add_widget( togglebutton )
+            togglebutton_mute = ToggleButton( text="mute", state=state )
+            hbox.add_widget( togglebutton_mute )
+
+            slider_volume = Slider(
+                min=0, max=100, value=int(sound_values['volume']*100), orientation='horizontal'
+            )
+            hbox.add_widget( slider_volume )
 
             checkbox = CheckBox()
             hbox.add_widget(checkbox)
 
             self.vbox_tracks.add_widget( hbox )
-            self.dict_hbox_tracks[key] = hbox
+            self.dict_track_options[key] = [
+                label, togglebutton_play, togglebutton_mute, slider_volume, checkbox
+            ]
+
+
+    def set_dict_track_values(self):
+        '''
+        Establecer el reproducir o no
+        name:str, play:bool, mute:bool, volume:float, active:bool
+        '''
+        self.dict_track_values.clear()
+        for key in self.dict_track_options.keys():
+            label, togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
+                self.dict_track_options[key]
+            )
+            nested_dict = {
+                'name': label.text,
+                'play': togglebutton_play.state == 'down',
+                'mute': togglebutton_mute.state == 'down',
+                'volume': slider_volume.value_normalized,
+                'active': checkbox.state == 'down'
+            }
+            self.dict_track_values.update( {key: nested_dict} )
 
 
 
     def update_compass(self):
-        self.compass = self.tempo * self.tempos
+        self.compass_in_fps = self.tempo * self.tempos
 
     def update_timer(self):
         self.timer_in_fps = self.timer_in_seconds*FPS
@@ -222,7 +255,7 @@ class LoopstationWindow(Widget):
             self.sound_count_repeated_times.update( {key: 0} )
 
     def get_sound_repetition_limit(self, name):
-        return self.sounds[name][2]*self.compass
+        return self.sounds[name]['repeated-times']*self.compass_in_fps
 
     def get_sound_reached_repetition_limit(self, name):
         limit = self.get_sound_repetition_limit(name)
@@ -230,15 +263,27 @@ class LoopstationWindow(Widget):
         return count >= limit
 
 
-    def save_sound( self, name:str, sound:SoundLoader, loop=False ):
+    def save_sound(
+            self, name:str, sound:SoundLoader, loop=False
+        ):
         good_name = isinstance(name, str)
         good_sound = True #isinstance(sound, SoundLoader)
         good_loop = isinstance(loop, bool)
 
         save = good_name and good_sound and good_loop
         if save:
-            repeated_times = ( sound.length / (self.compass/FPS) )
-            self.sounds.update( {name: [sound, loop, repeated_times]} )
+            repeated_times = ( sound.length / (self.compass_in_fps/FPS) )
+            self.sounds.update(
+                {name:
+                  {
+                   'sound': sound,
+                   'loop': loop,
+                   'volume': VOLUME,
+                   'mute': False,
+                   'repeated-times': repeated_times
+                  }
+                }
+            )
 
         self.init_sound_count_repeated_times()
 
@@ -357,7 +402,9 @@ class LoopstationWindow(Widget):
         debug_play_sounds = []
         for key in self.sounds.keys():
             # Variables necesarias
-            sound, loop, repeated_times = self.sounds[key]
+            sound = self.sounds[key]['sound']
+            loop = self.sounds[key]['loop']
+            repeated_times = self.sounds[key]['repeated-times']
 
             # Reproducción Modo contador de repeticione
             ## Determinar el contar o no
@@ -418,61 +465,40 @@ class LoopstationWindow(Widget):
 
 
         # Tracks | Opciones de reproducción
-        for key in self.dict_hbox_tracks.keys():
-            hbox = self.dict_hbox_tracks[key]
+        self.set_dict_track_values()
+        for key in self.dict_track_options.keys():
+            label, togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
+                self.dict_track_options[key]
+            )
 
-            checkbox, togglebutton, label = None, None, None
+            # Valores necesarios
+            sound_values = self.sounds[key]
+            values = self.dict_track_values[key]
 
-            number = 0
-            for child in hbox.children:
-                # 2 label, 1 togglebutton, 0 checkbox
-                if number == 0:
-                    checkbox = child
-                elif number == 1:
-                    togglebutton = child
-                elif number == 2:
-                    label = child
-                number += 1
+            update_track_options = False
 
-            active = checkbox.state == "down"
+            # Volumen
+            ## Mute o no
+            sound_values['mute'] = values['mute']
+            if values["mute"]:
+                sound_values['sound'].volume = 0
+            else:
+                sound_values['sound'].volume = values['volume']
 
-            ## Determinar si esta activado, y se preciona un botonazo para opciones generales.
-            general_play = False
-            general_stop = False
-            general_restart = False
-            '''
-            if active:
-                if general_play:
-                    togglebutton.state = "down"
-                elif general_stop:
-                    togglebutton.state = "normal"
-                restart = general_restart
-            '''
+            # Reproducir o no
+            if values['play'] and not sound_values['loop']:
+                update_track_options = True
+                sound_values['loop'] = True
+            elif not values['play'] and sound_values['loop']:
+                update_track_options = True
+                sound_values['loop'] = False
 
-            ## Determinar opciones, loop o restart
-            loop = togglebutton.state == "down"
-            restart = False
-
-            ## Reproducir, parar o reiniciar
-            if restart:
-                self.sounds[key][1] = False
-                sound.stop()
-
-            sound_loop = self.sounds[key][1]
-            sound = self.sounds[key][0]
-
-            play = loop and not sound_loop
-            stop = not loop and sound_loop
-            restart = False
-
-            if play:
-                self.sounds[key][1] = True
-                self.set_widget_tracks()
+                sound_values['sound'].stop()
                 self.sound_count_repeated_times[key] = 0
-            elif stop:
-                self.sounds[key][1] = False
+
+            # Actualizar track widget options o no
+            if update_track_options:
                 self.set_widget_tracks()
-                sound.stop()
 
 
 
