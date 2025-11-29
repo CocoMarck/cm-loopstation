@@ -1,36 +1,14 @@
-# Kivy
-from kivy.uix.widget import Widget
-from kivy.uix.button import Button
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.checkbox import CheckBox
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.slider import Slider
-from kivy.properties import (
-    ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
-)
-from kivy.graphics import Color, Ellipse
-from kivy.core.window import Window
-from kivy.clock import Clock
-from kivy.core.audio import SoundLoader
-
-# Primer forzar FPS
-from kivy.config import Config
-Config.set('graphics', 'vsync', '1')
-Config.set('graphics', 'maxfps', '60')
-
-# App
-from kivy.app import App
-
 # Grabador de microfonillo
 from core.microphone_recorder import MicrophoneRecorder
 
 # Constantes necesarias
 VOLUME = float(0.2)
-FPS = float(81)
+FPS = float(20)
 BPM_TO_SECONDS = int(60)
 
+
 ## Sonido
+from kivy.core.audio import SoundLoader
 SOUNDS = []
 TEMPO_SOUNDS = [
     SoundLoader.load('./resources/audio/tempo/tempo-1.ogg'),
@@ -50,6 +28,30 @@ for sound in SOUNDS:
     sound.volume = VOLUME
 
 TEMP_DIR = "./tmp"
+
+
+# Primer forzar FPS
+from kivy.config import Config
+Config.set('graphics', 'vsync', '0')
+Config.set('graphics', 'maxfps', str(FPS))
+
+# App
+from kivy.app import App
+
+# Kivy
+from kivy.uix.widget import Widget
+from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.checkbox import CheckBox
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.slider import Slider
+from kivy.properties import (
+    ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
+)
+from kivy.graphics import Color, Ellipse
+from kivy.core.window import Window
+from kivy.clock import Clock
 
 
 
@@ -192,8 +194,12 @@ class LoopstationWindow(Widget):
 
             hbox = BoxLayout(orientation="horizontal")
 
-            label = Label( text=str(key) )
-            hbox.add_widget(label)
+            label_name = Label( text=str(key) )
+            hbox.add_widget(label_name)
+
+            label_compass = Label( text=f"compass: {round(sound_values['repeated-times'])}" )
+            hbox.add_widget( label_compass )
+
 
             if sound_values['loop']:
                 state, text = "down", "play"
@@ -219,7 +225,7 @@ class LoopstationWindow(Widget):
 
             self.vbox_tracks.add_widget( hbox )
             self.dict_track_options[key] = [
-                label, togglebutton_play, togglebutton_mute, slider_volume, checkbox
+                togglebutton_play, togglebutton_mute, slider_volume, checkbox
             ]
 
 
@@ -230,11 +236,10 @@ class LoopstationWindow(Widget):
         '''
         self.dict_track_values.clear()
         for key in self.dict_track_options.keys():
-            label, togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
+            togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
                 self.dict_track_options[key]
             )
             nested_dict = {
-                'name': label.text,
                 'play': togglebutton_play.state == 'down',
                 'mute': togglebutton_mute.state == 'down',
                 'volume': slider_volume.value_normalized,
@@ -467,10 +472,6 @@ class LoopstationWindow(Widget):
         # Tracks | Opciones de reproducción
         self.set_dict_track_values()
         for key in self.dict_track_options.keys():
-            label, togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
-                self.dict_track_options[key]
-            )
-
             # Valores necesarios
             sound_values = self.sounds[key]
             values = self.dict_track_values[key]
@@ -574,7 +575,9 @@ class LoopstationApp(App):
     def build(self):
         loopstation = LoopstationWindow()
         loopstation.init_the_essential()
+
         Clock.schedule_interval(loopstation.update, 1.0/FPS)
+
         return loopstation
 
 if __name__ == '__main__':
