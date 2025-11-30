@@ -1,75 +1,122 @@
 #:kivy 2.3.1
 
 <LoopstationWindow>:
-    record_button: toggle_button_record
+    record_button: record
     label_timer: timer_text
     label_tracks: tracks_text
-    vbox_tracks: scroll_vbox
+    label_compass_to_record: compass_to_record
+
+    label_bpm: text_bpm
+    textinput_bpm: input_bpm
+
+
+    grid_tracks: track_container
 
     button_play: play
     button_stop: stop
     button_restart: restart
 
-    # Textos
-    Label:
-        font_size: 16
-        center_x: root.width * 0.5
-        y: root.height * 0.8
-        text: "Loopstation Application"
+    togglebutton_automatic_stop: automatic_stop
+    textinput_compass_to_stop: compass_to_stop
 
-    Label:
-        id: timer_text
-        center_x: root.width * 0.75
-        y: root.height * 0.75
-        text: "Timer 0"
+    textinput_timer: timer_input
 
-    Label:
-        id: tracks_text
-        center_x: root.width * 0.15
-        y: root.height * 0.75
-        text: "Tracks 0"
+    metronome_container: metronome_box
 
-    # Botonsillos
-    ToggleButton:
-        id: toggle_button_record
-        width: 100
-        height: 30
-        center_x: root.width * 0.5
-        y: root.height * 0.65
-        text: "Grabar"
+    GridLayout:
+        x: 0
+        y: root.height*0.72
+        width: root.width*1
+        height: root.height*0.25
+
+        cols: 3
+
+        # Fila uno
+        ## timer
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: timer_text
+                text: "timer"
+            TextInput:
+                id: timer_input
+
+        ## Nombre
+        Label:
+            text: "loopstation application"
+
+        ## tracks
+        Label:
+            id: tracks_text
+            text: "tracks 0"
+
+        # Fila 2
+        ## compases a grabar
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: compass_to_record
+                text: "compasses to record"
+
+            TextInput:
+                id: compass_to_stop
+                text: "0"
+
+        ## circulos del Metronomo
+        BoxLayout:
+            id: metronome_box
+            orientation: "horizontal"
+
+        # nada
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: text_bpm
+                text: "bpm"
+            TextInput:
+                id: input_bpm
+                text: "0"
 
 
 
-    # Widgets | Opciones de reproducción
+    # Widgets
     BoxLayout:
         orientation: "vertical"
         width: root.width*1.0
-        height: root.height * 0.12
+        height: root.height *0.2
 
         center_x: root.width * 0.5
         y: root.height * 0.5
 
+        # Opciones de grabación
+        BoxLayout:
+            orientation: "horizontal"
+
+            # Grabar
+            ToggleButton:
+                id: record
+                text: "record"
+
+            # Opcion Parar grabación por numero de compass
+            ToggleButton:
+                id: automatic_stop
+                text: "stop by number of compass"
+
+        # Opciones de reproducción de tracks
         BoxLayout:
             orientation: "horizontal"
 
             Button:
                 id: play
-                text: 'Iniciar'
+                text: 'play'
 
             Button:
                 id: stop
-                text: 'Parar'
+                text: 'stop'
 
             Button:
                 id: restart
-                text: 'Reiniciar'
-
-        BoxLayout:
-            orientation: "horizontal"
-            Label:
-                text: "Seleccionar todas las pistas"
-
-            CheckBox:
+                text: 'restart'
 
 
 
@@ -79,20 +126,19 @@
         do_scroll_x: True
         do_scroll_y: True
 
-        width: root.width*0.75
-        height: root.height * 0.4
+        width: root.width*1
+        height: root.height * 0.44
 
         center_x: root.width * 0.5
-        y: root.height * 0.1
+        y: root.height * 0.0475
 
         # CheckBox Tracks
-        BoxLayout:
-            id: scroll_vbox
-            orientation: "vertical"
-
+        GridLayout:
+            id: track_container
+            cols: 6
 
             Label:
-                text: "Aca estan todas las pistas"
+                text: "here are all the tracks"
 
             BoxLayout:
                 orientation: "horizontal"

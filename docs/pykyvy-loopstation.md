@@ -33,4 +33,4 @@ Tendra opciones de parar, iniciar, eliminar, y pos el volumen anteriormente menc
 - Como reproducir audios desde un loop PyKivy.
 
 # Conclusión
-Primemro desarrollar el metronomo, tener claro cuando empiza el primer tempo y cuando termina. Esto determinaran los compases.
+Primero desarrollar el metronomo, tener claro cuando empiza el primer tempo y cuando termina. Esto determinaran los compases.

@@ -13,3 +13,7 @@ Cosas importantes:
 
 ## Terminar en final del proximo compas
 Tambien por defecto estara habilitado, esta función lo unico que hace, es que una vez detectado el boton parar, la grabación esperara hasta el proximo compas para terminar. Esto sera configurable.
+
+---
+## Detener segun x cantidad de compases
+Por defecto seran cuatro compases. Si es que no se da datener antes, el se detendra automaticamente la grabación al cuarto compas.
