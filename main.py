@@ -100,20 +100,23 @@ class LoopstationWindow(Widget):
     button_restart = ObjectProperty(None)
 
     togglebutton_automatic_stop = ObjectProperty(None)
+    togglebutton_play_beat = ObjectProperty(None)
 
     textinput_compass_to_stop = ObjectProperty(None)
     textinput_timer = ObjectProperty(None)
     textinput_bpm = ObjectProperty(None)
+    textinput_beats = ObjectProperty(None)
 
     metronome_container = ObjectProperty(None)
 
     # Variables para el metrnomo
     bpm = 120
-    tempos = 4 # Cantidad de tiempos
-    count_tempos = 0 # Contador de tiempos
-    tempo = 0 # Tiempo individual.
+    beats = 4 # Cantidad de tiempos
+    count_beats = 0 # Contador de tiempos
+    beat_in_fps = 0 # Tiempo individual.
     count = 0
     compass_in_fps = 0
+    play_beat = False
 
     # Para dibujar el tempo
     circles = []
@@ -121,8 +124,8 @@ class LoopstationWindow(Widget):
     # Cambio de tempo y sonidotos
     change_tempo = False
     change_compass = False
-    first_tempo = False
-    last_tempo = False
+    first_beat = False
+    last_beat = False
     init_tempo = False
 
     # Diccionario para sonidos a reproducir
@@ -170,10 +173,11 @@ class LoopstationWindow(Widget):
             print(text)
 
     # Posicionar metronomo
-    def init_metronome(self):
+    def update_metronome_circles(self):
         # Establecer circulos
         self.circles.clear()
-        for x in range(0, self.tempos):
+        self.metronome_container.clear_widgets()
+        for x in range(0, self.beats):
             circle = LoopstationCircle()
             self.circles.append( circle )
             self.metronome_container.add_widget(circle)
@@ -277,7 +281,7 @@ class LoopstationWindow(Widget):
         '''
         Establecer compass basado en fps
         '''
-        self.compass_in_fps = self.tempo * self.tempos
+        self.compass_in_fps = self.beat_in_fps * self.beats
 
     def update_timer(self):
         '''
@@ -347,10 +351,23 @@ class LoopstationWindow(Widget):
         '''
         if self.bpm <= 0:
             self.bpm = 1
-        self.tempo = FPS * (BPM_TO_SECONDS / self.bpm)
+        self.beat_in_fps = FPS * (BPM_TO_SECONDS / self.bpm)
         self.update_compass()
         self.count = 0
-        self.count_tempos = 0
+        self.count_beats = 0
+        self.update_tracks()
+        self.init_sound_count_repeated_times()
+        self.set_widget_tracks()
+
+
+    def update_beats(self):
+        '''
+        Actualizar beats, inicializar y actualizar todo lo relacionado
+        '''
+        self.count = 0
+        self.count_beats = 0
+        self.update_compass()
+        self.update_metronome_circles()
         self.update_tracks()
         self.init_sound_count_repeated_times()
         self.set_widget_tracks()
@@ -358,43 +375,51 @@ class LoopstationWindow(Widget):
 
 
     def init_the_essential(self):
-        self.init_metronome()
+        self.update_metronome_circles()
 
         # Obtener datos adecuados
         self.set_bpm()
         self.update_timer()
 
-        # Agregar samples
-        self.save_sound( "party", SAMPLE_SOUNDS[0], False, sample=True )
-        self.save_sound( "macaco", SAMPLE_SOUNDS[1], False, sample=True )
-        self.save_sound( "do-scale", SAMPLE_SOUNDS[2], False, sample=True )
-        self.save_sound( "metro", SAMPLE_SOUNDS[3], False, sample=True )
-
         # Establecer contador de repetición
         self.init_sound_count_repeated_times()
+
+        # Agregar samples
+        #self.save_sound( "party", SAMPLE_SOUNDS[0], False, sample=True )
+        #self.save_sound( "macaco", SAMPLE_SOUNDS[1], False, sample=True )
+        #self.save_sound( "do-scale", SAMPLE_SOUNDS[2], False, sample=True )
+        #self.save_sound( "metro", SAMPLE_SOUNDS[3], False, sample=True )
 
         # Reproductor de pistas
         self.set_widget_tracks()
 
         # Widgets
+        self.on_play_beat(
+            self.togglebutton_play_beat, self.togglebutton_play_beat.state
+        )
+
+
         self.textinput_compass_to_stop.text = str(self.record_compass_to_stop)
-
         self.textinput_bpm.text = str(self.bpm)
+        self.textinput_beats.text = str(self.beats)
 
-        self.set_bpm_on_textinput(self.textinput_bpm, self.textinput_bpm.text)
+        self.on_bpm(self.textinput_bpm, self.textinput_bpm.text)
         self.set_record(self.record_button, self.record_button.state)
-        self.set_record_compass_to_stop(
+        self.on__record_compsss_to_stop(
             self.textinput_compass_to_stop, self.textinput_compass_to_stop.text
         )
-        self.set_timer_on_textinput( self.textinput_timer, self.textinput_timer.text)
+        self.on_timer( self.textinput_timer, self.textinput_timer.text)
 
         # Bind widgets
         self.record_button.bind(state=self.set_record)
-        self.togglebutton_automatic_stop.bind(state=self.set_record_automatic_stop)
+        self.togglebutton_automatic_stop.bind(state=self.on_record_automatic_stop)
+        self.togglebutton_play_beat.bind(state=self.on_play_beat)
 
-        self.textinput_compass_to_stop.bind(text=self.set_record_compass_to_stop)
-        self.textinput_bpm.bind(text=self.set_bpm_on_textinput)
-        self.textinput_timer.bind(text=self.set_timer_on_textinput)
+        self.textinput_compass_to_stop.bind(text=self.on__record_compsss_to_stop)
+        self.textinput_bpm.bind(text=self.on_bpm)
+        self.textinput_timer.bind(text=self.on_timer)
+        self.textinput_beats.bind(text=self.on_beats)
+
 
 
     def set_record(self, obj, value):
@@ -407,10 +432,11 @@ class LoopstationWindow(Widget):
         else:
             obj.text = "record"
 
+    def on_play_beat(self, obj, value):
+        self.play_beat = value == "down"
 
 
-
-    def set_record_automatic_stop(self, obj, value):
+    def on_record_automatic_stop(self, obj, value):
         '''Establecer parar grabación de forma automatica'''
         self.record_automatic_stop = value == "down"
 
@@ -426,7 +452,7 @@ class LoopstationWindow(Widget):
             number = int(text)
         return number
 
-    def set_record_compass_to_stop(self, obj, text):
+    def on__record_compsss_to_stop(self, obj, text):
         '''
         Establecer la cantidad de compases a grabar
         '''
@@ -436,21 +462,34 @@ class LoopstationWindow(Widget):
         else:
             obj.text = str(self.record_compass_to_stop)
 
-    def set_bpm_on_textinput(self, obj, text):
+    def on_bpm(self, obj, text):
         self.bpm = self.filter_text_to_number( text )
-        if self.bpm == 0:
+        if self.bpm == 0 or self.bpm > 200:
+            self.bpm == 1
             obj.text = ""
         else:
             obj.text = str(self.bpm)
         self.set_bpm()
 
-    def set_timer_on_textinput(self, obj, text):
+    def on_timer(self, obj, text):
         self.timer_in_seconds = self.filter_text_to_number( text )
+        if self.timer_in_seconds > 30:
+            self.timer_in_seconds = 0
+
         if self.timer_in_seconds == 0:
             obj.text = ""
         else:
             obj.text = str(self.timer_in_seconds)
         self.update_timer()
+
+    def on_beats(self, obj, text):
+        self.beats = self.filter_text_to_number( text )
+        if self.beats <= 1 or self.beats >= 10:
+            self.beats = 2
+            obj.text = ""
+        else:
+            obj.text = str(self.beats)
+        self.update_beats()
 
 
 
@@ -462,36 +501,36 @@ class LoopstationWindow(Widget):
         '''
 
         # Relacionado con el metronomo.
-        self.change_tempo = self.count >= self.tempo
+        self.change_tempo = self.count >= self.beat_in_fps
 
         ## Cambio de tempo
         if self.change_tempo:
             self.count = 0
-            self.count_tempos += 1
+            self.count_beats += 1
 
         ## Inicio de tempo
         self.init_tempo = self.count == 0
 
         ## Fin de compas
-        self.change_compass = self.count_tempos == self.tempos
+        self.change_compass = self.count_beats == self.beats
         if self.change_compass:
             self.count = 0
-            self.count_tempos = 0
+            self.count_beats = 0
 
 
         # Inicio de tempo | Tipo de inicio de tempo
-        self.first_tempo, self.last_tempo, self.other_tempo = False, False, False
+        self.first_beat, self.last_beat, self.other_beat = False, False, False
         if self.init_tempo:
-            self.first_tempo = self.count_tempos == 0
-            self.last_tempo = self.count_tempos == self.tempos-1
-            self.other_tempo = not(self.first_tempo and self.last_tempo)
+            self.first_beat = self.count_beats == 0
+            self.last_beat = self.count_beats == self.beats-1
+            self.other_beat = not(self.first_beat and self.last_beat)
 
 
         # Grabar | Sonidos grabados
         # Esta en bind -> `self.record = self.record_button.state == "down"`
 
         self.first_frame_of_recording = (
-         self.record and self.timer_completed and self.record_count == 0 and self.first_tempo
+         self.record and self.timer_completed and self.record_count == 0 and self.first_beat
         )
 
         ## Limite de record
@@ -531,7 +570,7 @@ class LoopstationWindow(Widget):
 
         if (
             self.record == False and self.microphone_recorder.state == "record"
-            and self.first_tempo
+            and self.first_beat
         ):
             self.microphone_recorder.stop()
             sound_microphone = SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME)
@@ -574,7 +613,7 @@ class LoopstationWindow(Widget):
                 ## Repeticiones | Sonido se reproduce, contador de reprodución
                 #if add_seconds:
                 debug_add_sounds = False
-                if sound.state == "stop" and self.first_tempo:
+                if sound.state == "stop" and self.first_beat:
                     sound.play()
                     debug_add_sounds = True
 
@@ -584,7 +623,7 @@ class LoopstationWindow(Widget):
 
                 ## Alcanzo el limite
                 if (
-                    (self.get_sound_reached_repetition_limit(key) and self.first_tempo) or
+                    (self.get_sound_reached_repetition_limit(key) and self.first_beat) or
                     self.first_frame_of_recording
                 ):
                     debug_add_sounds = True
@@ -605,7 +644,7 @@ class LoopstationWindow(Widget):
                 if self.first_frame_of_recording:
                     sound.stop()
                     sound.play()
-                elif sound.state == "stop" and self.first_tempo:
+                elif sound.state == "stop" and self.first_beat:
                     # Reproducir
                     debug_play_sounds.append( [sound.source, 0, 0] )
                     sound.play()
@@ -617,10 +656,11 @@ class LoopstationWindow(Widget):
 
         # Sonido | Metrónomo
         # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
-        if self.first_tempo:
-            TEMPO_SOUNDS[0].play()
-        elif self.last_tempo or self.other_tempo:
-            TEMPO_SOUNDS[2].play()
+        if self.play_beat:
+            if self.first_beat:
+                TEMPO_SOUNDS[0].play()
+            elif self.last_beat or self.other_beat:
+                TEMPO_SOUNDS[2].play()
 
 
 
@@ -668,16 +708,16 @@ class LoopstationWindow(Widget):
         RGB_OFF_TEMPO = [1,1,1]
         RGB_FIRST_TEMPO = [0,1,0]
         RGB_TEMPO = [1,0,0]
-        if self.count_tempos == 0:
+        if self.count_beats == 0:
             # Aun en primer tempo | Mostrar en verde
             rgb = RGB_FIRST_TEMPO
         else:
             # Otro tipo de tempo
             rgb = RGB_TEMPO
-        self.circles[self.count_tempos].color.rgb = rgb
+        self.circles[self.count_beats].color.rgb = rgb
 
         for index in range( 0, len(self.circles) ):
-            if self.count_tempos != index:
+            if self.count_beats != index:
                 # Circulos no perteneciente al tempo | Apagado
                 self.circles[index].color.rgb = RGB_OFF_TEMPO
 
@@ -700,7 +740,7 @@ class LoopstationWindow(Widget):
         # Debug
         ## Debug | Cambio de compas
         if self.change_compass:
-            self.debug(f"--Fin de compas de {self.tempos} tempos--")
+            self.debug(f"--Fin de compas de {self.beats} beats--")
 
         ## Debug | Reproducir sonidos
         for source, count, limit in debug_play_sounds:
@@ -712,13 +752,13 @@ class LoopstationWindow(Widget):
              )
             )
 
-        ## Debug | Cambio de tempos
-        if self.first_tempo:
-            self.debug("Primer tempo")
-        elif self.last_tempo:
-            self.debug("Ultimo tempo")
-        elif self.other_tempo:
-            self.debug(f"Tempo: {self.count_tempos}")
+        ## Debug | Cambio de beats
+        if self.first_beat:
+            self.debug("Primer pulso")
+        elif self.last_beat:
+            self.debug("Ultimo pulso")
+        elif self.other_beat:
+            self.debug(f"Pulso: {self.count_beats}")
 
         ## Debug | Boton grabador
         if self.first_frame_of_recording:

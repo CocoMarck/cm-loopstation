@@ -17,9 +17,11 @@
     button_restart: restart
 
     togglebutton_automatic_stop: automatic_stop
-    textinput_compass_to_stop: compass_to_stop
+    togglebutton_play_beat: option_play_beat
 
+    textinput_compass_to_stop: compass_to_stop
     textinput_timer: timer_input
+    textinput_beats: beats_input
 
     metronome_container: metronome_box
 
@@ -41,14 +43,26 @@
             TextInput:
                 id: timer_input
 
-        ## Nombre
-        Label:
-            text: "loopstation application"
+        ## Beats
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                text: "beats"
+            TextInput:
+                id: beats_input
+                text: "0"
 
-        ## tracks
-        Label:
-            id: tracks_text
-            text: "tracks 0"
+        ## BPM
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: text_bpm
+                text: "bpm"
+            TextInput:
+                id: input_bpm
+                text: "0"
+
+
 
         # Fila 2
         ## compases a grabar
@@ -67,56 +81,54 @@
             id: metronome_box
             orientation: "horizontal"
 
-        # nada
-        BoxLayout:
-            orientation: "horizontal"
-            Label:
-                id: text_bpm
-                text: "bpm"
-            TextInput:
-                id: input_bpm
-                text: "0"
+        ## tracks
+        Label:
+            id: tracks_text
+            text: "tracks 0"
+
+
 
 
 
     # Widgets
-    BoxLayout:
-        orientation: "vertical"
+    GridLayout:
         width: root.width*1.0
         height: root.height *0.2
-
         center_x: root.width * 0.5
         y: root.height * 0.5
 
-        # Opciones de grabación
-        BoxLayout:
-            orientation: "horizontal"
+        cols: 3
 
-            # Grabar
-            ToggleButton:
-                id: record
-                text: "record"
 
-            # Opcion Parar grabación por numero de compass
-            ToggleButton:
-                id: automatic_stop
-                text: "stop by number of compass"
+        # Col 1
+        ToggleButton:
+            id: option_play_beat
+            text: "play beat"
+            state: "down"
 
-        # Opciones de reproducción de tracks
-        BoxLayout:
-            orientation: "horizontal"
+        ## Grabar
+        ToggleButton:
+            id: record
+            text: "record"
 
-            Button:
-                id: play
-                text: 'play'
+        ## Opcion Parar grabación por numero de compass
+        ToggleButton:
+            id: automatic_stop
+            text: "stop by number of compass"
 
-            Button:
-                id: stop
-                text: 'stop'
+        # Col 2
+        ## Opciones de reproducción de tracks
+        Button:
+            id: play
+            text: 'play'
 
-            Button:
-                id: restart
-                text: 'restart'
+        Button:
+            id: stop
+            text: 'stop'
+
+        Button:
+            id: restart
+            text: 'restart'
 
 
 
@@ -136,9 +148,3 @@
         GridLayout:
             id: track_container
             cols: 6
-
-            Label:
-                text: "here are all the tracks"
-
-            BoxLayout:
-                orientation: "horizontal"

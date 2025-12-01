@@ -1,9 +1,11 @@
 # Motor de loopstation
 Pienso hacer esta app con varios frameworks, kivy, pygame, qt, y gtk.
 
-Sera simplemente un objeto con atributos relacionados al loop. Todo el funcionamiento se basara con fps.
+Sera simplemente un objeto con atributos relacionados al loop. Todo el funcionamiento se basara con fps. Seran FPS fijos.
 
-Tendra metodos de detección.
+Tendra metodos de detección de beats, de compass...
+
+Determinar latencia, basado en FPS fijos. Calcular eso con método.
 
 ## Atributos
 > Los compass se componen por beats.
@@ -39,6 +41,7 @@ Tendra metodos de detección.
 - `record_count`: Contar mienstras se graba.
 - `record_compass_limit`: Cantidad de compases.
 - `record_limit_in_fps`: Limite en fps.
+- `current_file_to_save`: Archivo actual a guardar. Remplaza o guarda, da igual. De que se guarda se guarda.
 
 **Timer**
 - `timer`: Activar o no timer.
@@ -55,9 +58,7 @@ Tendra metodos de detección.
 ----
 
 # Ejemplos de obtención de datos
-- BPM: $120$
-- Tempo de tres cuartos: ${3 \over 4} = 0.75$
-- $3$ Beat: $(4 \cdot 120) \cdot 0.75 = 360$
+## Cantidad de beats por compas
 
 ---
 
