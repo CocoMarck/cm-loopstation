@@ -290,6 +290,7 @@ class LoopstationWindow(Widget):
         self.timer_in_fps = self.timer_in_seconds*FPS
 
     def init_sound_count_repeated_times(self):
+        self.sound_count_repeated_times.clear()
         for key in self.sounds.keys():
             self.sound_count_repeated_times.update( {key: 0} )
 
@@ -405,7 +406,7 @@ class LoopstationWindow(Widget):
 
         self.on_bpm(self.textinput_bpm, self.textinput_bpm.text)
         self.set_record(self.record_button, self.record_button.state)
-        self.on__record_compsss_to_stop(
+        self.on_record_compsss_to_stop(
             self.textinput_compass_to_stop, self.textinput_compass_to_stop.text
         )
         self.on_timer( self.textinput_timer, self.textinput_timer.text)
@@ -415,7 +416,7 @@ class LoopstationWindow(Widget):
         self.togglebutton_automatic_stop.bind(state=self.on_record_automatic_stop)
         self.togglebutton_play_beat.bind(state=self.on_play_beat)
 
-        self.textinput_compass_to_stop.bind(text=self.on__record_compsss_to_stop)
+        self.textinput_compass_to_stop.bind(text=self.on_record_compsss_to_stop)
         self.textinput_bpm.bind(text=self.on_bpm)
         self.textinput_timer.bind(text=self.on_timer)
         self.textinput_beats.bind(text=self.on_beats)
@@ -456,7 +457,7 @@ class LoopstationWindow(Widget):
             number = int(text)
         return number
 
-    def on__record_compsss_to_stop(self, obj, text):
+    def on_record_compsss_to_stop(self, obj, text):
         '''
         Establecer la cantidad de compases a grabar
         '''
@@ -497,22 +498,28 @@ class LoopstationWindow(Widget):
 
     def on_tracks_play(self, obj, state):
         if state == "down":
-            for sound in self.sounds.values():
+            for key in self.sounds.keys():
+                sound = self.sounds[key]
                 sound['loop'] = True
             self.set_widget_tracks()
+            self.init_sound_count_repeated_times()
 
     def on_tracks_stop(self, obj, state):
         if state == "down":
-            for sound in self.sounds.values():
+            for key in self.sounds.keys():
+                sound = self.sounds[key]
                 sound['loop'] = False
             self.set_widget_tracks()
+            self.init_sound_count_repeated_times()
 
     def on_tracks_restart(self, obj, state):
         if state == "down":
-            for sound in self.sounds.values():
+            for key in self.sounds.keys():
+                sound = self.sounds[key]
                 sound['sound'].stop()
                 sound['loop'] = True
             self.set_widget_tracks()
+            self.init_sound_count_repeated_times()
 
 
 
