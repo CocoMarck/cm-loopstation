@@ -420,6 +420,10 @@ class LoopstationWindow(Widget):
         self.textinput_timer.bind(text=self.on_timer)
         self.textinput_beats.bind(text=self.on_beats)
 
+        self.button_play.bind(state=self.on_tracks_play)
+        self.button_stop.bind(state=self.on_tracks_stop)
+        self.button_restart.bind(state=self.on_tracks_restart)
+
 
 
     def set_record(self, obj, value):
@@ -489,7 +493,26 @@ class LoopstationWindow(Widget):
             obj.text = ""
         else:
             obj.text = str(self.beats)
-        self.update_beats()
+        self.update_beats
+
+    def on_tracks_play(self, obj, state):
+        if state == "down":
+            for sound in self.sounds.values():
+                sound['loop'] = True
+            self.set_widget_tracks()
+
+    def on_tracks_stop(self, obj, state):
+        if state == "down":
+            for sound in self.sounds.values():
+                sound['loop'] = False
+            self.set_widget_tracks()
+
+    def on_tracks_restart(self, obj, state):
+        if state == "down":
+            for sound in self.sounds.values():
+                sound['sound'].stop()
+                sound['loop'] = True
+            self.set_widget_tracks()
 
 
 
