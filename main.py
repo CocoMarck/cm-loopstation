@@ -1,4 +1,18 @@
 from core.text_util import ignore_text_filter, PREFIX_NUMBER
+from utils import ResourceLoader
+
+resource_loader = ResourceLoader()
+TEMP_DIR = resource_loader.base_dir.joinpath('tmp')
+AUDIO_DIR = resource_loader.resources_dir.joinpath( 'audio' )
+TEMPO_DIR = AUDIO_DIR.joinpath( 'tempo' )
+SAMPLE_DIR = AUDIO_DIR.joinpath( 'sample' )
+
+DICT_SAMPLE_DIR = resource_loader.get_recursive_tree( SAMPLE_DIR )
+SAMPLE_FILES = DICT_SAMPLE_DIR['file']
+
+DICT_TEMPO_DIR = resource_loader.get_recursive_tree( TEMPO_DIR )
+TEMPO_FILES = DICT_TEMPO_DIR["file"]
+
 
 # Grabador de microfonillo
 from core.microphone_recorder import MicrophoneRecorder
@@ -12,24 +26,19 @@ BPM_TO_SECONDS = int(60)
 ## Sonido
 from kivy.core.audio import SoundLoader
 SOUNDS = []
-TEMPO_SOUNDS = [
-    SoundLoader.load('./resources/audio/tempo/tempo-1.ogg'),
-    SoundLoader.load('./resources/audio/tempo/tempo-2.ogg'),
-    SoundLoader.load('./resources/audio/tempo/tempo-3.ogg')
-]
+
+TEMPO_SOUNDS = []
+for audio in TEMPO_FILES:
+    TEMPO_SOUNDS.append( SoundLoader.load( str(audio) ) )
 SOUNDS.extend(TEMPO_SOUNDS)
-SAMPLE_SOUNDS = [
-    SoundLoader.load('./resources/audio/sample/loop-01-party.ogg'),
-    SoundLoader.load('./resources/audio/sample/loop-02-macaco.ogg'),
-    SoundLoader.load('./resources/audio/sample/loop-03-do-scale.ogg'),
-    SoundLoader.load('./resources/audio/sample/loop-04-metro.ogg')
-]
+
+SAMPLE_SOUNDS = []
+for audio in SAMPLE_FILES:
+    SAMPLE_SOUNDS.append( SoundLoader.load( str(audio) ) )
 SOUNDS.extend(SAMPLE_SOUNDS)
 
 for sound in SOUNDS:
     sound.volume = VOLUME
-
-TEMP_DIR = "./tmp"
 
 
 # Primer forzar FPS
@@ -129,12 +138,14 @@ class LoopstationWindow(Widget):
     init_tempo = False
 
     # Diccionario para sonidos a reproducir
-    sound_name = str
-    sounds = {}
-    sound_count_repeated_times = {}
+    track_name = str
+    dict_tracks = {}
+    track_count_repeated_times = {}
 
     # Grabar
-    microphone_recorder = MicrophoneRecorder( output_filename=f"{TEMP_DIR}/audio-test-1.wav" )
+    microphone_recorder = MicrophoneRecorder(
+        output_filename=str( TEMP_DIR.joinpath("audio-test-1.wav") )
+    )
     record_files_count = 0
     record_files_limit = 4
     record_limit = False
@@ -197,17 +208,17 @@ class LoopstationWindow(Widget):
 
 
     def play_sound(self):
-        if self.sound_name in self.sounds.keys():
-            self.sounds[self.sound_name][1] = True
+        if self.track_name in self.dict_tracks.keys():
+            self.dict_tracks[self.track_name][1] = True
 
     def stop_sound(self):
-        if self.sound_name in self.sounds.keys:
-            self.sounds[self.sound_name][1] = False
+        if self.track_name in self.dict_tracks.keys():
+            self.dict_tracks[self.track_name][1] = False
 
 
     def set_dict_track_options(self):
         self.dict_track_options.clear()
-        for key in self.sounds.keys():
+        for key in self.dict_tracks.keys():
             self.dict_track_options.update( {key: []} )
 
 
@@ -219,8 +230,8 @@ class LoopstationWindow(Widget):
         '''
         self.set_dict_track_options()
         self.grid_tracks.clear_widgets()
-        for key in self.sounds.keys():
-            sound_values = self.sounds[key]
+        for key in self.dict_tracks.keys():
+            sound_values = self.dict_tracks[key]
 
             label_name = Label( text=str(key) )
             self.grid_tracks.add_widget(label_name)
@@ -289,17 +300,17 @@ class LoopstationWindow(Widget):
         '''
         self.timer_in_fps = self.timer_in_seconds*FPS
 
-    def init_sound_count_repeated_times(self):
-        self.sound_count_repeated_times.clear()
-        for key in self.sounds.keys():
-            self.sound_count_repeated_times.update( {key: 0} )
+    def init_track_count_repeated_times(self):
+        self.track_count_repeated_times.clear()
+        for key in self.dict_tracks.keys():
+            self.track_count_repeated_times.update( {key: 0} )
 
     def get_sound_repetition_limit(self, name):
-        return self.sounds[name]['repeated-times']*self.compass_in_fps
+        return self.dict_tracks[name]['repeated-times']*self.compass_in_fps
 
     def get_sound_reached_repetition_limit(self, name):
         limit = self.get_sound_repetition_limit(name)
-        count = self.sound_count_repeated_times[name]
+        count = self.track_count_repeated_times[name]
         return count >= limit
 
 
@@ -317,7 +328,7 @@ class LoopstationWindow(Widget):
         save = good_name and good_sound and good_loop
         if save:
             length = sound.length
-            self.sounds.update(
+            self.dict_tracks.update(
                 {name:
                   {
                    'sound': sound,
@@ -333,13 +344,13 @@ class LoopstationWindow(Widget):
                 }
             )
 
-        self.init_sound_count_repeated_times()
+        self.init_track_count_repeated_times()
 
         return save
 
     def update_tracks(self):
-        for key in self.sounds.keys():
-            values = self.sounds[key]
+        for key in self.dict_tracks.keys():
+            values = self.dict_tracks[key]
             values['sound'].stop()
             values['repeated-times'] = self.get_times_in_loop( values['length'] )
             values['volume'] = VOLUME
@@ -357,7 +368,7 @@ class LoopstationWindow(Widget):
         self.count = 0
         self.count_beats = 0
         self.update_tracks()
-        self.init_sound_count_repeated_times()
+        self.init_track_count_repeated_times()
         self.set_widget_tracks()
 
 
@@ -370,7 +381,7 @@ class LoopstationWindow(Widget):
         self.update_compass()
         self.update_metronome_circles()
         self.update_tracks()
-        self.init_sound_count_repeated_times()
+        self.init_track_count_repeated_times()
         self.set_widget_tracks()
 
 
@@ -383,7 +394,7 @@ class LoopstationWindow(Widget):
         self.update_timer()
 
         # Establecer contador de repetición
-        self.init_sound_count_repeated_times()
+        self.init_track_count_repeated_times()
 
         # Agregar samples
         #self.save_sound( "party", SAMPLE_SOUNDS[0], False, sample=True )
@@ -498,28 +509,28 @@ class LoopstationWindow(Widget):
 
     def on_tracks_play(self, obj, state):
         if state == "down":
-            for key in self.sounds.keys():
-                sound = self.sounds[key]
+            for key in self.dict_tracks.keys():
+                sound = self.dict_tracks[key]
                 sound['loop'] = True
             self.set_widget_tracks()
-            self.init_sound_count_repeated_times()
+            self.init_track_count_repeated_times()
 
     def on_tracks_stop(self, obj, state):
         if state == "down":
-            for key in self.sounds.keys():
-                sound = self.sounds[key]
+            for key in self.dict_tracks.keys():
+                sound = self.dict_tracks[key]
                 sound['loop'] = False
             self.set_widget_tracks()
-            self.init_sound_count_repeated_times()
+            self.init_track_count_repeated_times()
 
     def on_tracks_restart(self, obj, state):
         if state == "down":
-            for key in self.sounds.keys():
-                sound = self.sounds[key]
+            for key in self.dict_tracks.keys():
+                sound = self.dict_tracks[key]
                 sound['sound'].stop()
                 sound['loop'] = True
             self.set_widget_tracks()
-            self.init_sound_count_repeated_times()
+            self.init_track_count_repeated_times()
 
 
 
@@ -580,8 +591,8 @@ class LoopstationWindow(Widget):
             ## Solo guardar cuando esta en focus, o no esta en alcanzado limite de tracks
             ## Se establece nombre de archivo.
             sound_source = None
-            for key in self.sounds.keys():
-                sound = self.sounds[key]
+            for key in self.dict_tracks.keys():
+                sound = self.dict_tracks[key]
                 if sound['focus'] == True and not sound['sample']:
                     sound_source = sound['source']
                     self.current_save_sound_key = key
@@ -589,7 +600,7 @@ class LoopstationWindow(Widget):
             new_sound = sound_source == None and not self.record_limit
             if new_sound:
                 self.current_save_sound_key = f"track-{self.record_files_count}"
-                sound_source = f"{TEMP_DIR}/{self.current_save_sound_key}.wav"
+                sound_source = str( TEMP_DIR.joinpath(f"{self.current_save_sound_key}.wav") )
 
             self.microphone_recorder.WAVE_OUTPUT_FILENAME = sound_source
 
@@ -629,11 +640,11 @@ class LoopstationWindow(Widget):
 
         # Sonido | Reproducir o no pista/sample
         debug_play_sounds = []
-        for key in self.sounds.keys():
+        for key in self.dict_tracks.keys():
             # Variables necesarias
-            sound = self.sounds[key]['sound']
-            loop = self.sounds[key]['loop']
-            repeated_times = self.sounds[key]['repeated-times']
+            sound = self.dict_tracks[key]['sound']
+            loop = self.dict_tracks[key]['loop']
+            repeated_times = self.dict_tracks[key]['repeated-times']
 
             # Reproducción Modo contador de repeticione
             ## Determinar el contar o no
@@ -648,8 +659,8 @@ class LoopstationWindow(Widget):
                     debug_add_sounds = True
 
                 if sound.state == "play":
-                    self.sound_count_repeated_times[key] += 1
-                count = self.sound_count_repeated_times[key]
+                    self.track_count_repeated_times[key] += 1
+                count = self.track_count_repeated_times[key]
 
                 ## Alcanzo el limite
                 if (
@@ -657,7 +668,7 @@ class LoopstationWindow(Widget):
                     self.first_frame_of_recording
                 ):
                     debug_add_sounds = True
-                    self.sound_count_repeated_times[key] = 0
+                    self.track_count_repeated_times[key] = 0
                     sound.stop()
                     sound.play()
 
@@ -698,7 +709,7 @@ class LoopstationWindow(Widget):
         self.set_dict_track_values()
         for key in self.dict_track_options.keys():
             # Valores necesarios
-            sound_values = self.sounds[key]
+            sound_values = self.dict_tracks[key]
             values = self.dict_track_values[key]
 
             update_track_options = False
@@ -723,7 +734,7 @@ class LoopstationWindow(Widget):
                 sound_values['loop'] = False
 
                 sound_values['sound'].stop()
-                self.sound_count_repeated_times[key] = 0
+                self.track_count_repeated_times[key] = 0
 
             # Actualizar track widget options o no
             if update_track_options:
