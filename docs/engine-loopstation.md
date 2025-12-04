@@ -12,21 +12,27 @@ Determinar latencia, basado en FPS fijos. Calcular eso con método.
 
 `FPS`: Fotogramas por segundo. `INT`.
 
-**Metronomo**
-- `bpm`: Beats por minuto.
-- `compass_tempo`: `[int, int]`
-- `beats`: Cantidad de tempos. `int`. Basado en `compass_tempo`.
-- `beat`: Duración en bpm
-- `beat_in_fps`: BPM a FPS.
-- `current_beat`: Beat actual. `int`
-- `count_fps`: Contador de fps.
+### Metronomo
+**BPM y cantidad de latidos**
+- `bpm`: beats por minuto
+- `beats_per_compas`: cantidad de latidos que equivalen a un compass. Se cuenta desde cero.
+- `current_beat`: tempo actual
 
-**Metronomo boleanos**
-- `change_beat`: Determinar que se acabo un beat
-- `change_compass`: Se acabo un compass
-- `init_beat`: Inicio algun beat.
-- `first_beat`: Inicio el primer beat
-- `last_beat`: Inicio ultimo beat
+**En segundos reales**
+- `beat_in_seconds`: bpm a segundos.
+- `compas_in_seconds`: equivalencia en segundos del compass.
+
+**FPS**
+- `beat_in_fps`: equivalencie de latido en fps
+- `compas_in_fps`: equivalencia del compass en fps
+- `count_fps`: contador de fps
+
+**Boleanos para determinar posición tempo actual**
+- `change_beat`: Cambiar de tempo.
+- `change_compas`: Empezar de nuevo.
+- `is_first_beat`: Esta en el primer frame del beat.
+- `is_last_beat`: Esta en el ultimo frame del seundo beat.
+- `is_another_beat`: Esta en el primer frame de cualquier beat que no sea ni el ultimo ni el primero.
 
 **Pistas**
 - `dict_track`: Diccionario de pistas, cada key es tiene un sonido y sus atributos. Con un `len()`, se obtendra la cantidad de pistas.
