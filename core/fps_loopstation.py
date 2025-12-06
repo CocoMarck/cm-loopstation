@@ -1,6 +1,10 @@
 from kivy.core.audio import SoundLoader # Para sound
+from core.microphone_recorder import MicrophoneRecorder
+
+from config.paths import TEMP_DIR
 
 BPM_IN_SECONDS = int(60)
+AUDIO_NAME_PREFIX = "track-"
 
 class FPSLoopstation():
     def __init__(self):
@@ -60,6 +64,9 @@ class FPSLoopstation():
         self.dict_track = {}
         self.sample_limit = 3
         self.track_limit = 3
+
+        # Grabador
+        self.microphone_recorder = MicrophoneRecorder()
 
 
     def update_beat_duration(self):
