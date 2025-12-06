@@ -19,14 +19,14 @@ TEMPO_FILES = DICT_TEMPO_DIR["file"]
 from core.fps_loopstation import FPSLoopstation
 
 
-FPS = 20
+FPS = 60
 FRAME_TIME = 1.0 / FPS
 
 loopstation = FPSLoopstation()
 loopstation.fps = FPS
 loopstation.update_metronome_settings()
-loopstation.save_track( 0, path=str(SAMPLE_FILES[0]), sample=True )
-loopstation.save_track( 1, path=str(SAMPLE_FILES[3]), sample=True )
+loopstation.save_track( 0, path=SAMPLE_FILES[0], sample=True )
+loopstation.save_track( 1, path=SAMPLE_FILES[3], sample=True )
 
 def update(dt):
     # Logica

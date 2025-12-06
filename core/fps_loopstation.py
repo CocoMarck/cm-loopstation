@@ -124,7 +124,8 @@ class FPSLoopstation():
         '''
         Obtener sound por path
         '''
-        return SoundLoader.load( path )
+        # SondLoader, pide un string como ruta.
+        return SoundLoader.load( str(path) )
 
 
     def play_sound(self, sound):
@@ -188,6 +189,47 @@ class FPSLoopstation():
 
 
 
+    def playback_track(self):
+        '''
+        Reproduce las pistas, de manera sincronizada, y con comases determinados, por la duración en segundos del sonido.
+        Depende de `determine_current_beat`
+
+        Se enviara una señalillas de las pistas iniciado o parando. Se enviara su id.
+        '''
+        ids_track_playing = []
+        ids_track_stopping = []
+        for track_id in self.dict_track.keys():
+            track = self.dict_track[track_id]
+            if track['loop']:
+                playing = self.is_sound_playing( track['sound'] )
+                if self.is_first_beat and not playing:
+                    self.play_sound( track['sound'] )
+
+                playing_limit = track['count_fps'] >= track['length_in_fps']-1
+                if playing_limit:
+                    self.stop_sound( track['sound'] )
+                    ids_track_stopping.append(track_id)
+
+                playing = self.is_sound_playing( track['sound'] )
+                if playing:
+                    track['count_fps'] += 1
+                    if self.is_first_beat:
+                        ids_track_playing.append(track_id)
+                else:
+                    track['count_fps'] = 0
+
+        return {
+            'starting': ids_track_playing,
+            'stopping': ids_track_stopping
+        }
+
+
+
+    def debug_playback_track(self, dict_track_id_playing_signal={}):
+        for signal in dict_track_id_playing_signal.keys():
+            for track_id in dict_track_id_playing_signal[signal]:
+                print( f"--{signal}: `{self.dict_track[track_id]['source']}`--" )
+
 
 
     def looping(self):
@@ -197,28 +239,22 @@ class FPSLoopstation():
         # Determinar tempo actual
         self.determine_current_beat()
 
-        # Track
-        for track_id in self.dict_track.keys():
-            track = self.dict_track[track_id]
-            if track['loop']:
-                playing = self.is_sound_playing( track['sound'] )
-                if self.is_first_beat:
-                    if not playing:
-                        self.play_sound( track['sound'] )
 
-                if track['count_fps'] >= track['length_in_fps']-1:
-                    self.stop_sound( track['sound'] )
+        # Grabación
+        #...
 
-                playing = self.is_sound_playing( track['sound'] )
-                if playing:
-                    track['count_fps'] += 1
-                else:
-                    track['count_fps'] = 0
+
+        # Reproduccion de Tracks
+        dict_track_id_playing_signal = self.playback_track()
 
 
         # Contar fotogramas por segundo.
         self.count_fps_of_beat += 1
-        self.count_fps += 1
+        #self.count_fps += 1 # Aun no se necesita.
 
         # Debug
+        self.debug_playback_track(
+            dict_track_id_playing_signal=dict_track_id_playing_signal
+        )
         self.debug_metronome()
+
