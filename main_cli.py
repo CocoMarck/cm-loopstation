@@ -12,9 +12,15 @@ FRAME_TIME = 1.0 / FPS
 
 loopstation = FPSLoopstation()
 loopstation.fps = FPS
+loopstation.volume = 0.1
 loopstation.update_metronome_settings()
-loopstation.save_track( 0, path=SAMPLE_FILES[0], sample=True )
-loopstation.save_track( 1, path=SAMPLE_FILES[3], sample=True )
+loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+#loopstation.save_track( path=SAMPLE_FILES[2], sample=True )
+#loopstation.save_track( path=SAMPLE_FILES[3], sample=True )
+#loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+loopstation.recording = True
+loopstation.recorder_limit_in_bars = 1
 
 def update(dt):
     # Logica
