@@ -64,10 +64,10 @@ class FPSLoopstation():
         self.volume = self.__DEFAULT_VOLUME
         self.dict_track = {}
         self.count_saved_track = 0
-        self.count_audio = 0
-        self.audio_limit = 3
-        self.count_audio_sample = 0
-        self.audio_sample_limit = 3
+        self.count_temp_sound = 0
+        self.temp_sound_limit = 3
+        self.count_sample_sound = 0
+        self.sample_sound_limit = 3
 
         # Grabador
         self.microphone_recorder = MicrophoneRecorder()
@@ -76,6 +76,13 @@ class FPSLoopstation():
         self.recorder_limit_in_seconds = 0
         self.recorder_limit_in_fps = 0
         self.recorder_count_fps = 0
+
+        # Timer
+        self.timer_in_seconds = 0
+        self.timer_limit_in_seconds = 180
+        self.timer_in_fps = 0
+        self.timer_count_fps = 0
+        self.update_timer_duration()
 
 
     def update_beat_duration(self):
@@ -168,11 +175,11 @@ class FPSLoopstation():
         return seconds/self.bar_in_seconds
 
 
-    def audio_sample_limit_reached(self):
-        return self.count_audio_sample >= self.audio_sample_limit
+    def sample_sound_limit_reached(self):
+        return self.count_sample_sound >= self.sample_sound_limit
 
-    def audio_limit_reached(self):
-        return self.count_audio >= self.audio_limit
+    def temp_sound_limit_reached(self):
+        return self.count_temp_sound >= self.temp_sound_limit
 
     def get_focused_track_id(self):
         track_id = None
@@ -210,11 +217,11 @@ class FPSLoopstation():
         if track_id == None:
             track_id = self.count_saved_track
 
-        count = self.count_audio
-        limit = self.audio_limit
+        count = self.count_temp_sound
+        limit = self.temp_sound_limit
         if sample:
-            count = self.count_audio_sample
-            limit = self.audio_sample_limit
+            count = self.count_sample_sound
+            limit = self.sample_sound_limit
         insert_track = not( count > limit )
 
         # Guardando
@@ -243,9 +250,9 @@ class FPSLoopstation():
             # Contar cantidad de tracks, cantidad de samples y no samples
             self.count_saved_track += 1
             if sample:
-                self.count_audio_sample += 1
+                self.count_sample_sound += 1
             else:
-                self.count_audio += 1
+                self.count_temp_sound += 1
 
         # Retornar estados de interes.
         return {
@@ -318,18 +325,21 @@ class FPSLoopstation():
     def is_the_recorder_limit_activated(self):
         return self.recorder_limit_in_bars > 0
 
-    def track_recording(self):
+    def track_recording(self, dict_timer_signal):
         dict_recorder_signal = {
             "start_recording": False,
             "stop_recording": False,
             "sound_name": None,
             "count_fps": 0
         }
-        if not self.some_track_is_in_focus() and self.audio_limit_reached():
+        if not self.some_track_is_in_focus() and self.temp_sound_limit_reached():
             # No se grabara, porque se alcanzo limite de audios. Y no hay focus en alguna pista.
             self.recording = False
 
-        if self.recording and self.is_first_beat and self.microphone_recorder.state == "stop":
+        if (
+            self.recording and self.is_first_beat and self.microphone_recorder.state == "stop" and
+            dict_timer_signal['completed']
+        ):
             # Empezar a grabar al inicio del compas
             # Indicar el limite actual.
             self.microphone_recorder.record()
@@ -393,6 +403,53 @@ class FPSLoopstation():
 
 
 
+    def update_timer_duration(self):
+        if self.timer_in_seconds > self.timer_limit_in_seconds:
+            self.timer_in_seconds = self.timer_limit_in_seconds
+        elif self.timer_in_seconds < 0:
+            self.timer_in_seconds = 0
+        self.timer_in_fps = self.timer_in_seconds*self.fps
+
+    def timer(self):
+        dict_timer_signal = {
+            "completed": True,
+            "count_fps": self.timer_count_fps
+        }
+        if self.recording:
+            dict_timer_signal['completed'] = self.timer_count_fps >= self.timer_in_fps
+            if not dict_timer_signal['completed']:
+                self.timer_count_fps += 1
+        else:
+            self.timer_count_fps = 0
+        return dict_timer_signal
+
+    def debug_timer(self, dict_timer_signal):
+        text = None
+        if not dict_timer_signal['completed'] and dict_timer_signal["count_fps"] == 0:
+            text = "**starting-timer: "
+        elif dict_timer_signal['completed'] and dict_timer_signal["count_fps"] > 0:
+            text = "**stopping-timer: "
+        if text != None:
+            text += (
+             f"count {dict_timer_signal['count_fps']} | limit {self.timer_in_fps}**"
+            )
+            print(text)
+
+
+
+
+    def update_all_data(self):
+        '''
+        Actualizar todos los datos necesarios para el looping
+        '''
+        self.update_metronome_settings()
+        self.update_timer_duration()
+        self.update_recorder_limit()
+
+
+
+
+
     def looping(self):
         '''
         La chamba principal
@@ -402,10 +459,9 @@ class FPSLoopstation():
 
 
         # Grabación
-        dict_recorder_signal = self.track_recording()
-
-
-        # Configuración de track
+        # timer y recorder
+        dict_timer_signal = self.timer()
+        dict_recorder_signal = self.track_recording( dict_timer_signal=dict_timer_signal )
 
 
         # Reproduccion de Tracks
@@ -418,7 +474,14 @@ class FPSLoopstation():
 
 
         # Debug
+        self.debug_timer( dict_timer_signal=dict_timer_signal )
         self.debug_track_recording( dict_recorder_signal=dict_recorder_signal )
         self.debug_playback_track( dict_track_id_playing_signal=dict_track_id_playing_signal )
         self.debug_metronome()
+
+        return {
+            "timer_signal": dict_timer_signal,
+            "recorder_signal": dict_recorder_signal,
+            "track_id_playing_signal": dict_track_id_playing_signal
+        }
 
