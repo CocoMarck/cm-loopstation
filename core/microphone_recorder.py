@@ -3,6 +3,7 @@ import wave
 import threading
 import time
 import os
+from controller.logging_controller import LoggingController
 
 class MicrophoneRecorder():
     def __init__(self, output_filename:str="record-audio.wav", record_seconds=0, channels=1, rate=44100):
@@ -27,12 +28,14 @@ class MicrophoneRecorder():
         self.state = self.__states[0]
 
         # degug
-        self.verbose = True
+        self.logging = self.logging = LoggingController(
+            name="MicrophoneRecorder", filename="microphone_recorder", verbose=True,
+            log_level="warning", save_log=True, only_the_value=True
+        )
 
 
     def debug(self, level:str, message:str):
-        if self.verbose:
-            print( f"{level.upper()}: {message.lower()}" )
+        self.logging.log( message=message.lower(), log_type=level )
 
 
     def __save(self):
@@ -42,7 +45,7 @@ class MicrophoneRecorder():
         if not self.frames:
             self.debug("warning", "No hay datos grabados para guardar")
 
-        wf = wave.open(self.WAVE_OUTPUT_FILENAME, 'wb')
+        wf = wave.open(str(self.WAVE_OUTPUT_FILENAME), 'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
         wf.setframerate(self.RATE)
