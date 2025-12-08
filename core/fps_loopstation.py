@@ -1,5 +1,6 @@
 from kivy.core.audio import SoundLoader # Para sound
 from core.microphone_recorder import MicrophoneRecorder
+from controller.logging_controller import LoggingController
 
 from config.paths import TEMP_DIR
 
@@ -71,6 +72,10 @@ class FPSLoopstation():
 
         # Grabador
         self.microphone_recorder = MicrophoneRecorder()
+        self.microphone_recorder.logging.verbose = True
+        self.microphone_recorder.logging.log_level = "info"
+        self.microphone_recorder.logging.save_log = False
+        self.microphone_recorder.logging.set_config()
         self.recording = False
         self.recorder_limit_in_bars = 0
         self.recorder_limit_in_seconds = 0
@@ -83,6 +88,12 @@ class FPSLoopstation():
         self.timer_in_fps = 0
         self.timer_count_fps = 0
         self.update_timer_duration()
+
+        # Debug
+        self.logging = LoggingController(
+            name="FPSLoopstation", filename="fps_loopstation", verbose=True,
+            log_level="info", save_log=False, only_the_value=True,
+        )
 
 
     def update_beat_duration(self):
@@ -133,12 +144,16 @@ class FPSLoopstation():
 
 
     def debug_metronome(self):
+        text = None
         if self.is_first_beat:
-            print( f"first-beat     {self.current_beat}" )
+            text = f"first-beat     {self.current_beat}"
         elif self.is_last_beat:
-            print( f"last-beat      {self.current_beat}" )
+            text = f"last-beat      {self.current_beat}"
         elif self.is_another_beat:
-            print( f"another-beat   {self.current_beat}" )
+            text = f"another-beat   {self.current_beat}"
+        if text != None:
+            self.logging.log( message=text, log_type="info" )
+
 
 
 
@@ -310,10 +325,11 @@ class FPSLoopstation():
         for signal in dict_track_id_playing_signal.keys():
             for track_id, count_fps in dict_track_id_playing_signal[signal]:
                 track = self.dict_track[track_id]
-                print(
-                 f"--{signal}: {track_id} | sample {track['sample']} | `{track['source']}`--\n"
-                 f"--length_in_fps: {count_fps}/{track['length_in_fps']}`--"
+                text = (
+                 f"{signal}: {track_id} | sample {track['sample']} | `{track['source']}` | "
+                 f"| length_in_fps: {count_fps}/{track['length_in_fps']}`"
                 )
+                self.logging.log( message=text, log_type="debug" )
 
 
 
@@ -365,7 +381,7 @@ class FPSLoopstation():
                 number_of_track = self.count_saved_track
             sound_name = f"{AUDIO_NAME_PREFIX}{number_of_track}.wav"
             self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
-                str( TEMP_DIR.joinpath( sound_name ) )
+                TEMP_DIR.joinpath( sound_name )
             )
             self.microphone_recorder.stop()
             dict_save_track = self.save_track(
@@ -398,7 +414,7 @@ class FPSLoopstation():
                 info = f"{text_frames} | {dict_recorder_signal['sound_name']}"
             else:
                 info = text_frames
-            print( f"++{text} | {info}++" )
+            self.logging.log( message=f"{text} | {info}" , log_type="info" )
 
 
 
@@ -426,14 +442,17 @@ class FPSLoopstation():
     def debug_timer(self, dict_timer_signal):
         text = None
         if not dict_timer_signal['completed'] and dict_timer_signal["count_fps"] == 0:
-            text = "**starting-timer: "
-        elif dict_timer_signal['completed'] and dict_timer_signal["count_fps"] > 0:
-            text = "**stopping-timer: "
+            text = "starting-timer | "
+        elif (
+            dict_timer_signal['completed'] and (dict_timer_signal["count_fps"] > 0) and
+            self.recorder_count_fps == 1
+        ):
+            text = "stopping-timer | "
         if text != None:
             text += (
-             f"count {dict_timer_signal['count_fps']} | limit {self.timer_in_fps}**"
+             f"frames {dict_timer_signal['count_fps']}/{self.timer_in_fps}"
             )
-            print(text)
+            self.logging.log( message=text, log_type="info" )
 
 
 
