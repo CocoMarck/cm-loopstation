@@ -65,7 +65,7 @@ class LoopstationCircle(Widget):
         Necesario para actualizar graficos, se usa en automatico.
         '''
         self.ellipse.pos = self.pos
-        self.ellipse.size = self.size
+        self.ellipse.size = ( min(self.size), min(self.size) )
 
 
 # Ventana, el loop del porgrama

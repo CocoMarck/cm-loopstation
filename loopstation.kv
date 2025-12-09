@@ -1,5 +1,12 @@
 #:kivy 2.3.1
 
+#:import Window kivy.core.window.Window
+<Label>:
+    font_size: min(Window.width, Window.height) * 0.03
+<TextInput>:
+    font_size: min(Window.width, Window.height) * 0.03
+
+
 <LoopstationWindow>:
     record_button: record
     label_timer: timer_text

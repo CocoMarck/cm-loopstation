@@ -503,7 +503,7 @@ class FPSLoopstation():
         if (
             self.microphone_recorder.state == "record" and
             self.is_the_recorder_limit_activated() and self.limit_recording and
-            self.recorder_count_fps >= self.recorder_limit_in_fps
+            self.recorder_count_fps >= self.recorder_limit_in_fps+1
         ):
             # Mandar señal para detener la grabación, en limite establecido.
             self.recording = False
