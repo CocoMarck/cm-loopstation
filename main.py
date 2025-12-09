@@ -1,3 +1,4 @@
+from functools import partial
 from core.text_util import ignore_text_filter, PREFIX_NUMBER
 from config.paths import (
     TEMP_DIR, AUDIO_DIR, TEMPO_DIR, SAMPLE_DIR, DICT_SAMPLE_DIR, SAMPLE_FILES, DICT_TEMPO_DIR, TEMPO_FILES
@@ -12,19 +13,6 @@ from core.microphone_recorder import MicrophoneRecorder
 VOLUME = float(0.1)
 FPS = float(20)
 BPM_TO_SECONDS = int(60)
-
-
-## Sonido
-from kivy.core.audio import SoundLoader
-SOUNDS = []
-
-SAMPLE_SOUNDS = []
-for audio in SAMPLE_FILES:
-    SAMPLE_SOUNDS.append( SoundLoader.load( str(audio) ) )
-SOUNDS.extend(SAMPLE_SOUNDS)
-
-for sound in SOUNDS:
-    sound.volume = VOLUME
 
 
 ## Colores
@@ -234,6 +222,8 @@ class LoopstationWindow(Widget):
         self.fps_loopstation.beats_limit_per_bar = 7
         self.fps_loopstation.timer_limit_in_seconds = 20
         self.fps_loopstation.limit_recording = True
+        self.fps_loopstation.sample_sound_limit = 3
+        self.fps_loopstation.temp_sound_limit = 3
         self.fps_loopstation.update_all_data()
 
         self.update_metronome_circles()
@@ -257,6 +247,29 @@ class LoopstationWindow(Widget):
 
 
 
+    def on_track_play(self, track_id, widget):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['loop'] = (widget.state == "down")
+        if not track['loop']:
+            self.fps_loopstation.stop_sound( track['sound'] )
+
+
+    def on_track_mute(self, track_id, widget):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['mute'] = (widget.state == "down")
+
+
+    def on_track_volume(self, track_id, widget, value):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['volume'] = value
+
+
+    def on_track_focus(self, track_id, widget, active):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['focus'] = active
+
+
+
     def set_widget_track_options(self):
         '''
         Establecer widgets
@@ -274,8 +287,11 @@ class LoopstationWindow(Widget):
             if track['loop']:
                 state, text = "down", "play"
             else:
-                state, text= "normal", "stop"
+                state, text = "normal", "stop"
             togglebutton_play = ToggleButton( text=text, state=state )
+            togglebutton_play.bind(
+                on_press=partial(self.on_track_play, track_id)
+            )
             self.grid_tracks.add_widget( togglebutton_play )
 
             if track['mute']:
@@ -283,15 +299,18 @@ class LoopstationWindow(Widget):
             else:
                 state = "normal"
             togglebutton_mute = ToggleButton( text="mute", state=state )
+            togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
             self.grid_tracks.add_widget( togglebutton_mute )
 
             slider_volume = Slider(
                 min=0, max=100, value=int(track['volume']*100), orientation='horizontal'
             )
+            slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
             self.grid_tracks.add_widget( slider_volume )
 
             checkbox = CheckBox( group="focus" )
             checkbox.active = track['focus']
+            checkbox.bind( active=partial(self.on_track_focus, track_id) )
             self.grid_tracks.add_widget(checkbox)
 
 
