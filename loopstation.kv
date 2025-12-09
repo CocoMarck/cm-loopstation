@@ -4,7 +4,9 @@
     record_button: record
     label_timer: timer_text
     label_tracks: tracks_text
+    label_tracks_number: tracks_number
     label_compass_to_record: compass_to_record
+    label_center: center_label
 
     label_bpm: text_bpm
     textinput_bpm: input_bpm
@@ -82,9 +84,14 @@
             orientation: "horizontal"
 
         ## tracks
-        Label:
-            id: tracks_text
-            text: "tracks 0"
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: tracks_text
+                text: "tracks"
+            Label:
+                id: tracks_number
+                text: "0"
 
 
 
@@ -148,3 +155,14 @@
         GridLayout:
             id: track_container
             cols: 6
+
+
+
+
+    # Timer
+    FloatLayout:
+        Label:
+            id: center_label
+            center_x: root.center_x
+            center_y: root.center_y
+            opacity: 1

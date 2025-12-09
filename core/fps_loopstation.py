@@ -116,7 +116,7 @@ class FPSLoopstation():
             "emphasis_on_first_and_last": 3,
         }
         self.beat_play_mode = 0
-        self.set_play_mode_beat( 'nuetral' )
+        self.set_play_mode_beat( 'neutral' )
         self.beat_sounds = []
         self.update_beat_sounds()
 
@@ -398,7 +398,6 @@ class FPSLoopstation():
         }
 
 
-
     def debug_playback_track(self, dict_track_id_playing_signal={}):
         for signal in dict_track_id_playing_signal.keys():
             for track_id, count_fps in dict_track_id_playing_signal[signal]:
@@ -408,6 +407,38 @@ class FPSLoopstation():
                  f"length_in_fps: {count_fps}/{track['length_in_fps']}`"
                 )
                 self.logging.log( message=text, log_type="debug" )
+
+
+    def play_track_loop(self, track_id):
+        self.dict_track[track_id]["loop"] = True
+
+    def stop_track_loop(self, track_id):
+        self.dict_track[track_id]["loop"] = False
+
+    def break_track_loop(self, track_id):
+        self.stop_track_loop( track_id=track_id )
+        self.stop_sound( self.dict_track[track_id]["sound"] )
+
+    def reset_track_loop(self, track_id):
+        self.break_track_loop( track_id )
+        self.play_track_loop( track_id )
+
+
+    def play_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.play_track_loop( track_id )
+
+    def stop_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.stop_track_loop( track_id )
+
+    def break_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.break_track_loop( track_id )
+
+    def reset_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.reset_track_loop( track_id )
 
 
     def update_track_bars(self, track_id):

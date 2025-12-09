@@ -78,8 +78,10 @@ class LoopstationWindow(Widget):
 
     label_timer = ObjectProperty(None)
     label_tracks = ObjectProperty(None)
+    label_tracks_number = ObjectProperty(None)
     label_compass_to_record = ObjectProperty(None)
     label_bpm = ObjectProperty(None)
+    label_center = ObjectProperty(None)
 
 
     grid_tracks = ObjectProperty(None)
@@ -141,6 +143,9 @@ class LoopstationWindow(Widget):
             state = "down"
         self.togglebutton_automatic_stop.state = state
 
+    def set_label_tracks_number(self):
+        self.label_tracks_number.text = str( self.fps_loopstation.count_saved_track )
+
 
 
 
@@ -159,6 +164,8 @@ class LoopstationWindow(Widget):
         else:
             number = int(text)
         return number
+
+
 
 
     def on_bpm(self, obj, text):
@@ -211,6 +218,85 @@ class LoopstationWindow(Widget):
 
 
 
+    def on_track_loop(self, track_id, widget):
+        if widget.state == "down":
+            self.fps_loopstation.play_track_loop( track_id=track_id )
+        else:
+            self.fps_loopstation.break_track_loop( track_id=track_id )
+
+    def on_track_mute(self, track_id, widget):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['mute'] = (widget.state == "down")
+
+    def on_track_volume(self, track_id, widget, value):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['volume'] = value
+
+    def on_track_focus(self, track_id, widget, active):
+        track = self.fps_loopstation.dict_track[track_id]
+        track['focus'] = active
+
+
+    def set_widget_track_options(self):
+        '''
+        Establecer widgets
+        '''
+        self.grid_tracks.clear_widgets()
+        for track_id in self.fps_loopstation.dict_track.keys():
+            track = self.fps_loopstation.dict_track[track_id]
+
+            label_name = Label( text=str(track_id) )
+            self.grid_tracks.add_widget(label_name)
+
+            label_bars = Label( text=f"compass: {round(track['bars'])}" )
+            self.grid_tracks.add_widget( label_bars )
+
+            if track['loop']:
+                state = "down"
+            else:
+                state = "normal"
+            togglebutton_loop = ToggleButton( text="loop", state=state )
+            togglebutton_loop.bind(
+                on_press=partial(self.on_track_loop, track_id)
+            )
+            self.grid_tracks.add_widget( togglebutton_loop )
+
+            if track['mute']:
+                state = "down"
+            else:
+                state = "normal"
+            togglebutton_mute = ToggleButton( text="mute", state=state )
+            togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
+            self.grid_tracks.add_widget( togglebutton_mute )
+
+            slider_volume = Slider(
+                min=0, max=100, value=int(track['volume']*100), orientation='horizontal'
+            )
+            slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
+            self.grid_tracks.add_widget( slider_volume )
+
+            checkbox = CheckBox( group="focus" )
+            checkbox.active = track['focus']
+            checkbox.bind( active=partial(self.on_track_focus, track_id) )
+            self.grid_tracks.add_widget(checkbox)
+
+
+
+
+    def on_play_loop_of_all_tracks(self, widget, state):
+        self.fps_loopstation.play_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+    def on_break_loop_of_all_tracks(self, widget, state):
+        self.fps_loopstation.break_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+    def on_reset_loop_of_all_tracks(self, widget, state):
+        self.fps_loopstation.reset_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+
+
 
     def init_the_essential(self):
         self.fps_loopstation.fps = FPS
@@ -235,6 +321,7 @@ class LoopstationWindow(Widget):
         self.set_textinput_beats()
         self.set_togglebutton_play_beat()
         self.set_togglebutton_automatic_stop()
+        self.set_label_tracks_number()
 
         # Bind
         self.togglebutton_play_beat.bind( state=self.on_play_beat )
@@ -244,74 +331,9 @@ class LoopstationWindow(Widget):
         self.textinput_compass_to_stop.bind( text=self.on_compass_to_stop )
         self.togglebutton_automatic_stop.bind( state=self.on_automatic_stop )
         self.record_button.bind( state=self.on_record )
-
-
-
-    def on_track_play(self, track_id, widget):
-        track = self.fps_loopstation.dict_track[track_id]
-        track['loop'] = (widget.state == "down")
-        if not track['loop']:
-            self.fps_loopstation.stop_sound( track['sound'] )
-
-
-    def on_track_mute(self, track_id, widget):
-        track = self.fps_loopstation.dict_track[track_id]
-        track['mute'] = (widget.state == "down")
-
-
-    def on_track_volume(self, track_id, widget, value):
-        track = self.fps_loopstation.dict_track[track_id]
-        track['volume'] = value
-
-
-    def on_track_focus(self, track_id, widget, active):
-        track = self.fps_loopstation.dict_track[track_id]
-        track['focus'] = active
-
-
-
-    def set_widget_track_options(self):
-        '''
-        Establecer widgets
-        '''
-        self.grid_tracks.clear_widgets()
-        for track_id in self.fps_loopstation.dict_track.keys():
-            track = self.fps_loopstation.dict_track[track_id]
-
-            label_name = Label( text=str(track_id) )
-            self.grid_tracks.add_widget(label_name)
-
-            label_bars = Label( text=f"compass: {round(track['bars'])}" )
-            self.grid_tracks.add_widget( label_bars )
-
-            if track['loop']:
-                state, text = "down", "play"
-            else:
-                state, text = "normal", "stop"
-            togglebutton_play = ToggleButton( text=text, state=state )
-            togglebutton_play.bind(
-                on_press=partial(self.on_track_play, track_id)
-            )
-            self.grid_tracks.add_widget( togglebutton_play )
-
-            if track['mute']:
-                state = "down"
-            else:
-                state = "normal"
-            togglebutton_mute = ToggleButton( text="mute", state=state )
-            togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
-            self.grid_tracks.add_widget( togglebutton_mute )
-
-            slider_volume = Slider(
-                min=0, max=100, value=int(track['volume']*100), orientation='horizontal'
-            )
-            slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
-            self.grid_tracks.add_widget( slider_volume )
-
-            checkbox = CheckBox( group="focus" )
-            checkbox.active = track['focus']
-            checkbox.bind( active=partial(self.on_track_focus, track_id) )
-            self.grid_tracks.add_widget(checkbox)
+        self.button_play.bind( state=self.on_play_loop_of_all_tracks )
+        self.button_stop.bind( state=self.on_break_loop_of_all_tracks )
+        self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
 
 
 
@@ -327,6 +349,22 @@ class LoopstationWindow(Widget):
         if signals['recorder_signal']['stop_recording']:
             self.record_button.state = "normal"
             self.set_widget_track_options()
+            self.set_label_tracks_number()
+
+        # Visual timer de grabación
+        if (
+            (not signals['timer_signal']['completed']) and
+            signals['timer_signal']['count_fps'] > 0
+        ):
+            self.label_center.text = str(
+                round(
+                    (self.fps_loopstation.timer_in_fps -signals['timer_signal']['count_fps']) /
+                    self.fps_loopstation.fps
+                )
+            )
+        else:
+            self.label_center.text = ""
+
 
         # Metronomo | Visual
         for i in range( 0, len(self.circles) ):
@@ -337,6 +375,8 @@ class LoopstationWindow(Widget):
             self.circles[self.fps_loopstation.current_beat].color.rgb = RGB_FIRST_TEMPO
         elif self.fps_loopstation.first_frame_of_beat:
             self.circles[self.fps_loopstation.current_beat].color.rgb = RGB_ANOTHER_TEMPO
+
+
 
 
 '''
