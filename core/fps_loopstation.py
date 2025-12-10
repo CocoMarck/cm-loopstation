@@ -2,10 +2,17 @@ from kivy.core.audio import SoundLoader # Para sound
 from core.microphone_recorder import MicrophoneRecorder
 from controller.logging_controller import LoggingController
 
-from config.paths import TEMP_DIR
+from config.paths import TEMP_DIR, TEMPO_FILES
 
 BPM_IN_SECONDS = int(60)
 AUDIO_NAME_PREFIX = "track-"
+
+# Sonidos
+TEMPO_SOUNDS = []
+for path in TEMPO_FILES:
+    TEMPO_SOUNDS.append( SoundLoader.load( str(path) ) )
+
+
 
 class FPSLoopstation():
     def __init__(self):
@@ -36,8 +43,11 @@ class FPSLoopstation():
         self.fps = 20
 
         # BPM y cantidad de latisdos
-        self.bpm = 120
+        self.__DEFAULT_BPM = 120
+        self.bpm = self.__DEFAULT_BPM
+        self.bpm_limit = 0
         self.beats_per_bar = 3
+        self.beats_limit_per_bar = 0
         self.current_beat = 0
 
         # En segundos reales
@@ -53,6 +63,7 @@ class FPSLoopstation():
         # Boleanos para determinar posición tempo actual
         self.change_beat = False
         self.reset_bar = False
+        self.first_frame_of_beat = False
         self.is_first_beat = True
         self.is_last_beat = False
         self.is_another_beat = False
@@ -77,6 +88,7 @@ class FPSLoopstation():
         self.microphone_recorder.logging.save_log = False
         self.microphone_recorder.logging.set_config()
         self.recording = False
+        self.limit_recording = False
         self.recorder_limit_in_bars = 0
         self.recorder_limit_in_seconds = 0
         self.recorder_limit_in_fps = 0
@@ -92,8 +104,43 @@ class FPSLoopstation():
         # Debug
         self.logging = LoggingController(
             name="FPSLoopstation", filename="fps_loopstation", verbose=True,
-            log_level="info", save_log=False, only_the_value=True,
+            log_level="debug", save_log=False, only_the_value=True,
         )
+
+        # Sonido, reproducir metronomo
+        self.play_beat = False
+        self.__DICT_BEAT_PLAY_MODE = {
+            "neutral": 0,
+            "emphasis_on_first": 1,
+            "emphasis_on_last": 2,
+            "emphasis_on_first_and_last": 3,
+        }
+        self.beat_play_mode = 0
+        self.set_play_mode_beat( 'neutral' )
+        self.beat_sounds = []
+        self.update_beat_sounds()
+
+
+
+    def update_bpm(self):
+        '''
+        Actualiza bpm a unos aceptables, no crash.
+        '''
+        if self.bpm_limit > 0:
+            if self.bpm > self.bpm_limit:
+                self.bpm = self.bpm_limit
+        if self.bpm <= 0:
+            self.bpm = self.__DEFAULT_BPM
+
+    def update_beats_per_bar(self):
+        '''
+        Actualiza beats a unos aceptables, no crash.
+        '''
+        if self.beats_limit_per_bar > 0:
+            if self.beats_per_bar > self.beats_limit_per_bar:
+                self.beats_per_bar = self.beats_limit_per_bar
+        if self.beats_per_bar < 0:
+            self.beats_per_bar = 0
 
 
     def update_beat_duration(self):
@@ -113,6 +160,8 @@ class FPSLoopstation():
     def update_metronome_settings(self):
         '''
         '''
+        self.update_bpm()
+        self.update_beats_per_bar()
         self.update_beat_duration()
         self.update_bar_duration()
 
@@ -155,6 +204,15 @@ class FPSLoopstation():
             self.logging.log( message=text, log_type="info" )
 
 
+    def reset_metronome(self):
+        '''
+        Actualiza detos de metronomo y se reinicia.
+        '''
+        self.update_metronome_settings()
+        self.count_fps_of_beat = 0
+        self.current_beat = 0
+
+
 
 
 
@@ -191,10 +249,10 @@ class FPSLoopstation():
 
 
     def sample_sound_limit_reached(self):
-        return self.count_sample_sound >= self.sample_sound_limit
+        return self.count_sample_sound >= self.sample_sound_limit+1
 
     def temp_sound_limit_reached(self):
-        return self.count_temp_sound >= self.temp_sound_limit
+        return self.count_temp_sound >= self.temp_sound_limit+1
 
     def get_focused_track_id(self):
         track_id = None
@@ -204,8 +262,20 @@ class FPSLoopstation():
                 break
         return track_id
 
+    def some_sample_track_is_in_focus(self):
+        track_id = self.get_focused_track_id()
+        if isinstance(track_id, int ):
+            return self.dict_track[track_id]['sample']
+        else:
+            return False
+
     def some_track_is_in_focus(self):
-        return isinstance( self.get_focused_track_id(), int )
+        track_id = self.get_focused_track_id()
+        if isinstance(track_id, int ):
+            return self.dict_track[track_id]['sample'] == False
+        else:
+            return False
+
 
     def save_track(self, track_id=None, path=str, loop=True, sample=False):
         '''
@@ -232,15 +302,13 @@ class FPSLoopstation():
         if track_id == None:
             track_id = self.count_saved_track
 
-        count = self.count_temp_sound
-        limit = self.temp_sound_limit
         if sample:
-            count = self.count_sample_sound
-            limit = self.sample_sound_limit
-        insert_track = not( count > limit )
+            limit_reached = not( self.sample_sound_limit_reached() )
+        else:
+            limit_reached = not( self.temp_sound_limit_reached() )
 
         # Guardando
-        if insert_track or update_track:
+        if limit_reached or update_track:
             sound = self.get_sound( path )
             self.set_sound_volume( sound, self.volume )
             self.dict_track.update(
@@ -263,20 +331,35 @@ class FPSLoopstation():
             )
 
             # Contar cantidad de tracks, cantidad de samples y no samples
-            self.count_saved_track += 1
-            if sample:
-                self.count_sample_sound += 1
-            else:
-                self.count_temp_sound += 1
+            if update_track == False:
+                self.count_saved_track += 1
+                if sample:
+                    self.count_sample_sound += 1
+                else:
+                    self.count_temp_sound += 1
 
         # Retornar estados de interes.
         return {
-            "update_track": update_track,
-            "insert_track": insert_track,
             "track_id": track_id,
-            "count": count,
-            "limit": limit
+            "update_track": update_track,
+            "limit_reached": limit_reached,
+            "sample": sample
         }
+
+    def debug_save_track(self, signals):
+        log_type = "debug"
+        if signals["update_track"]:
+            message = "update-track"
+        elif signals["limit_reached"]:
+            message = "insert-track"
+        if not( signals["limit_reached"] and signals["update_track"] ):
+            log_type = "warning"
+            message = "limit-reached"
+
+        message += f" | track_id {signals['track_id']} | sample {signals['sample']}"
+        self.logging.log( message=message, log_type=log_type )
+
+
 
 
 
@@ -292,6 +375,13 @@ class FPSLoopstation():
         for track_id in self.dict_track.keys():
             track = self.dict_track[track_id]
             if track['loop']:
+                # Configurar adecuadamente track
+                if track['mute']:
+                    self.mute_sound( track['sound'] )
+                else:
+                    self.set_sound_volume( track['sound'], track['volume'] )
+
+                # Reproducir o parar | Contar fps
                 playing = self.is_sound_playing( track['sound'] )
                 starting = self.is_first_beat and not playing
                 if starting:
@@ -320,16 +410,75 @@ class FPSLoopstation():
         }
 
 
-
     def debug_playback_track(self, dict_track_id_playing_signal={}):
         for signal in dict_track_id_playing_signal.keys():
             for track_id, count_fps in dict_track_id_playing_signal[signal]:
                 track = self.dict_track[track_id]
                 text = (
                  f"{signal}: {track_id} | sample {track['sample']} | `{track['source']}` | "
-                 f"| length_in_fps: {count_fps}/{track['length_in_fps']}`"
+                 f"length_in_fps: {count_fps}/{track['length_in_fps']}`"
                 )
                 self.logging.log( message=text, log_type="debug" )
+
+
+    def play_track_loop(self, track_id):
+        self.dict_track[track_id]["loop"] = True
+
+    def stop_track_loop(self, track_id):
+        self.dict_track[track_id]["loop"] = False
+
+    def break_track_loop(self, track_id):
+        self.stop_track_loop( track_id=track_id )
+        self.stop_sound( self.dict_track[track_id]["sound"] )
+
+    def reset_track_loop(self, track_id):
+        self.break_track_loop( track_id )
+        self.play_track_loop( track_id )
+
+
+    def play_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.play_track_loop( track_id )
+
+    def stop_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.stop_track_loop( track_id )
+
+    def break_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.break_track_loop( track_id )
+
+    def reset_loop_of_all_tracks(self):
+        for track_id in self.dict_track.keys():
+            self.reset_track_loop( track_id )
+
+
+    def update_track_bars(self, track_id):
+        track = self.dict_track[track_id]
+        track["bars"] = self.get_seconds_to_bars( track["length"] )
+        track["length_in_fps"] = track["length"]*self.fps
+
+
+    def update_tracks(self):
+        for track_id in self.dict_track.keys():
+            track = self.dict_track[track_id]
+            self.stop_sound( track["sound"] )
+            track["count_fps"] = 0
+            self.update_track_bars( track_id=track_id )
+
+
+    def reset_tracks(self):
+        for track_id in self.dict_track.keys():
+            track = self.dict_track[track_id]
+            self.stop_sound( track["sound"] )
+            track["loop"] = True
+            track["volume"] = self.volume
+            track["count_fps"] = 0
+            self.update_track_bars( track_id=track_id )
+
+    def get_tracks(self):
+        return self.dict_track.values()
+
 
 
 
@@ -348,12 +497,19 @@ class FPSLoopstation():
             "sound_name": None,
             "count_fps": 0
         }
-        if not self.some_track_is_in_focus() and self.temp_sound_limit_reached():
+        if ( not self.some_track_is_in_focus() ) and ( self.temp_sound_limit_reached() ):
             # No se grabara, porque se alcanzo limite de audios. Y no hay focus en alguna pista.
             self.recording = False
 
+        frame_before_the_bar = (
+            (self.current_beat >= self.beats_per_bar) and
+            (self.count_fps_of_beat >= self.beat_in_fps-1)
+        )
         if (
-            self.recording and self.is_first_beat and self.microphone_recorder.state == "stop" and
+            self.recording and
+            frame_before_the_bar and
+            #self.is_first_beat and <-- Ya no se necesita, pero lo dejo porque si.
+            self.microphone_recorder.state == "stop" and
             dict_timer_signal['completed']
         ):
             # Empezar a grabar al inicio del compas
@@ -365,8 +521,8 @@ class FPSLoopstation():
 
         if (
             self.microphone_recorder.state == "record" and
-            self.is_the_recorder_limit_activated() and
-            self.recorder_count_fps >= self.recorder_limit_in_fps
+            self.is_the_recorder_limit_activated() and self.limit_recording and
+            self.recorder_count_fps >= (self.recorder_limit_in_fps+1)
         ):
             # Mandar señal para detener la grabación, en limite establecido.
             self.recording = False
@@ -384,13 +540,15 @@ class FPSLoopstation():
                 TEMP_DIR.joinpath( sound_name )
             )
             self.microphone_recorder.stop()
-            dict_save_track = self.save_track(
+            dict_save_track_signals = self.save_track(
                 track_id=number_of_track, path=self.microphone_recorder.WAVE_OUTPUT_FILENAME,
                 sample=False, loop=True
             )
+            self.debug_save_track( signals=dict_save_track_signals )
             dict_recorder_signal['stop_recording'] = True
             dict_recorder_signal['sound_name'] = sound_name
             dict_recorder_signal['count_fps'] = self.recorder_count_fps
+
 
         if self.microphone_recorder.state == "record":
             # Contar fps de grabación
@@ -415,6 +573,7 @@ class FPSLoopstation():
             else:
                 info = text_frames
             self.logging.log( message=f"{text} | {info}" , log_type="info" )
+
 
 
 
@@ -457,6 +616,47 @@ class FPSLoopstation():
 
 
 
+    def get_beat_sounds(self):
+        self.beat_sounds.clear()
+        for path in TEMPO_FILES:
+            self.beat_sounds.append( self.get_sound( path=path ) )
+
+    def update_beat_sounds(self):
+        self.get_beat_sounds()
+        for sound in self.beat_sounds:
+            self.set_sound_volume( sound, volume=self.volume )
+
+
+    def play_beat_sound(self, number_of_beat=0):
+        self.play_sound( self.beat_sounds[number_of_beat] )
+
+
+    def set_play_mode_beat(self, mode="neutral"):
+        if mode in self.__DICT_BEAT_PLAY_MODE:
+            self.beat_play_mode = self.__DICT_BEAT_PLAY_MODE[mode]
+        else:
+            self.beat_play_mode = self.__DICT_BEAT_PLAY_MODE["neutral"]
+
+
+    def beat_playback(self):
+        emphasis = False
+        if self.beat_play_mode == self.__DICT_BEAT_PLAY_MODE['neutral']:
+            emphasis = False
+        if self.beat_play_mode == self.__DICT_BEAT_PLAY_MODE['emphasis_on_first']:
+            emphasis = self.is_first_beat
+        elif self.beat_play_mode == self.__DICT_BEAT_PLAY_MODE['emphasis_on_last']:
+            emphasis = self.is_last_beat
+        elif self.beat_play_mode == self.__DICT_BEAT_PLAY_MODE['emphasis_on_first_and_last']:
+            emphasis = self.is_first_beat or self.is_last_beat
+
+        if emphasis:
+            self.play_beat_sound(0)
+        elif self.first_frame_of_beat:
+            self.play_beat_sound(2)
+
+
+
+
     def update_all_data(self):
         '''
         Actualizar todos los datos necesarios para el looping
@@ -464,9 +664,20 @@ class FPSLoopstation():
         self.update_metronome_settings()
         self.update_timer_duration()
         self.update_recorder_limit()
+        self.update_tracks()
+        self.update_beat_sounds()
 
 
 
+
+    def reset_looping(self):
+        self.reset_metronome()
+        self.reset_tracks()
+
+
+    def update_looping(self):
+        self.reset_metronome()
+        self.update_tracks()
 
 
     def looping(self):
@@ -485,6 +696,11 @@ class FPSLoopstation():
 
         # Reproduccion de Tracks
         dict_track_id_playing_signal = self.playback_track()
+
+
+        # Sonido de metronomo
+        if self.play_beat:
+            self.beat_playback()
 
 
         # Contar fotogramas por segundo.
