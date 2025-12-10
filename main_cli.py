@@ -7,7 +7,7 @@ from config.paths import SAMPLE_FILES
 from core.fps_loopstation import FPSLoopstation
 
 
-FPS = 60
+FPS = 20
 FRAME_TIME = 1.0 / FPS
 
 loopstation = FPSLoopstation()
@@ -20,6 +20,7 @@ loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
 #loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
 loopstation.recording = True
 loopstation.recorder_limit_in_bars = 1
+loopstation.limit_recording = True
 loopstation.timer_in_seconds = 10
 loopstation.update_all_data()
 
