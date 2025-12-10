@@ -528,7 +528,7 @@ class FPSLoopstation():
             self.recording = False
 
         if (
-            (self.recording == False and self.is_first_beat) and # Para detenersi si o en final de compas
+            (self.recording == False and frame_before_the_bar) and # Para detener si o si en final de compas
             self.microphone_recorder.state == "record"
         ):
             # Detener, solo si se esta grabando.
