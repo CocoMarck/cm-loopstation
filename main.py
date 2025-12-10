@@ -5,12 +5,12 @@ from config.paths import (
 )
 from core.fps_loopstation import FPSLoopstation
 
+# Samples
+from config.paths import SAMPLE_FILES
 
-# Grabador de microfonillo
-from core.microphone_recorder import MicrophoneRecorder
 
 # Constantes necesarias
-VOLUME = float(0.1)
+VOLUME = float(1)
 FPS = float(20)
 BPM_TO_SECONDS = int(60)
 
@@ -144,7 +144,7 @@ class LoopstationWindow(Widget):
         self.togglebutton_automatic_stop.state = state
 
     def set_label_tracks_number(self):
-        self.label_tracks_number.text = str( self.fps_loopstation.count_saved_track )
+        self.label_tracks_number.text = str( self.fps_loopstation.count_temp_sound )
 
 
 
@@ -193,6 +193,9 @@ class LoopstationWindow(Widget):
             self.fps_loopstation.timer_in_seconds = number
             self.fps_loopstation.update_timer_duration()
             self.set_textinput_timer()
+        if number == 0:
+            self.fps_loopstation.timer_in_seconds = number
+            self.fps_loopstation.update_timer_duration()
 
     def on_compass_to_stop(self, obj, text):
         number = self.filter_text_to_number(text)
@@ -275,10 +278,14 @@ class LoopstationWindow(Widget):
             slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
             self.grid_tracks.add_widget( slider_volume )
 
-            checkbox = CheckBox( group="focus" )
-            checkbox.active = track['focus']
-            checkbox.bind( active=partial(self.on_track_focus, track_id) )
-            self.grid_tracks.add_widget(checkbox)
+            if track['sample']:
+                label = Label( text=str("sample") )
+                self.grid_tracks.add_widget(label)
+            else:
+                checkbox = CheckBox( group="focus" )
+                checkbox.active = track['focus']
+                checkbox.bind( active=partial(self.on_track_focus, track_id) )
+                self.grid_tracks.add_widget(checkbox)
 
 
 
@@ -314,6 +321,10 @@ class LoopstationWindow(Widget):
 
         self.update_metronome_circles()
 
+        # Samples
+        #self.fps_loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+        #self.fps_loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+
         # Establecer primer estado de los widgets
         self.set_textinput_bpm()
         self.set_textinput_timer()
@@ -322,6 +333,7 @@ class LoopstationWindow(Widget):
         self.set_togglebutton_play_beat()
         self.set_togglebutton_automatic_stop()
         self.set_label_tracks_number()
+        self.set_widget_track_options()
 
         # Bind
         self.togglebutton_play_beat.bind( state=self.on_play_beat )

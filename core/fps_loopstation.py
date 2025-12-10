@@ -262,8 +262,20 @@ class FPSLoopstation():
                 break
         return track_id
 
+    def some_sample_track_is_in_focus(self):
+        track_id = self.get_focused_track_id()
+        if isinstance(track_id, int ):
+            return self.dict_track[track_id]['sample']
+        else:
+            return False
+
     def some_track_is_in_focus(self):
-        return isinstance( self.get_focused_track_id(), int )
+        track_id = self.get_focused_track_id()
+        if isinstance(track_id, int ):
+            return self.dict_track[track_id]['sample'] == False
+        else:
+            return False
+
 
     def save_track(self, track_id=None, path=str, loop=True, sample=False):
         '''
@@ -489,8 +501,15 @@ class FPSLoopstation():
             # No se grabara, porque se alcanzo limite de audios. Y no hay focus en alguna pista.
             self.recording = False
 
+        frame_before_the_bar = (
+            (self.current_beat >= self.beats_per_bar) and
+            (self.count_fps_of_beat >= self.beat_in_fps-1)
+        )
         if (
-            self.recording and self.is_first_beat and self.microphone_recorder.state == "stop" and
+            self.recording and
+            frame_before_the_bar and
+            #self.is_first_beat and <-- Ya no se necesita, pero lo dejo porque si.
+            self.microphone_recorder.state == "stop" and
             dict_timer_signal['completed']
         ):
             # Empezar a grabar al inicio del compas
@@ -503,12 +522,15 @@ class FPSLoopstation():
         if (
             self.microphone_recorder.state == "record" and
             self.is_the_recorder_limit_activated() and self.limit_recording and
-            self.recorder_count_fps >= self.recorder_limit_in_fps+1
+            self.recorder_count_fps >= (self.recorder_limit_in_fps)
         ):
             # Mandar señal para detener la grabación, en limite establecido.
             self.recording = False
 
-        if self.recording == False and self.microphone_recorder.state == "record":
+        if (
+            (self.recording == False and self.is_first_beat) and # Para detenersi si o en final de compas
+            self.microphone_recorder.state == "record"
+        ):
             # Detener, solo si se esta grabando.
             # Establecer nombre de archivo. Guardar pista.
             # Remplazar el sonido de la pista que tenga focus.
