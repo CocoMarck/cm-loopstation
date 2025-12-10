@@ -522,12 +522,15 @@ class FPSLoopstation():
         if (
             self.microphone_recorder.state == "record" and
             self.is_the_recorder_limit_activated() and self.limit_recording and
-            self.recorder_count_fps >= (self.recorder_limit_in_fps+1)
+            self.recorder_count_fps >= (self.recorder_limit_in_fps)
         ):
             # Mandar señal para detener la grabación, en limite establecido.
             self.recording = False
 
-        if self.recording == False and self.microphone_recorder.state == "record":
+        if (
+            (self.recording == False and frame_before_the_bar) and # Para detener si o si en final de compas
+            self.microphone_recorder.state == "record"
+        ):
             # Detener, solo si se esta grabando.
             # Establecer nombre de archivo. Guardar pista.
             # Remplazar el sonido de la pista que tenga focus.
