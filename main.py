@@ -398,12 +398,12 @@ Window.size = (960, 540)
 Window.resizable = True
 class LoopstationApp(App):
     def build(self):
-        loopstation = LoopstationWindow()
-        loopstation.init_the_essential()
+        window = LoopstationWindow()
+        window.init_the_essential()
 
-        Clock.schedule_interval(loopstation.update, 1.0/FPS)
+        Clock.schedule_interval(window.update, 1.0/FPS)
 
-        return loopstation
+        return window
 
 if __name__ == '__main__':
     LoopstationApp().run()

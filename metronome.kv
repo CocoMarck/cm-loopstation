@@ -1,0 +1,50 @@
+#:kivy 2.3.1
+
+#:import Window kivy.core.window.Window
+<Label>:
+    font_size: min(Window.width, Window.height) * 0.03
+<TextInput>:
+    font_size: min(Window.width, Window.height) * 0.03
+
+
+<MetronomeWindow>:
+    label_title: text_title
+    label_bpm: text_bpm
+    textinput_bpm: bpm
+    label_beats: text_beats
+    textinput_beats: beats
+    hbox_metronome: metronome
+
+    BoxLayout:
+        width: root.width*1
+        height: root.height*1
+        orientation: "vertical"
+
+        ## Metronomo
+        BoxLayout:
+            id: metronome
+            orientation: "horizontal"
+
+
+        # BPM y beats
+        BoxLayout:
+            orientation: "horizontal"
+            Label:
+                id: text_bpm
+                text: "timer"
+            TextInput:
+                id: bpm
+
+            Label:
+                id: text_beats
+                text: "beats"
+            TextInput:
+                id: beats
+                text: "0"
+
+        # Titulo
+        Label:
+            id: text_title
+            text: "fps metronome"
+
+

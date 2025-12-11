@@ -4,3 +4,5 @@ portaudio19-dev
 pathlib
 
 python3-imageio-ffmpeg
+
+python3-playsound3
