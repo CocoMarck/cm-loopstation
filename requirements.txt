@@ -1,6 +1,4 @@
 python3-kivy
 python3-pyaudio
-portaudio19-dev
 pathlib
-
-python3-imageio-ffmpeg
+logger
