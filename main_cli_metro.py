@@ -4,29 +4,17 @@ import time
 from config.paths import SAMPLE_FILES
 
 
-from core.fps_loopstation import FPSLoopstation
+from core.fps_metronome import FPSMetronome
 
 
 FPS = 20
 FRAME_TIME = 1.0 / FPS
 
-loopstation = FPSLoopstation()
-loopstation.fps = FPS
-loopstation.volume = 0.1
-#loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
-#loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
-#loopstation.save_track( path=SAMPLE_FILES[2], sample=True )
-#loopstation.save_track( path=SAMPLE_FILES[3], sample=True )
-#loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
-loopstation.recording = True
-loopstation.recorder_limit_in_bars = 1
-loopstation.limit_recording = True
-loopstation.timer_in_seconds = 10
-loopstation.update_all_data()
+metronome = FPSMetronome()
 
 def update(dt):
     # Logica
-    loopstation.looping()
+    metronome.update()
 
 def main():
     last_time = time.perf_counter()
