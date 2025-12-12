@@ -299,6 +299,19 @@ class FPSMetronome():
             )
 
 
+    def get_seconds_to_bars( self, seconds=int ):
+        '''
+        Segundos a barras, a cantidad de compases
+        '''
+        return seconds/self.bar_in_seconds
+
+    def get_seconds_to_fps(self, seconds:int ):
+        '''
+        Segundos a fps
+        '''
+        return seconds*self.fps
+
+
 
 
 

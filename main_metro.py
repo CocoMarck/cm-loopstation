@@ -76,7 +76,7 @@ class GoodCircle(Widget):
 
 
 # Ventana, el loop del porgrama
-class MetronomeWindow( BoxLayout ):
+class MetronomeRoot( BoxLayout ):
     '''
     El tempo de preferencia que sea un entero.
     '''
@@ -281,12 +281,10 @@ Constructor de aplicación
 '''
 class MetronomeApp(App):
     def build(self):
-        window = MetronomeWindow()
-        window.init_the_essential()
-
-        Clock.schedule_interval(window.update, 1.0/FPS)
-
-        return window
+        root = MetronomeRoot()
+        root.init_the_essential()
+        Clock.schedule_interval(root.update, 1.0/FPS)
+        return root
 
 if __name__ == '__main__':
     MetronomeApp().run()
