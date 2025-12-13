@@ -185,13 +185,21 @@ class MetronomeRoot( BoxLayout ):
 
     def on_bpm(self, obj, text):
         number = self.filter_text_to_number( text )
+        better_text = None
         if number >= 10:
             self.fps_metronome.bpm = number
             self.fps_metronome.reset_settings()
             self.set_textinput_bpm()
+        else:
+            better_text = str(number)
 
         if number == 0:
-            obj.text = ""
+            better_text = ""
+
+        if not better_text == None:
+            obj.text = better_text
+
+
 
 
 
