@@ -188,11 +188,10 @@ class MetronomeRoot( BoxLayout ):
         if number >= 10:
             self.fps_metronome.bpm = number
             self.fps_metronome.reset_settings()
+            self.set_textinput_bpm()
 
         if number == 0:
             obj.text = ""
-        else:
-            obj.text = str(number)
 
 
 
