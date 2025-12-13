@@ -204,6 +204,12 @@ class MetronomeRoot( BoxLayout ):
             self.update_metronome_circles()
             self.set_textinput_beats()
 
+        else:
+            if number > 0:
+                obj.text = str(number)
+            else:
+                obj.text = ""
+
 
     def on_play_beat(self, obj, state):
         self.fps_metronome.play_beat = state == "down"
