@@ -45,6 +45,196 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 
 
+# Estilo molon
+from kivy.lang import Builder
+kv = '''
+#:kivy 2.3.1
+
+#:import Window kivy.core.window.Window
+<BoxLayout>
+    size_hint_y: None
+    height: dp( min(Window.width, Window.height)*0.1 )
+<ScrollView>
+    size_hint_y: None
+    height: dp( min(Window.width, Window.height)*0.1 )
+
+
+<Label>:
+    font_size: min(Window.width, Window.height) * 0.05
+<TextInput>
+    font_size: min(Window.width, Window.height) * 0.05
+<ToggleButton>:
+    font_size: min(Window.width, Window.height) * 0.05
+
+
+<LoopstationWindow>:
+    record_button: record
+    label_timer: timer_text
+    label_tracks: tracks_text
+    label_tracks_number: tracks_number
+    label_compass_to_record: compass_to_record
+    label_center: center_label
+
+    label_bpm: text_bpm
+    textinput_bpm: input_bpm
+
+
+    grid_tracks: track_container
+
+    button_play: play
+    button_stop: stop
+    button_restart: restart
+
+    togglebutton_automatic_stop: automatic_stop
+    togglebutton_play_beat: option_play_beat
+
+    textinput_compass_to_stop: compass_to_stop
+    textinput_timer: timer_input
+    textinput_beats: beats_input
+
+    metronome_container: metronome_box
+
+    BoxLayout:
+        width: root.width
+        height: root.height*0.5
+        y: root.height*0.5
+
+        orientation: "vertical"
+
+        # Fila 1
+        ## circulos del Metronomo
+        BoxLayout:
+            id: metronome_box
+            orientation: "horizontal"
+
+        # Fila 2
+        BoxLayout:
+            orientation: "horizontal"
+
+            ## timer
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: timer_text
+                    text: "timer"
+                TextInput:
+                    id: timer_input
+
+            ## Beats
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    text: "beats"
+                TextInput:
+                    id: beats_input
+                    text: "0"
+
+            ## BPM
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: text_bpm
+                    text: "bpm"
+                TextInput:
+                    id: input_bpm
+                    text: "0"
+
+        # Fila 3
+        BoxLayout:
+            orientation: "horizontal"
+
+            ## compases a grabar
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: compass_to_record
+                    text: "bars"
+
+                TextInput:
+                    id: compass_to_stop
+                    text: "0"
+
+            ## tracks
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: tracks_text
+                    text: "tracks"
+                Label:
+                    id: tracks_number
+                    text: "0"
+
+        # Fila 4
+        BoxLayout:
+            ## Widgets
+            orientation: "horizontal"
+
+            # Col 1
+            ToggleButton:
+                id: option_play_beat
+                text: "play beat"
+                state: "down"
+
+            ## Grabar
+            ToggleButton:
+                id: record
+                text: "record"
+
+            ## Opcion Parar grabación por numero de compass
+            ToggleButton:
+                id: automatic_stop
+                text: "limit bars"
+
+        BoxLayout:
+            ## Widgets
+            orientation: "horizontal"
+
+            ## Opciones de reproducción de tracks
+            Button:
+                id: play
+                text: 'play'
+
+            Button:
+                id: stop
+                text: 'stop'
+
+            Button:
+                id: restart
+                text: 'restart'
+
+
+    # Segunda mitad de window
+    # Scroll | Contenedor de Pistas
+    ScrollView:
+        width: root.width
+        height: root.height*0.5
+        y: 0
+        do_scroll_x: True
+        do_scroll_y: True
+
+        # CheckBox Tracks
+        GridLayout:
+            id: track_container
+            cols: 6
+
+            size_hint_y: None
+            height: self.minimum_height
+
+            row_default_height: dp( min(Window.width, Window.height) * 0.1 )
+            row_force_default: True
+
+    # Timer
+    FloatLayout:
+        Label:
+            id: center_label
+            center_x: root.center_x
+            center_y: root.center_y
+            opacity: 1
+
+'''
+Builder.load_string(kv)
+
+
 
 
 # Objeto criculos del metronomo
@@ -64,8 +254,14 @@ class LoopstationCircle(Widget):
         '''
         Necesario para actualizar graficos, se usa en automatico.
         '''
-        self.ellipse.pos = self.pos
-        self.ellipse.size = ( min(self.size), min(self.size) )
+        min_size = min(self.size)
+        good_size = [ min_size, min_size ]
+        self.ellipse.size = good_size
+
+        good_pos = [0, 0]
+        good_pos[0] = self.x + (self.width -good_size[0]) / 2
+        good_pos[1] = self.y + (self.height -good_size[1]) / 2
+        self.ellipse.pos = good_pos
 
 
 # Ventana, el loop del porgrama
@@ -251,7 +447,7 @@ class LoopstationWindow(Widget):
             label_name = Label( text=str(track_id) )
             self.grid_tracks.add_widget(label_name)
 
-            label_bars = Label( text=f"compass: {round(track['bars'])}" )
+            label_bars = Label( text=f"bars: {round(track['bars'])}" )
             self.grid_tracks.add_widget( label_bars )
 
             if track['loop']:
@@ -394,8 +590,8 @@ class LoopstationWindow(Widget):
 '''
 Constructor de aplicación
 '''
-Window.size = (960, 540)
-Window.resizable = True
+#Window.size = (960, 540)
+#Window.resizable = True
 class LoopstationApp(App):
     def build(self):
         window = LoopstationWindow()
