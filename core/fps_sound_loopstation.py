@@ -8,9 +8,6 @@ from .sound_manager import SoundManager
 # Rutas en donde guardar los samples y temp audios
 from config.paths import TEMP_DIR, TEMPO_FILES
 
-# Constantes necesarias
-AUDIO_NAME_PREFIX = "track-"
-
 
 class FPSSoundLoopstation():
     def __init__(

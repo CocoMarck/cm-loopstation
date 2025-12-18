@@ -14,7 +14,7 @@ class MicrophoneRecorder():
         self.CHANNELS = channels
         self.RATE = rate
         self.RECORD_SECONDS = record_seconds
-        self.WAVE_OUTPUT_FILENAME = output_filename
+        self.output_filename = output_filename
 
         self.stream = None
         self.frames = []
@@ -45,14 +45,14 @@ class MicrophoneRecorder():
         if not self.frames:
             self.debug("warning", "No hay datos grabados para guardar")
 
-        wf = wave.open(str(self.WAVE_OUTPUT_FILENAME), 'wb')
+        wf = wave.open(str(self.output_filename), 'wb')
         wf.setnchannels(self.CHANNELS)
         wf.setsampwidth(self.audio.get_sample_size(self.FORMAT))
         wf.setframerate(self.RATE)
         wf.writeframes( b''.join(self.frames) )
         wf.close()
 
-        self.debug("info", f"Archivo guardado `{self.WAVE_OUTPUT_FILENAME}`")
+        self.debug("info", f"Archivo guardado `{self.output_filename}`")
 
 
     def __cleanup(self):
@@ -137,7 +137,7 @@ class MicrophoneRecorder():
 
         self.state = self.__states[1]
 
-        self.debug("info", f"Grabación de `{self.WAVE_OUTPUT_FILENAME}` iniciada.")
+        self.debug("info", f"Grabación de `{self.output_filename}` iniciada.")
 
 
     def stop(self):

@@ -6,6 +6,7 @@ from config.paths import TEMP_DIR, TEMPO_FILES
 
 BPM_IN_SECONDS = int(60)
 AUDIO_NAME_PREFIX = "track-"
+AUDIO_FILEFORMAT = "wav"
 
 # Sonidos
 TEMPO_SOUNDS = []
@@ -538,13 +539,13 @@ class FPSLoopstation():
                 number_of_track = self.get_focused_track_id()
             else:
                 number_of_track = self.count_saved_track
-            sound_name = f"{AUDIO_NAME_PREFIX}{number_of_track}.wav"
-            self.microphone_recorder.WAVE_OUTPUT_FILENAME = (
+            sound_name = f"{AUDIO_NAME_PREFIX}{number_of_track}.{AUDIO_FILEFORMAT}"
+            self.microphone_recorder.output_filename = (
                 TEMP_DIR.joinpath( sound_name )
             )
             self.microphone_recorder.stop()
             dict_save_track_signals = self.save_track(
-                track_id=number_of_track, path=self.microphone_recorder.WAVE_OUTPUT_FILENAME,
+                track_id=number_of_track, path=self.microphone_recorder.output_filename,
                 sample=False, loop=True
             )
             self.debug_save_track( signals=dict_save_track_signals )
