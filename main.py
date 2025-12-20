@@ -48,15 +48,13 @@ from kivy.clock import Clock
 # Estilo molon
 from kivy.lang import Builder
 kv = '''
-#:kivy 2.3.1
-
 #:import Window kivy.core.window.Window
-<BoxLayout>
-    size_hint_y: None
-    height: dp( min(Window.width, Window.height)*0.1 )
-<ScrollView>
-    size_hint_y: None
-    height: dp( min(Window.width, Window.height)*0.1 )
+#<BoxLayout>
+    #size_hint_y: None
+    #height: dp( min(Window.width, Window.height)*0.1 )
+#<ScrollView>
+    #size_hint_y: None
+    #height: dp( min(Window.width, Window.height)*0.1 )
 
 
 <Label>:

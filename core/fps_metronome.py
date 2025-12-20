@@ -286,9 +286,9 @@ class FPSMetronome():
             if signals["sound_exists"]:
                 message = f"playing beat"
                 if signals["emphasis"]:
-                    message += "| emphasis"
+                    message += " | emphasis"
                 else:
-                    message += "| neutral"
+                    message += " | neutral"
             else:
                 message = f"there is no sound beat"
                 log_type = "warning"
@@ -310,6 +310,9 @@ class FPSMetronome():
         Segundos a fps
         '''
         return seconds*self.fps
+
+    def get_bars_to_fps(self, bars:int ):
+        return self.bars_in_fps*bars
 
 
 
@@ -337,5 +340,6 @@ class FPSMetronome():
 
         return {
             'metronome': signals,
-            'emphasis_of_beat': emphasis_of_beat_signals
+            'emphasis_of_beat': emphasis_of_beat_signals,
+            'beat_playback': beat_playback_signals
         }

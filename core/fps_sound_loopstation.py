@@ -12,7 +12,7 @@ from config.paths import TEMP_DIR, TEMPO_FILES
 class FPSSoundLoopstation():
     def __init__(
         self, fps=20, bpm=120, beats_per_bar=3, beats_limit_per_bar=0, bpm_limit=0,
-        volume=1, play_beat=False, beat_play_mode='neutral', save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3,
+        volume=1, play_beat=False, beat_play_mode='neutral', save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3
     ):
         '''
         Para reproducir sonidos en bucle, sonidos sincronizados con el metronomo.
@@ -64,14 +64,24 @@ class FPSSoundLoopstation():
         return self.count_temp_sound >= self.temp_saved_sound_limit+1
 
 
-    def get_focused_track_id(self):
+    def get_focused_sample_track_id(self):
         '''
-        Obtener track con focus actual.
-        Solo se obtiene el primero que detecte. Se supono que solo debe haber focus en un track, no en varios.
+        Obtener sample track con focus actual. Solo se obtiene el primero que detecte.
         '''
         track_id = None
         for i in self.dict_track.keys():
-            if self.dict_track[i]['focus']:
+            if self.dict_track[i]['focus'] and self.dict_track[i]['sample']:
+                track_id = i
+                break
+        return track_id
+
+    def get_focused_temp_track_id(self):
+        '''
+        Obtener sample track con focus actual. Solo se obtiene el primero que detecte.
+        '''
+        track_id = None
+        for i in self.dict_track.keys():
+            if self.dict_track[i]['focus'] and (not self.dict_track[i]['sample']):
                 track_id = i
                 break
         return track_id
@@ -81,22 +91,14 @@ class FPSSoundLoopstation():
         '''
         Algun sample track esta en focus
         '''
-        track_id = self.get_focused_track_id()
-        if isinstance(track_id, int ):
-            return self.dict_track[track_id]['sample']
-        else:
-            return False
+        return ( self.get_focused_sample_track_id() != None )
 
 
     def some_temp_track_is_in_focus(self):
         '''
         Algun temp track esta en focus
         '''
-        track_id = self.get_focused_track_id()
-        if isinstance(track_id, int ):
-            return self.dict_track[track_id]['sample'] == False
-        else:
-            return False
+        return ( self.get_focused_temp_track_id() != None )
 
 
     def save_track(self, track_id=None, path=str, loop=True, sample=True):
@@ -244,6 +246,9 @@ class FPSSoundLoopstation():
                 self.logging.log( message=text, log_type="debug" )
 
 
+    def get_track(track_id):
+        # Obtener pista
+        return self.dict_track[track_id]
 
     def get_tracks(self):
         # Obtener pistas
@@ -375,6 +380,8 @@ class FPSSoundLoopstation():
 
         # Debug
         self.debug_playback_track( playback_track_signals )
+
+        signals.update( {'playback_track': playback_track_signals} )
 
         return signals
 

@@ -6,7 +6,7 @@ FPS = 20
 FRAME_TIME = 1.0 / FPS
 
 loopstation = FPSSoundLoopstation(
-    fps=FPS, volume=0.1, play_beat=True, beat_play_mode='emphasis_on_first'
+    fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
 )
 loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
 loopstation.save_track( path=SAMPLE_FILES[1], sample=True )

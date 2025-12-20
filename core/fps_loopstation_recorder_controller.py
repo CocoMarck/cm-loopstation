@@ -1,12 +1,91 @@
+from config.paths import TEMP_DIR
 from core.microphone_recorder import MicrophoneRecorder
-from core.fps_sound_loopstation import FPSSoudLoopstation
-
-# Constantes necesarias
-AUDIO_NAME_PREFIX = "track-"
+from core.fps_sound_loopstation import FPSSoundLoopstation
 
 class FPSLoopstationRecorderController():
-    def __init__(self, recorder=MicrophoneRecorder(), fileformat="wav"):
+    def __init__(
+        self, fps_sound_loopstation, recorder, fileformat="wav"
+    ):
+        '''
+        Controlador de Recorder, de preferncia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
+        Recomendado configurar el recorder y el loopstation antes de ponerlos como parametros.
+
+        Recorder no hacer calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
+        '''
 
         self.recorder = recorder
-        self.fps_loopstation = FPSSoudLoopstation()
+        self.fps_sound_loopstation = fps_sound_loopstation
+        self.fps_metronome = fps_sound_loopstation.fps_metronome
+        self.track_name_prefix = "track"
         self.fileformat = fileformat
+
+        # Relacionado con grabar, iniciar y parar
+        self.record = False
+        self.limit_record = False
+        self.record_bars = 0
+        self.record_count_fps = 0
+
+
+
+    def record_track(self, metronome_signals, emphasis_of_beat_signals):
+        '''
+        Grabar solo en la detección del primer tempo.
+        Obtener señales de metronomo, y los enphasis del beat del metronomo.
+        Contar FPS de grabación y determinar cantidad de compases a grabar, y parar automaticamente.
+        Este método, hace la chamba principal.
+        '''
+        some_track_is_in_focus = self.fps_sound_loopstation.some_temp_track_is_in_focus()
+        saved_sound_limit_reached = (
+            self.fps_sound_loopstation.temp_saved_sound_limit_reached() and
+            self.recorder.state == "stop" and (not some_track_is_in_focus)
+        )
+        number_of_track = self.fps_sound_loopstation.count_temp_sound
+        if saved_sound_limit_reached:
+            # Limite de grabaciones alcanzado. Y no hay track temp en focus.
+            # Obtener numero de pista en focus
+            self.record = False
+            number_of_track = self.fps_sound_loopstation.get_focused_temp_track_id()
+
+
+        limit_record = self.limit_record and (self.record_bars > 0)
+        start_record = (
+            emphasis_of_beat_signals['is_first_beat'] and self.record and
+            self.recorder.state == "stop"
+        )
+        if start_record:
+            # Empezo el primer beat, esta activado el record, y esta no esta parador el recorder.
+            self.recorder.output_filename = TEMP_DIR.joinpath(
+                f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
+            )
+            self.recorder.record()
+
+        count_fps = self.record_count_fps
+        is_count_fps, stop_record, save_record_as_track = False, False, False
+        if self.recorder.state == "record":
+            # Esta grabando
+            if limit_record:
+                # Determinar limite, y si llego o paso el limite, parar grabación
+                if count_fps >= self.fps_metronome.get_bars_to_fps(self.record_bars):
+                    self.record = False
+
+            is_count_fps, stop_record = self.record, (not self.record)
+            if is_count_fps:
+                # Contar fps
+                self.record_count_fps += 1
+            if stop_record:
+                # Forzar parar grabación y guardar
+                self.recorder.stop()
+                self.fps_sound_loopstation.save_track(
+                    path=self.recorder.output_filename, loop=True, sample=False
+                )
+
+        # Señales
+        return {
+            'start_record': start_record,
+            'count_fps': count_fps,
+            'is_count_fps': is_count_fps,
+            'stop_record': stop_record,
+            'number_of_track': number_of_track,
+            'some_track_is_in_focus': some_track_is_in_focus,
+            'saved_sound_limit_reached': saved_sound_limit_reached
+        }
