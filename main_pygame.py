@@ -1,5 +1,7 @@
 # Loopstation
+from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
+from core.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from config.paths import SAMPLE_FILES
 
 FPS = 20
@@ -8,8 +10,15 @@ FRAME_TIME = 1.0 / FPS
 loopstation = FPSSoundLoopstation(
     fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
 )
-loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
-loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+metronome = loopstation.fps_metronome
+recorder_controller = FPSSoundLoopstationRecorderController(
+    fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+)
+recorder_controller.record = True
+recorder_controller.limit_record = True
+recorder_controller.record_bars = 1
+#loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+#loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
 
 # Constantes
 SCREEN_SIZE = (960, 540)
@@ -95,14 +104,18 @@ while running:
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("green")
 
-    # RENDER YOUR GAME HERE
-    signals = loopstation.update()
+    # Loopstation events
+    loopstation_signals = loopstation.update()
+    recorder_controller_signals = recorder_controller.update(
+        metronome_signals=loopstation_signals['metronome']
+    )
 
+    # RENDER YOUR GAME HERE
     game_screen.fill("purple")
 
     for circle in circle_group:
         # Circulos de beats
-        circle.paint_circle_by_metronome( signals )
+        circle.paint_circle_by_metronome( loopstation_signals )
 
     for sprite in sprite_layer.sprites():
         # Establce sprites en surf

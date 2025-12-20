@@ -312,7 +312,7 @@ class FPSMetronome():
         return seconds*self.fps
 
     def get_bars_to_fps(self, bars:int ):
-        return self.bars_in_fps*bars
+        return self.bar_in_fps*bars
 
 
 

@@ -1,16 +1,28 @@
 from config.paths import TEMP_DIR
-from core.microphone_recorder import MicrophoneRecorder
-from core.fps_sound_loopstation import FPSSoundLoopstation
+from controller.logging_controller import LoggingController
+from .fps_sound_loopstation import FPSSoundLoopstation
 
-class FPSLoopstationRecorderController():
+
+class FPSSoundLoopstationRecorderController():
     def __init__(
-        self, fps_sound_loopstation, recorder, fileformat="wav"
+        self, fps_sound_loopstation, recorder, recorder_path=TEMP_DIR, fileformat="wav",
+        verbose=True, log_level="info", save_log=False
     ):
         '''
         Controlador de Recorder, de preferncia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
         Recomendado configurar el recorder y el loopstation antes de ponerlos como parametros.
 
         Recorder no hacer calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
+
+        Ejemplo de uso:
+        ```bash
+        loopstation = FPSSoundLoopstation(
+            fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
+        )
+        recorder_controller = FPSSoundLoopstationRecorderController(
+            fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+        )
+        ```
         '''
 
         self.recorder = recorder
@@ -18,6 +30,7 @@ class FPSLoopstationRecorderController():
         self.fps_metronome = fps_sound_loopstation.fps_metronome
         self.track_name_prefix = "track"
         self.fileformat = fileformat
+        self.recorder_path = recorder_path
 
         # Relacionado con grabar, iniciar y parar
         self.record = False
@@ -25,9 +38,14 @@ class FPSLoopstationRecorderController():
         self.record_bars = 0
         self.record_count_fps = 0
 
+        # Debug
+        self.logging = LoggingController(
+            name="FPSLoopstationRecorderController", filename="fps_loopstation_recorder_controller", verbose=verbose, log_level=log_level, save_log=save_log, only_the_value=True,
+        )
 
 
-    def record_track(self, metronome_signals, emphasis_of_beat_signals):
+
+    def record_track(self, metronome_signals):
         '''
         Grabar solo en la detección del primer tempo.
         Obtener señales de metronomo, y los enphasis del beat del metronomo.
@@ -49,12 +67,12 @@ class FPSLoopstationRecorderController():
 
         limit_record = self.limit_record and (self.record_bars > 0)
         start_record = (
-            emphasis_of_beat_signals['is_first_beat'] and self.record and
+            metronome_signals['is_first_beat'] and self.record and
             self.recorder.state == "stop"
         )
         if start_record:
             # Empezo el primer beat, esta activado el record, y esta no esta parador el recorder.
-            self.recorder.output_filename = TEMP_DIR.joinpath(
+            self.recorder.output_filename = self.recorder_path.joinpath(
                 f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
             )
             self.recorder.record()
@@ -82,6 +100,7 @@ class FPSLoopstationRecorderController():
         # Señales
         return {
             'start_record': start_record,
+            'limit_record': limit_record,
             'count_fps': count_fps,
             'is_count_fps': is_count_fps,
             'stop_record': stop_record,
@@ -89,3 +108,34 @@ class FPSLoopstationRecorderController():
             'some_track_is_in_focus': some_track_is_in_focus,
             'saved_sound_limit_reached': saved_sound_limit_reached
         }
+
+
+    def debug_record_track(self, record_track_signals):
+        state = None
+        if record_track_signals['start_record']:
+            state = "starting recording"
+        elif record_track_signals['stop_record']:
+            if record_track_signals['saved_sound_limit_reached']:
+                state = "limit reached"
+            else:
+                state = "stopping recording"
+
+        if state != None:
+            message = (
+                f"{state} | {record_track_signals['number_of_track']}"
+                f" | focus {record_track_signals['some_track_is_in_focus']}"
+            )
+            if record_track_signals['is_count_fps']:
+                message += f" | frame {record_track_signals['count_fps']}"
+            self.logging.log( message=message, log_type="info" )
+
+
+
+
+    def update(self, metronome_signals):
+        # Chamba, lista.
+        signals = self.record_track( metronome_signals=metronome_signals )
+
+        self.debug_record_track( signals )
+
+        return signals
