@@ -46,10 +46,8 @@ kv = '''
 #:import Window kivy.core.window.Window
 <BoxLayout>
     size_hint_y: None
-    height: dp( min(Window.width, Window.height)*0.1 )
 <ScrollView>
     size_hint_y: None
-    height: dp( min(Window.width, Window.height)*0.1 )
 
 
 <Label>:
