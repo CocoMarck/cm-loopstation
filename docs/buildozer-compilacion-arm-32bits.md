@@ -21,8 +21,13 @@ Que sea para 32 bits:
 ```
 android.arch = armeabi-v7a
 ```
+O para las dos arquitecturas:
+```
+arm64-v8a
+```
 
-Tambien idicar en `orientation`, `all`. Para que jale en vertical y horizontal.
+Tambien idicar en `orientation`; Para que jale en vertical y horizontal:
 ```
-orientation = all
+orientation = landscape, portrait, portrait-reverse or landscape-reverse
 ```
+Los que digan `reverse` se pueden evitar, es por si tienes alrevez el celu.
