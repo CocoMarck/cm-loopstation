@@ -6,7 +6,10 @@ import os
 from controller.logging_controller import LoggingController
 
 class MicrophoneRecorder():
-    def __init__(self, output_filename:str="record-audio.wav", record_seconds=0, channels=1, rate=44100):
+    def __init__(
+        self, output_filename:str="record-audio.wav", record_seconds=0, channels=1, rate=44100,
+        verbose=True, log_level="info", save_log=False
+    ):
 
         self.audio = pyaudio.PyAudio()
         self.CHUNK = 1024
@@ -29,8 +32,8 @@ class MicrophoneRecorder():
 
         # degug
         self.logging = self.logging = LoggingController(
-            name="MicrophoneRecorder", filename="microphone_recorder", verbose=True,
-            log_level="warning", save_log=True, only_the_value=True
+            name="MicrophoneRecorder", filename="microphone_recorder", verbose=verbose,
+            log_level=log_level, save_log=save_log, only_the_value=True
         )
 
 
