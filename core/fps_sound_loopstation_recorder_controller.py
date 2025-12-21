@@ -67,7 +67,7 @@ class FPSSoundLoopstationRecorderController():
 
         limit_record = self.limit_record and (self.record_bars > 0)
         start_record = (
-            metronome_signals['is_first_beat'] and self.record and
+            metronome_signals['frame_before_the_bar'] and self.record and
             self.recorder.state == "stop"
         )
         if start_record:
@@ -90,6 +90,8 @@ class FPSSoundLoopstationRecorderController():
             if is_count_fps:
                 # Contar fps
                 self.record_count_fps += 1
+            else:
+                self.record_count_fps = 0
             if stop_record:
                 # Forzar parar grabación y guardar
                 self.recorder.stop()
@@ -122,11 +124,11 @@ class FPSSoundLoopstationRecorderController():
 
         if state != None:
             message = (
-                f"{state} | {record_track_signals['number_of_track']}"
+                f"{state} | number of track {record_track_signals['number_of_track']}"
+                f" | is_count_fps {record_track_signals['is_count_fps']}"
+                f" | count fps {record_track_signals['count_fps']}"
                 f" | focus {record_track_signals['some_track_is_in_focus']}"
             )
-            if record_track_signals['is_count_fps']:
-                message += f" | frame {record_track_signals['count_fps']}"
             self.logging.log( message=message, log_type="info" )
 
 
