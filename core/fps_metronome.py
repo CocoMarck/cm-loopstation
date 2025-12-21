@@ -139,8 +139,6 @@ class FPSMetronome():
         '''
         Determinar beat actual
         '''
-        count_fps = self.count_fps_of_beat # FPS actual analizado
-
         # Beat
         change_beat = self.count_fps_of_beat >= self.beat_in_fps
 
@@ -148,6 +146,9 @@ class FPSMetronome():
             self.count_fps_of_beat = 0
             self.current_beat += 1
         first_frame_of_beat = self.count_fps_of_beat == 0
+
+        # FPS actual analizado
+        count_fps = self.count_fps_of_beat
 
         # Compas
         reset_bar = self.current_beat == self.beats_per_bar+1
@@ -162,6 +163,14 @@ class FPSMetronome():
             is_last_beat = self.current_beat == self.beats_per_bar
             is_another_beat = (not is_first_beat) and (not is_last_beat)
 
+        # Frame antes de la barra
+        frame_before_the_bar = (
+            (self.current_beat == self.beats_per_bar) and (count_fps >= self.beat_in_fps-1)
+        )
+
+        # Sumar fps
+        self.count_fps_of_beat += 1
+
         return {
             "change_beat": change_beat,
             "first_frame_of_beat": first_frame_of_beat,
@@ -169,6 +178,7 @@ class FPSMetronome():
             "is_first_beat": is_first_beat,
             "is_last_beat": is_last_beat,
             "is_another_beat": is_another_beat,
+            "frame_before_the_bar": frame_before_the_bar,
             "current_beat": self.current_beat,
             "count_fps": count_fps
         }
@@ -185,7 +195,11 @@ class FPSMetronome():
 
         if signals['reset_bar']:
             self.logging.log(
-                message=f"reset-bar | frames {signals['count_fps']}", log_type="debug"
+                message=f"reset-bar | frames {self.bar_in_fps}", log_type="debug"
+            )
+        if signals['frame_before_the_bar']:
+            self.logging.log(
+                message=f"frame before the bar | count fps {signals['count_fps']}", log_type="debug"
             )
         if text_current_beat != None:
             self.logging.log( message=text_current_beat, log_type="info" )
@@ -286,9 +300,9 @@ class FPSMetronome():
             if signals["sound_exists"]:
                 message = f"playing beat"
                 if signals["emphasis"]:
-                    message += "| emphasis"
+                    message += " | emphasis"
                 else:
-                    message += "| neutral"
+                    message += " | neutral"
             else:
                 message = f"there is no sound beat"
                 log_type = "warning"
@@ -311,6 +325,9 @@ class FPSMetronome():
         '''
         return seconds*self.fps
 
+    def get_bars_to_fps(self, bars:int ):
+        return self.bar_in_fps*bars
+
 
 
 
@@ -326,10 +343,6 @@ class FPSMetronome():
         beat_playback_signals = self.beat_playback( emphasis_of_beat_signals )
 
 
-        # Sumar fps
-        self.count_fps_of_beat += 1
-
-
         # Debug
         self.debug_current_beat( signals )
         self.debug_beat_playback( beat_playback_signals )
@@ -337,5 +350,6 @@ class FPSMetronome():
 
         return {
             'metronome': signals,
-            'emphasis_of_beat': emphasis_of_beat_signals
+            'emphasis_of_beat': emphasis_of_beat_signals,
+            'beat_playback': beat_playback_signals
         }

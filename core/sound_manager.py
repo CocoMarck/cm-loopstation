@@ -35,15 +35,18 @@ class SoundManager():
         '''
         sound.stop()
 
-    def set_sound_volume(self, sound, volume=float(1) ):
-        '''
-        Establecer volumen a sonido
-        '''
+    def validate_volume(self, volume):
         if volume > self.__MAX_VOLUME:
             volume = self.__MAX_VOLUME
         elif volume < self.__MIN_VOLUME:
             volume = self.__MIN_VOLUME
-        sound.volume = volume
+        return volume
+
+    def set_sound_volume(self, sound, volume=float(1) ):
+        '''
+        Establecer volumen a sonido
+        '''
+        sound.volume = self.validate_volume(volume)
 
     def set_sound_default_volume(self, sound):
         self.set_sound_volume( sound, self.__DEFAULT_VOLUME)
