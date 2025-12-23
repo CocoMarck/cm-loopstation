@@ -7,6 +7,7 @@ from config.paths import SAMPLE_FILES
 FPS = 20
 FRAME_TIME = 1.0 / FPS
 
+# Loopstation
 loopstation = FPSSoundLoopstation(
     fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
 )
@@ -14,7 +15,7 @@ metronome = loopstation.fps_metronome
 recorder_controller = FPSSoundLoopstationRecorderController(
     fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
 )
-recorder_controller.record = True
+#recorder_controller.record = True
 recorder_controller.limit_record = True
 recorder_controller.record_bars = 1
 #loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
@@ -28,6 +29,12 @@ TILE_SIZE = GAME_SCREEN_SIZE[0]//32
 
 # Example file showing a basic pygame "game loop"
 import pygame
+
+# Fuente de Texto
+pygame.font.init()
+FONT_NAME = "monospace"
+font_normal = pygame.font.SysFont(FONT_NAME, TILE_SIZE)
+
 
 # Objeto circulo
 class SpriteCircle(pygame.sprite.Sprite):
@@ -49,6 +56,8 @@ class SpriteCircle(pygame.sprite.Sprite):
 
         self.rect = self.surf.get_rect( topleft=position )
 
+
+
     def paint_circle_by_metronome(self, signals):
         if self.NUMBER == signals["metronome"]["current_beat"]:
             if signals['emphasis_of_beat']['emphasis']:
@@ -62,11 +71,72 @@ class SpriteCircle(pygame.sprite.Sprite):
             self.surf = mask.to_surface(setcolor="white", unsetcolor=(0, 0, 0, 0))
 
 
+# Texto
+class SpriteText(pygame.sprite.Sprite):
+    def __init__(
+        self, text="", position=(0,0), color="white", background_color=None, identifer="sprite"
+    ):
+        super().__init__()
+
+        self.identifer = identifer
+
+        self.text = text
+        self.position = position
+        self.color = color
+
+        self.font_surf = None
+        self.font_rect = None
+        self.set_font_surf()
+
+        self.background_surf = None
+        self.background_rect = None
+        self.background_color = background_color
+        self.set_background_surf()
+
+        self.surf = None
+        self.rect = None
+        self.set_surf()
+
+    def set_font_surf(self):
+        self.font_surf = font_normal.render(self.text, True, self.color)
+        self.font_rect = self.font_surf.get_rect()
+
+    def is_good_background_color(self):
+        return (
+            isinstance( self.background_color, str ) or isinstance( self.background_color, list ) or
+            isinstance( self.background_color, tuple )
+        )
+
+    def set_background_surf(self):
+        self.background_surf = pygame.Surface( self.font_rect.size, pygame.SRCALPHA )
+        self.background_rect = self.background_surf.get_rect()
+        if self.is_good_background_color():
+            self.background_surf.fill( self.background_color )
+
+    def set_surf(self):
+        self.surf = pygame.Surface( (self.font_rect.size), pygame.SRCALPHA )
+        self.rect = self.surf.get_rect( topleft=self.position )
+        self.surf.blit( self.background_surf, (0,0) )
+        self.surf.blit( self.font_surf, (0,0) )
+
+    def set_all(self):
+        '''
+        Establecer todo de una
+        '''
+        self.set_font()
+        self.set_background_color()
+        self.set_sprite_surf()
 
 
+
+
+# Grupos
 sprite_layer = pygame.sprite.LayeredUpdates()
 circle_group = pygame.sprite.Group()
+text_group = pygame.sprite.Group()
+button_group = pygame.sprite.Group()
 
+# Método, cración de circulos
 CIRCLE_SIZE = TILE_SIZE*2
 def create_circles(number=1):
     for x in range(0, number):
@@ -84,6 +154,25 @@ def create_circles(number=1):
 create_circles( number=loopstation.get_beats_per_bar()+1 )
 
 
+# Método, textos
+text_title = SpriteText(
+    "FPS Loopstation", position=(GAME_SCREEN_SIZE[0]//2, 0)
+)
+text_title.rect.x -= text_title.rect.width//2
+sprite_layer.add( text_title, layer=0 )
+text_group.add( text_title )
+
+# Metodo botones
+button_record = SpriteText(
+    "record", position=(GAME_SCREEN_SIZE[0]//2, GAME_SCREEN_SIZE[0]*0.1),
+    background_color="black", identifer="record"
+)
+button_record.rect.x -= button_record.rect.width//2
+sprite_layer.add( button_record, layer=0 )
+button_group.add( button_record )
+
+
+
 
 
 # pygame setup
@@ -94,12 +183,23 @@ game_screen = pygame.Surface( GAME_SCREEN_SIZE )
 clock = pygame.time.Clock()
 running = True
 
+def get_screen_multiplier(screen_size=[0,0]):
+    return (
+        ( GAME_SCREEN_SIZE[0] / screen_size[0] ),
+        ( GAME_SCREEN_SIZE[1] / screen_size[1] )
+    )
+
 while running:
+    current_screen_size = pygame.display.get_surface().get_size()
+
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
+    mouse_click = False
+    mouse_position = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        mouse_click = event.type == pygame.MOUSEBUTTONUP
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("green")
@@ -117,12 +217,20 @@ while running:
         # Circulos de beats
         circle.paint_circle_by_metronome( loopstation_signals )
 
+    for button in button_group:
+        multiplier = get_screen_multiplier( current_screen_size )
+        position = [ mouse_position[0]*multiplier[0], mouse_position[1]*multiplier[1] ]
+        if (
+            mouse_click and button.rect.collidepoint(position)
+        ):
+            recorder_controller.record = True
+
     for sprite in sprite_layer.sprites():
         # Establce sprites en surf
         game_screen.blit(sprite.surf, sprite.rect)
 
     # flip() the display to put your work on screen
-    scale_game_screen = pygame.transform.scale( game_screen, pygame.display.get_surface().get_size() )
+    scale_game_screen = pygame.transform.scale( game_screen, current_screen_size )
     screen.blit(scale_game_screen, (0,0))
     pygame.display.flip()
 

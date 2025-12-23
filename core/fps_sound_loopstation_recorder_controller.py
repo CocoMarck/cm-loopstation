@@ -9,10 +9,10 @@ class FPSSoundLoopstationRecorderController():
         verbose=True, log_level="info", save_log=False
     ):
         '''
-        Controlador de Recorder, de preferncia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
+        Controlador de Recorder, de prefrencia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
         Recomendado configurar el recorder y el loopstation antes de ponerlos como parametros.
 
-        Recorder no hacer calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
+        RecorderController no hace calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
 
         Ejemplo de uso:
         ```bash
@@ -125,6 +125,7 @@ class FPSSoundLoopstationRecorderController():
         if state != None:
             message = (
                 f"{state} | number of track {record_track_signals['number_of_track']}"
+                f" | limit record {record_track_signals['limit_record']}"
                 f" | is_count_fps {record_track_signals['is_count_fps']}"
                 f" | count fps {record_track_signals['count_fps']}"
                 f" | focus {record_track_signals['some_track_is_in_focus']}"
