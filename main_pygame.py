@@ -35,6 +35,61 @@ pygame.font.init()
 FONT_NAME = "monospace"
 font_normal = pygame.font.SysFont(FONT_NAME, TILE_SIZE)
 
+# Objeto SpriteSurf
+class SpriteSurf(pygame.sprite.Sprite):
+    def __init__(
+        self, surf=None, size=[32,32], position=[0,0], transparency=255, color="grey"
+    ):
+        super().__init__()
+        # const
+        self._TRANSPARENCY = transparency
+        self._SIZE = size
+        self._POSITION = position
+        self._COLOR = color
+
+        # vars
+        self.size = size
+        self.position = position
+        self.color = color
+        self.transparency = transparency
+
+        # private
+        self._SURF = surf
+        self._set_surf_base()
+
+        # atributos
+        self.surf = None
+        self.rect = None
+        self.scale_surf()
+        self.set_color()
+        self.set_position()
+
+    def _set_surf_base(self):
+        if self._SURF == None:
+            self._SURF = pygame.Surface( self.size, pygame.SRCALPHA)
+
+    def set_surf_rect(self):
+        self.rect = self.surf.get_rect()
+
+    def set_position(self):
+        self.rect.topleft = self.position
+
+    def scale_surf(self):
+        if (
+            self.size[0] == self._SURF.get_size()[0] and
+            self.size[1] == self._SURF.get_size()[1]
+        ):
+            self.surf = pygame.transform.scale( self._SURF, self.size )
+        self.set_surf_rect()
+
+    def set_color(self):
+        self.scale_surf()
+        self.surf.fill( self.color )
+        self.surf.set_alpha( self.transparency )
+
+
+
+
 
 # Objeto circulo
 class SpriteCircle(pygame.sprite.Sprite):
@@ -144,7 +199,7 @@ def create_circles(number=1):
             size=CIRCLE_SIZE,
             position=(
                 GAME_SCREEN_SIZE[0]*0.5 -(CIRCLE_SIZE*number)//2,
-                GAME_SCREEN_SIZE[1]*0.5 -(CIRCLE_SIZE)//2
+                GAME_SCREEN_SIZE[1]*0.15 -(CIRCLE_SIZE)//2
             ), number = x
         )
         circle.rect.x += CIRCLE_SIZE*x
@@ -164,12 +219,17 @@ text_group.add( text_title )
 
 # Metodo botones
 button_record = SpriteText(
-    "record", position=(GAME_SCREEN_SIZE[0]//2, GAME_SCREEN_SIZE[0]*0.1),
+    "record", position=(GAME_SCREEN_SIZE[0]//2, GAME_SCREEN_SIZE[0]*0.15),
     background_color="black", identifer="record"
 )
 button_record.rect.x -= button_record.rect.width//2
 sprite_layer.add( button_record, layer=0 )
 button_group.add( button_record )
+
+tracks_container = SpriteSurf(
+    size=[GAME_SCREEN_SIZE[0], int(GAME_SCREEN_SIZE[1]*0.55)], position=[0,GAME_SCREEN_SIZE[1]*0.45]
+)
+sprite_layer.add( tracks_container, layer=0 )
 
 
 
@@ -223,7 +283,12 @@ while running:
         if (
             mouse_click and button.rect.collidepoint(position)
         ):
-            recorder_controller.record = True
+            if button.identifer == "record":
+                if recorder_controller.record:
+                    recorder_controller.record = False
+                else:
+                    recorder_controller.record = True
+
 
     for sprite in sprite_layer.sprites():
         # Establce sprites en surf
