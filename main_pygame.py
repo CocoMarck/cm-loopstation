@@ -30,16 +30,36 @@ TILE_SIZE = SCENE_SIZE[0]//32
 # Example file showing a basic pygame "game loop"
 import pygame
 
+# pygame setup
+pygame.init()
+screen = pygame.display.set_mode( SCREEN_SIZE, pygame.RESIZABLE)
+
+scene = pygame.Surface( SCENE_SIZE )
+clock = pygame.time.Clock()
+
+
 # Fuente de Texto
 pygame.font.init()
 FONT_NAME = "monospace"
 font_normal = pygame.font.SysFont(FONT_NAME, TILE_SIZE)
 
+
+# Funciones para pygame
+def invert_rgb_color( rgb ):
+    '''
+    Invertir color rgb.
+    '''
+    return [255 -rgb[0], 255 -rgb[1], 255 -rgb[2] ]
+
+def invert_pygame_color( pcolor ):
+    return invert_rgb_color( (pcolor.r, pcolor.g, pcolor.b) )
+
+
 # Objeto SpriteSurf
 class SpriteSurf(pygame.sprite.Sprite):
     def __init__(
         self, surf=None, size=None, position=[0,0], transparency=255, identifer="sprite-surf",
-        color=None
+        color=None, color_flags=None
     ):
         super().__init__()
         # const
@@ -62,7 +82,7 @@ class SpriteSurf(pygame.sprite.Sprite):
         self.surf = None
         self.rect = None
         self.scale_surf()
-        self.set_color()
+        self.set_color( flags=color_flags )
         self.set_position()
 
         # Identificador
@@ -79,18 +99,50 @@ class SpriteSurf(pygame.sprite.Sprite):
         self.rect.topleft = self.position
 
     def scale_surf(self):
-        if (
-            self.size[0] == self._SURF.get_size()[0] and
-            self.size[1] == self._SURF.get_size()[1]
-        ):
-            self.surf = pygame.transform.scale( self._SURF, self.size )
+        good_size = self.size != None
+        if good_size:
+            self.surf = pygame.Surface( self.size, pygame.SRCALPHA)
+        else:
+            self.surf = pygame.Surface( self._SURF.get_rect().size, pygame.SRCALPHA)
+        blit_surf = self._SURF
+        if good_size:
+            if (
+                self.size[0] == self._SURF.get_size()[0] and
+                self.size[1] == self._SURF.get_size()[1]
+            ):
+                blit_surf = pygame.transform.scale( self._SURF, self.size )
+        self.surf.blit( blit_surf, (0,0) )
         self.set_surf_rect()
 
-    def set_color(self):
-        self.scale_surf()
-        if not self.color == None:
-            self.surf.fill( self.color )
+    def set_transparency(self):
         self.surf.set_alpha( self.transparency )
+
+    def good_color(self):
+        return not self.color == None
+
+    def set_color(self, flags=None):
+        self.scale_surf()
+        if self.good_color():
+            if flags == 'BLEND_MULT':
+                colorSurf = pygame.Surface( self.surf.get_size() ).convert_alpha()
+                colorSurf.fill( self.color )
+                self.surf.blit(colorSurf, (0,0), special_flags = pygame.BLEND_RGB_MULT)
+            elif flags == 'BLEND_ADD':
+                self.surf.fill( self.color, special_flags=pygame.BLEND_ADD)
+            else:
+                self.surf.fill( self.color )
+        self.set_transparency()
+
+    def default_color(self):
+        self.color = self._COLOR
+
+    def invert_color(self):
+        if self.good_color():
+            self.color = invert_pygame_color( pygame.Color( self.color ) )
+
+    def set_default_surf(self):
+        self.surf = pygame.Surface( self.rect.size, pygame.SRCALPHA)
+        self.surf.blit( pygame.transform.scale( self._SURF, self.rect.size ), (0,0) )
 
 
 
@@ -110,8 +162,6 @@ class SpriteCircle(SpriteSurf):
         )
         self.NUMBER = number
 
-
-
     def paint_circle_by_metronome(self, signals):
         if self.NUMBER == signals["metronome"]["current_beat"]:
             if signals['emphasis_of_beat']['emphasis']:
@@ -126,60 +176,81 @@ class SpriteCircle(SpriteSurf):
 
 
 # Texto
-class SpriteText(pygame.sprite.Sprite):
+class SpriteText( SpriteSurf ):
     def __init__(
-        self, text="", position=(0,0), color="white", background_color=None, identifer="sprite"
+        self, font, text="", position=(0,0), color="white", background_color=None,
+        identifer="sprite-text"
     ):
-        super().__init__()
-
-        self.identifer = identifer
-
-        self.text = text
-        self.position = position
-        self.color = color
-
-        self.font_surf = None
-        self.font_rect = None
-        self.set_font_surf()
-
-        self.background_surf = None
-        self.background_rect = None
-        self.background_color = background_color
-        self.set_background_surf()
-
-        self.surf = None
-        self.rect = None
-        self.set_surf()
-
-    def set_font_surf(self):
-        self.font_surf = font_normal.render(self.text, True, self.color)
-        self.font_rect = self.font_surf.get_rect()
-
-    def is_good_background_color(self):
-        return (
-            isinstance( self.background_color, str ) or isinstance( self.background_color, list ) or
-            isinstance( self.background_color, tuple )
+        super().__init__(
+            size=(1,1), position=position, color=color, identifer=identifer
         )
 
-    def set_background_surf(self):
-        self.background_surf = pygame.Surface( self.font_rect.size, pygame.SRCALPHA )
-        self.background_rect = self.background_surf.get_rect()
-        if self.is_good_background_color():
-            self.background_surf.fill( self.background_color )
+        # Nuevos Atributos
+        self.text = text
+        self.antialiasing = True
+        self._font = font
+
+        # Nuevos métodos
+        self.sprite_text = None
+        self.set_sprite_text()
+
+        self.sprite_background = None
+        self.background_color = background_color
+        self.set_sprite_background()
+
+        self.set_surf()
+        self.rect = self.surf.get_rect( topleft=self.position )
+
+    def set_sprite_text(self):
+        self.sprite_text = SpriteSurf(
+            surf=self._font.render( self.text, self.antialiasing, "white" ), color=self.color, color_flags='BLEND_MULT'
+        )
+
+    def set_sprite_background(self):
+        self.sprite_background = SpriteSurf(
+            size=self.sprite_text.rect.size, color=self.background_color
+        )
 
     def set_surf(self):
-        self.surf = pygame.Surface( (self.font_rect.size), pygame.SRCALPHA )
-        self.rect = self.surf.get_rect( topleft=self.position )
-        self.surf.blit( self.background_surf, (0,0) )
-        self.surf.blit( self.font_surf, (0,0) )
+        self.surf = pygame.Surface( self.sprite_text.rect.size, pygame.SRCALPHA )
+        self.surf.blit( self.sprite_background.surf, (0,0) )
+        self.surf.blit( self.sprite_text.surf, (0,0) )
+        self.set_transparency()
 
     def set_all(self):
-        '''
-        Establecer todo de una
-        '''
-        self.set_font()
-        self.set_background_color()
-        self.set_sprite_surf()
+        self.set_text_surf()
+        self.set_background_surf()
+        self.set_surf()
+        self.rect = self.surf.get_rect( topleft=self.position )
+
+
+STATES = ["up", "down"]
+class SpriteToggleButton( SpriteText ):
+    def __init__( self, **kwargs ):
+        super().__init__( **kwargs )
+
+        # Nuevos atributos
+        self.state = STATES[0]
+
+    def set_state(self):
+        if self.state == STATES[0]:
+            self.state = STATES[1]
+        else:
+            self.state = STATES[0]
+
+    def press(self):
+        self.set_state()
+        if self.state == STATES[0]:
+            self.sprite_text.default_color()
+            self.sprite_background.default_color()
+        else:
+            self.sprite_text.invert_color()
+            self.sprite_background.invert_color()
+        self.sprite_text.set_default_surf()
+        self.sprite_text.set_color(flags='BLEND_MULT')
+        self.sprite_background.set_color()
+        self.set_surf()
+
 
 
 
@@ -211,15 +282,15 @@ create_circles( number=loopstation.get_beats_per_bar()+1 )
 
 # Método, textos
 text_title = SpriteText(
-    "FPS Loopstation", position=(SCENE_SIZE[0]//2, 0)
+    font=font_normal, text="FPS Loopstation", position=(SCENE_SIZE[0]//2, 0)
 )
 text_title.rect.x -= text_title.rect.width//2
 sprite_layer.add( text_title, layer=0 )
 text_group.add( text_title )
 
 # Metodo botones
-button_record = SpriteText(
-    "record", position=(SCENE_SIZE[0]//2, SCENE_SIZE[0]*0.15),
+button_record = SpriteToggleButton(
+    font=font_normal, text="record", position=(SCENE_SIZE[0]//2, SCENE_SIZE[0]*0.15),
     background_color="black", identifer="record"
 )
 button_record.rect.x -= button_record.rect.width//2
@@ -234,24 +305,35 @@ def get_track_options():
     track_options_group.empty()
     for track_id in loopstation.get_track_ids():
         sprite_text = SpriteText(
-            text=str(track_id),
+            font=font_normal, text=str(track_id),
             position=[tracks_container.rect.x, tracks_container.rect.y + (TILE_SIZE*number)],
             color="black"
         )
-        sprite_layer.add( sprite_text, layer=1 )
+        sprite_layer.add( sprite_text, layer=0 )
         text_group.add( sprite_text )
         track_options_group.add( sprite_text )
+
+        togglebutton_play = SpriteToggleButton(
+            font=font_normal, text="play",
+            position=[
+                tracks_container.rect.x + sprite_text.rect.right,
+                tracks_container.rect.y + (TILE_SIZE*number)
+            ],
+            color = "black",
+            background_color = "white"
+        )
+        sprite_layer.add( togglebutton_play, layer=0 )
+        button_group.add( togglebutton_play )
+        track_options_group.add( togglebutton_play )
+
+
+
         number += 1
 
 
 
 
-# pygame setup
-pygame.init()
-screen = pygame.display.set_mode( SCREEN_SIZE, pygame.RESIZABLE)
-
-scene = pygame.Surface( SCENE_SIZE )
-clock = pygame.time.Clock()
+# bycle
 running = True
 
 def get_screen_multiplier(screen_size=[0,0]):
@@ -298,6 +380,7 @@ while running:
         if (
             mouse_click and button.rect.collidepoint(position)
         ):
+            button.press()
             if button.identifer == "record":
                 if recorder_controller.record:
                     recorder_controller.record = False
