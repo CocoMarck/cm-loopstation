@@ -224,32 +224,34 @@ class SpriteText( SpriteSurf ):
         self.rect = self.surf.get_rect( topleft=self.position )
 
 
-STATES = ["up", "down"]
 class SpriteToggleButton( SpriteText ):
     def __init__( self, **kwargs ):
         super().__init__( **kwargs )
 
         # Nuevos atributos
-        self.state = STATES[0]
+        self.pressed = False
 
-    def set_state(self):
-        if self.state == STATES[0]:
-            self.state = STATES[1]
+    def change_state(self):
+        if self.pressed:
+            self.pressed = False
         else:
-            self.state = STATES[0]
+            self.pressed = True
 
-    def press(self):
-        self.set_state()
-        if self.state == STATES[0]:
-            self.sprite_text.default_color()
-            self.sprite_background.default_color()
-        else:
+    def change_color(self):
+        if self.pressed:
             self.sprite_text.invert_color()
             self.sprite_background.invert_color()
+        else:
+            self.sprite_text.default_color()
+            self.sprite_background.default_color()
         self.sprite_text.set_default_surf()
         self.sprite_text.set_color(flags='BLEND_MULT')
         self.sprite_background.set_color()
         self.set_surf()
+
+    def press(self):
+        self.change_state()
+        self.change_color()
 
 
 
@@ -377,15 +379,18 @@ while running:
     for button in button_group:
         multiplier = get_screen_multiplier( current_screen_size )
         position = [ mouse_position[0]*multiplier[0], mouse_position[1]*multiplier[1] ]
+
+        is_record = button.identifer == "record"
+        if recorder_controller_signals["stop_record"]:
+            button.pressed = False
+            button.change_color()
         if (
             mouse_click and button.rect.collidepoint(position)
         ):
-            button.press()
-            if button.identifer == "record":
-                if recorder_controller.record:
-                    recorder_controller.record = False
-                else:
-                    recorder_controller.record = True
+            button.change_state()
+            if is_record:
+                recorder_controller.record = button.pressed
+            button.change_color()
 
 
     for sprite in sprite_layer.sprites():
