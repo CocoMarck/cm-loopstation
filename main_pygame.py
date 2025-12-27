@@ -225,11 +225,12 @@ class SpriteText( SpriteSurf ):
 
 
 class SpriteToggleButton( SpriteText ):
-    def __init__( self, **kwargs ):
+    def __init__( self, pressed=False, **kwargs ):
         super().__init__( **kwargs )
 
         # Nuevos atributos
-        self.pressed = False
+        self.pressed = pressed
+        self.change_color()
 
     def change_state(self):
         if self.pressed:
@@ -262,7 +263,6 @@ sprite_layer = pygame.sprite.LayeredUpdates()
 circle_group = pygame.sprite.Group()
 text_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
-track_options_group = pygame.sprite.Group()
 
 # Método, cración de circulos
 CIRCLE_SIZE = TILE_SIZE*2
@@ -302,33 +302,50 @@ button_group.add( button_record )
 tracks_container = SpriteSurf(
     size=[SCENE_SIZE[0], int(SCENE_SIZE[1]*0.55)], position=[0,SCENE_SIZE[1]*0.45], color='grey'
 )
+dict_track_option = {}
 def get_track_options():
     number = 0
-    track_options_group.empty()
+    dict_track_option.clear()
     for track_id in loopstation.get_track_ids():
+        track = loopstation.dict_track[track_id]
+
         sprite_text = SpriteText(
             font=font_normal, text=str(track_id),
             position=[tracks_container.rect.x, tracks_container.rect.y + (TILE_SIZE*number)],
-            color="black"
+            color="black", identifer=track_id
         )
         sprite_layer.add( sprite_text, layer=0 )
         text_group.add( sprite_text )
-        track_options_group.add( sprite_text )
+        dict_track_option.update( {sprite_text: track_id} )
 
-        togglebutton_play = SpriteToggleButton(
-            font=font_normal, text="play",
+        togglebutton_loop = SpriteToggleButton(
+            pressed=track['loop'], font=font_normal, text="loop",
             position=[
                 tracks_container.rect.x + sprite_text.rect.right,
                 tracks_container.rect.y + (TILE_SIZE*number)
             ],
-            color = "black",
-            background_color = "white"
+            color = (255, 0, 255),
+            background_color = "black",
+            identifer="loop"
         )
-        sprite_layer.add( togglebutton_play, layer=0 )
-        button_group.add( togglebutton_play )
-        track_options_group.add( togglebutton_play )
+        sprite_layer.add( togglebutton_loop, layer=0 )
+        button_group.add( togglebutton_loop )
+        dict_track_option.update( {togglebutton_loop : track_id} )
 
-
+        togglebutton_mute = SpriteToggleButton(
+            font=font_normal, text="mute",
+            position=[
+                tracks_container.rect.x + togglebutton_loop.rect.right,
+                tracks_container.rect.y + (TILE_SIZE*number)
+            ],
+            color = (255, 0, 255),
+            background_color = "black",
+            identifer="mute",
+            pressed=track['mute']
+        )
+        sprite_layer.add( togglebutton_mute, layer=0 )
+        button_group.add( togglebutton_mute )
+        dict_track_option.update( {togglebutton_mute : track_id} )
 
         number += 1
 
@@ -365,12 +382,11 @@ while running:
         metronome_signals=loopstation_signals['metronome']
     )
     if recorder_controller_signals["stop_record"]:
-        print("wakanda")
         get_track_options()
 
     # RENDER YOUR GAME HERE
     scene.fill("purple")
-    scene.blit( tracks_container.surf, tracks_container.rect)
+    scene.blit( tracks_container.surf, tracks_container.rect )
 
     for circle in circle_group:
         # Circulos de beats
@@ -380,16 +396,40 @@ while running:
         multiplier = get_screen_multiplier( current_screen_size )
         position = [ mouse_position[0]*multiplier[0], mouse_position[1]*multiplier[1] ]
 
+        # Determinar tipo de boton
         is_record = button.identifer == "record"
-        if recorder_controller_signals["stop_record"]:
+        is_loop = button.identifer == "loop"
+        is_mute = button.identifer == "mute"
+        is_track_option = button in dict_track_option.keys()
+
+        if is_record and recorder_controller_signals["stop_record"]:
+            # Estado de record
             button.pressed = False
             button.change_color()
         if (
             mouse_click and button.rect.collidepoint(position)
         ):
+            # Cuand ose da click
             button.change_state()
-            if is_record:
-                recorder_controller.record = button.pressed
+            if is_track_option:
+                # Cuando es opcion de track
+                track_id = dict_track_option[button]
+                if is_loop:
+                    if button.pressed:
+                        loopstation.play_track_loop( track_id )
+                    else:
+                        loopstation.break_track_loop( track_id )
+                if is_mute:
+                    track = loopstation.get_track( track_id )
+                    if button.pressed:
+                        loopstation.mute_track( track_id )
+                    else:
+                        loopstation.unmute_track( track_id )
+            else:
+                # Cuando es opcion generalista
+                if is_record:
+                    recorder_controller.record = button.pressed
+
             button.change_color()
 
 

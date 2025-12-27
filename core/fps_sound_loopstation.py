@@ -246,7 +246,7 @@ class FPSSoundLoopstation():
                 self.logging.log( message=text, log_type="debug" )
 
 
-    def get_track(track_id):
+    def get_track(self, track_id):
         # Obtener pista
         return self.dict_track[track_id]
 
@@ -266,6 +266,12 @@ class FPSSoundLoopstation():
     def stop_track_loop(self, track_id):
         # Parar loop de pista
         self.dict_track[track_id]["loop"] = False
+
+    def mute_track(self, track_id):
+        self.dict_track[track_id]["mute"] = True
+
+    def unmute_track(self, track_id):
+        self.dict_track[track_id]["mute"] = False
 
 
     def play_track_sound(self, track_id):
