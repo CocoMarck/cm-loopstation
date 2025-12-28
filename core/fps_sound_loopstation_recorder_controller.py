@@ -89,7 +89,8 @@ class FPSSoundLoopstationRecorderController():
                 if count_fps >= self.fps_metronome.get_bars_to_fps(self.record_bars):
                     self.record = False
 
-            is_count_fps, stop_record = self.record, (not self.record)
+            is_count_fps = self.record
+            stop_record = (not self.record) and (metronome_signals['frame_before_the_bar'])
             if is_count_fps:
                 # Contar fps
                 self.record_count_fps += 1
