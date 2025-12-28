@@ -290,14 +290,56 @@ text_title.rect.x -= text_title.rect.width//2
 sprite_layer.add( text_title, layer=0 )
 text_group.add( text_title )
 
-# Metodo botones
+# Botones de grabar
 button_record = SpriteToggleButton(
-    font=font_normal, text="record", position=(SCENE_SIZE[0]//2, SCENE_SIZE[0]*0.15),
-    background_color="black", identifer="record"
+    font=font_normal, text="record", position=(0, SCENE_SIZE[1]*0.25),
+    background_color="black", identifer="record", pressed=recorder_controller.record
 )
-button_record.rect.x -= button_record.rect.width//2
 sprite_layer.add( button_record, layer=0 )
 button_group.add( button_record )
+
+button_limit_record = SpriteToggleButton(
+    font=font_normal, text="limit_record",
+    position=(button_record.rect.right+TILE_SIZE, SCENE_SIZE[1]*0.25),
+    background_color="black", identifer="limit_record", pressed=recorder_controller.limit_record
+)
+sprite_layer.add( button_limit_record, layer=0 )
+button_group.add( button_limit_record )
+
+## Centrar botones de grabar
+size_button_record = (
+    button_record.rect.x + button_limit_record.rect.x + button_limit_record.rect.width
+)
+
+button_record.rect.x += SCENE_SIZE[0]//2 -(size_button_record//2)
+button_limit_record.rect.x += SCENE_SIZE[0]//2 -(size_button_record//2)
+
+# Botones reproducción global
+number = 0
+buttons_rect = []
+buttons_posx = 0
+options = ["loop", "stop", "mute"]
+for text in options:
+    button = SpriteToggleButton(
+        font=font_normal, text=text, position=(0, SCENE_SIZE[1]*0.35),
+        background_color="black", identifer=text
+    )
+    buttons_rect.append( button.rect )
+    if number > 0:
+        buttons_posx += (buttons_rect[number].width + TILE_SIZE)
+        button.rect.x = buttons_posx
+    sprite_layer.add( button, layer=0 )
+    button_group.add( button )
+    if number == len(options)-1:
+        buttons_posx += button.rect.width
+        break
+    number += 1
+for rect in buttons_rect:
+    rect.x += SCENE_SIZE[0]//2 -(buttons_posx//2)
+
+
+
+
 
 tracks_container = SpriteSurf(
     size=[SCENE_SIZE[0], int(SCENE_SIZE[1]*0.55)], position=[0,SCENE_SIZE[1]*0.45], color='grey'
@@ -413,6 +455,7 @@ while running:
 
         # Determinar tipo de boton
         is_record = button.identifer == "record"
+        is_limit_record = button.identifer == "limit_record"
         is_loop = button.identifer == "loop"
         is_mute = button.identifer == "mute"
         is_focus = button.identifer == "focus"
@@ -450,6 +493,8 @@ while running:
                 # Cuando es opcion generalista
                 if is_record:
                     recorder_controller.record = button.pressed
+                if is_limit_record:
+                    recorder_controller.limit_record = button.pressed
 
             button.change_color()
 
