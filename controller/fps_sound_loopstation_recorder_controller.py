@@ -9,10 +9,10 @@ class FPSSoundLoopstationRecorderController():
         verbose=True, log_level="info", save_log=False
     ):
         '''
-        Controlador de Recorder, de preferncia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
+        Controlador de Recorder, de prefrencia un `MicrophoneRecorder()`, para adaptarlo a `FPSSoundLoopstation()`.
         Recomendado configurar el recorder y el loopstation antes de ponerlos como parametros.
 
-        Recorder no hacer calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
+        RecorderController no hace calculos referentes al loop y sus frames, nada de eso. Solo cosas referentes al recording.
 
         Ejemplo de uso:
         ```bash
@@ -52,6 +52,7 @@ class FPSSoundLoopstationRecorderController():
         Contar FPS de grabación y determinar cantidad de compases a grabar, y parar automaticamente.
         Este método, hace la chamba principal.
         '''
+        track_id = None
         some_track_is_in_focus = self.fps_sound_loopstation.some_temp_track_is_in_focus()
         saved_sound_limit_reached = (
             self.fps_sound_loopstation.temp_saved_sound_limit_reached() and
@@ -62,7 +63,9 @@ class FPSSoundLoopstationRecorderController():
             # Limite de grabaciones alcanzado. Y no hay track temp en focus.
             # Obtener numero de pista en focus
             self.record = False
+        if some_track_is_in_focus:
             number_of_track = self.fps_sound_loopstation.get_focused_temp_track_id()
+            track_id = number_of_track
 
 
         limit_record = self.limit_record and (self.record_bars > 0)
@@ -86,7 +89,8 @@ class FPSSoundLoopstationRecorderController():
                 if count_fps >= self.fps_metronome.get_bars_to_fps(self.record_bars):
                     self.record = False
 
-            is_count_fps, stop_record = self.record, (not self.record)
+            is_count_fps = self.record
+            stop_record = (not self.record) and (metronome_signals['frame_before_the_bar'])
             if is_count_fps:
                 # Contar fps
                 self.record_count_fps += 1
@@ -96,6 +100,7 @@ class FPSSoundLoopstationRecorderController():
                 # Forzar parar grabación y guardar
                 self.recorder.stop()
                 self.fps_sound_loopstation.save_track(
+                    track_id=track_id,
                     path=self.recorder.output_filename, loop=True, sample=False
                 )
 
@@ -125,6 +130,7 @@ class FPSSoundLoopstationRecorderController():
         if state != None:
             message = (
                 f"{state} | number of track {record_track_signals['number_of_track']}"
+                f" | limit record {record_track_signals['limit_record']}"
                 f" | is_count_fps {record_track_signals['is_count_fps']}"
                 f" | count fps {record_track_signals['count_fps']}"
                 f" | focus {record_track_signals['some_track_is_in_focus']}"
