@@ -318,7 +318,7 @@ button_limit_record.rect.x += SCENE_SIZE[0]//2 -(size_button_record//2)
 number = 0
 buttons_rect = []
 buttons_posx = 0
-options = ["loop", "stop", "mute"]
+options = ["reset", "loop", "mute"]
 for text in options:
     button = SpriteToggleButton(
         font=font_normal, text=text, position=(0, SCENE_SIZE[1]*0.35),
@@ -326,7 +326,7 @@ for text in options:
     )
     buttons_rect.append( button.rect )
     if number > 0:
-        buttons_posx += (buttons_rect[number].width + TILE_SIZE)
+        buttons_posx += ( buttons_rect[number-1].width+ TILE_SIZE*1)
         button.rect.x = buttons_posx
     sprite_layer.add( button, layer=0 )
     button_group.add( button )
@@ -459,6 +459,7 @@ while running:
         is_loop = button.identifer == "loop"
         is_mute = button.identifer == "mute"
         is_focus = button.identifer == "focus"
+        is_reset = button.identifer == "reset"
         is_track_option = button in dict_track_option.keys()
 
         if is_record and recorder_controller_signals["stop_record"]:
@@ -495,6 +496,20 @@ while running:
                     recorder_controller.record = button.pressed
                 if is_limit_record:
                     recorder_controller.limit_record = button.pressed
+                if is_loop:
+                    if button.pressed:
+                        loopstation.play_loop_of_all_tracks()
+                    else:
+                        loopstation.break_loop_of_all_tracks()
+                if is_mute:
+                    if button.pressed:
+                        loopstation.mute_all_tracks()
+                    else:
+                        loopstation.unmute_all_tracks()
+                if is_reset:
+                    if button.pressed:
+                        loopstation.reset_loop_of_all_tracks()
+
 
             button.change_color()
 
