@@ -1,7 +1,7 @@
 # Loopstation
 from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
-from core.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from config.paths import SAMPLE_FILES
 
 FPS = 20
