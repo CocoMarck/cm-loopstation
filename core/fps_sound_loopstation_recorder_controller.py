@@ -52,6 +52,7 @@ class FPSSoundLoopstationRecorderController():
         Contar FPS de grabación y determinar cantidad de compases a grabar, y parar automaticamente.
         Este método, hace la chamba principal.
         '''
+        track_id = None
         some_track_is_in_focus = self.fps_sound_loopstation.some_temp_track_is_in_focus()
         saved_sound_limit_reached = (
             self.fps_sound_loopstation.temp_saved_sound_limit_reached() and
@@ -62,7 +63,9 @@ class FPSSoundLoopstationRecorderController():
             # Limite de grabaciones alcanzado. Y no hay track temp en focus.
             # Obtener numero de pista en focus
             self.record = False
+        if some_track_is_in_focus:
             number_of_track = self.fps_sound_loopstation.get_focused_temp_track_id()
+            track_id = number_of_track
 
 
         limit_record = self.limit_record and (self.record_bars > 0)
@@ -96,6 +99,7 @@ class FPSSoundLoopstationRecorderController():
                 # Forzar parar grabación y guardar
                 self.recorder.stop()
                 self.fps_sound_loopstation.save_track(
+                    track_id=track_id,
                     path=self.recorder.output_filename, loop=True, sample=False
                 )
 

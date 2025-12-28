@@ -273,6 +273,12 @@ class FPSSoundLoopstation():
     def unmute_track(self, track_id):
         self.dict_track[track_id]["mute"] = False
 
+    def focus_track(self, track_id):
+        self.dict_track[track_id]["focus"] = True
+
+    def unfocus_track(self, track_id):
+        self.dict_track[track_id]["focus"] = False
+
 
     def play_track_sound(self, track_id):
         # Reproducir pista

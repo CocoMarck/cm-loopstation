@@ -347,6 +347,21 @@ def get_track_options():
         button_group.add( togglebutton_mute )
         dict_track_option.update( {togglebutton_mute : track_id} )
 
+        togglebutton_focus = SpriteToggleButton(
+            font=font_normal, text="focus",
+            position=[
+                tracks_container.rect.x + togglebutton_mute.rect.right,
+                tracks_container.rect.y + (TILE_SIZE*number)
+            ],
+            color = (255, 0, 255),
+            background_color = "black",
+            identifer="focus",
+            pressed=track['focus']
+        )
+        sprite_layer.add( togglebutton_focus, layer=0 )
+        button_group.add( togglebutton_focus )
+        dict_track_option.update( {togglebutton_focus : track_id} )
+
         number += 1
 
 
@@ -400,6 +415,7 @@ while running:
         is_record = button.identifer == "record"
         is_loop = button.identifer == "loop"
         is_mute = button.identifer == "mute"
+        is_focus = button.identifer == "focus"
         is_track_option = button in dict_track_option.keys()
 
         if is_record and recorder_controller_signals["stop_record"]:
@@ -420,11 +436,16 @@ while running:
                     else:
                         loopstation.break_track_loop( track_id )
                 if is_mute:
-                    track = loopstation.get_track( track_id )
                     if button.pressed:
                         loopstation.mute_track( track_id )
                     else:
                         loopstation.unmute_track( track_id )
+                if is_focus:
+                    if button.pressed:
+                        loopstation.focus_track( track_id )
+                    else:
+                        loopstation.unfocus_track( track_id )
+
             else:
                 # Cuando es opcion generalista
                 if is_record:
