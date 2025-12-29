@@ -255,6 +255,42 @@ class SpriteToggleButton( SpriteText ):
         self.change_color()
 
 
+class SpriteButton( SpriteToggleButton ):
+    def __init__( self, frames_pressed=1, **kwargs ):
+        super().__init__( **kwargs )
+
+        self.count_fps = 0
+        self.frames_pressed = frames_pressed
+
+    def update(self):
+        # No dejar precionado el boton, solo un frame.
+        if self.pressed:
+            if self.count_fps >= self.frames_pressed:
+                self.pressed = False
+                self.change_color()
+            self.count_fps += 1
+        else:
+            self.count_fps = 0
+
+
+
+class SpriteEntry( SpriteText ):
+    def __init__(self, text="", **kwargs ):
+        super().__init__( **kwargs )
+
+        self.text = text
+        self._current_text = None
+
+    def set_text(self, text):
+        self.text = text
+        self._current_text = text
+
+    def update(self):
+        if self._current_text != self.text:
+            self._current_text = self.text
+
+
+
 
 
 
@@ -263,6 +299,8 @@ sprite_layer = pygame.sprite.LayeredUpdates()
 circle_group = pygame.sprite.Group()
 text_group = pygame.sprite.Group()
 button_group = pygame.sprite.Group()
+entry_group = pygame.sprite.Group()
+update_group = pygame.sprite.Group()
 
 # Método, cración de circulos
 CIRCLE_SIZE = TILE_SIZE*2
@@ -318,9 +356,9 @@ button_limit_record.rect.x += SCENE_SIZE[0]//2 -(size_button_record//2)
 number = 0
 buttons_rect = []
 buttons_posx = 0
-options = ["reset", "loop", "mute"]
+options = ["play", "stop", "reset"]
 for text in options:
-    button = SpriteToggleButton(
+    button = SpriteButton(
         font=font_normal, text=text, position=(0, SCENE_SIZE[1]*0.35),
         background_color="black", identifer=text
     )
@@ -330,6 +368,7 @@ for text in options:
         button.rect.x = buttons_posx
     sprite_layer.add( button, layer=0 )
     button_group.add( button )
+    update_group.add( button )
     if number == len(options)-1:
         buttons_posx += button.rect.width
         break
@@ -460,6 +499,8 @@ while running:
         is_mute = button.identifer == "mute"
         is_focus = button.identifer == "focus"
         is_reset = button.identifer == "reset"
+        is_play = button.identifer == "play"
+        is_stop = button.identifer == "stop"
         is_track_option = button in dict_track_option.keys()
 
         if is_record and recorder_controller_signals["stop_record"]:
@@ -496,22 +537,21 @@ while running:
                     recorder_controller.record = button.pressed
                 if is_limit_record:
                     recorder_controller.limit_record = button.pressed
-                if is_loop:
-                    if button.pressed:
+                if button.pressed:
+                    if is_play:
                         loopstation.play_loop_of_all_tracks()
-                    else:
+                    if is_stop:
                         loopstation.break_loop_of_all_tracks()
-                if is_mute:
-                    if button.pressed:
-                        loopstation.mute_all_tracks()
-                    else:
-                        loopstation.unmute_all_tracks()
-                if is_reset:
-                    if button.pressed:
+                    if is_reset:
                         loopstation.reset_loop_of_all_tracks()
-
+                    if is_play or is_stop or is_reset:
+                        get_track_options()
 
             button.change_color()
+
+    for sprite in update_group:
+        sprite.update()
+
 
 
     for sprite in sprite_layer.sprites():
