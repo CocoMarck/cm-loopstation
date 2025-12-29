@@ -275,19 +275,30 @@ class SpriteButton( SpriteToggleButton ):
 
 
 class SpriteEntry( SpriteText ):
-    def __init__(self, text="", **kwargs ):
+    def __init__(self, **kwargs ):
         super().__init__( **kwargs )
 
-        self.text = text
         self._current_text = None
 
     def set_text(self, text):
         self.text = text
         self._current_text = text
+        self.set_all()
 
     def update(self):
         if self._current_text != self.text:
             self._current_text = self.text
+            self.set_all()
+
+
+
+class SpriteSlider( SpriteSurf ):
+    def __init__(self, value=0, max_value=100, **kwargs ):
+        super().__init__( **kwargs )
+
+        self.value = 0
+        self.max_value = 100
+        self.step = 0
 
 
 
@@ -391,7 +402,7 @@ def get_track_options():
         track = loopstation.dict_track[track_id]
 
         sprite_text = SpriteText(
-            font=font_normal, text=str(track_id),
+            font=font_normal, text=f"{track_id}-length:{round(track['bars'])}",
             position=[tracks_container.rect.x, tracks_container.rect.y + (TILE_SIZE*number)],
             color="black", identifer=track_id
         )
@@ -464,9 +475,12 @@ while running:
     # pygame.QUIT event means the user clicked X to close your window
     mouse_click = False
     mouse_position = pygame.mouse.get_pos()
+    text_input = None
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            text_input = event.unicode
         mouse_click = event.type == pygame.MOUSEBUTTONUP
 
     # fill the screen with a color to wipe away anything from last frame
@@ -541,7 +555,7 @@ while running:
                     if is_play:
                         loopstation.play_loop_of_all_tracks()
                     if is_stop:
-                        loopstation.break_loop_of_all_tracks()
+                        loopstation.stop_loop_of_all_tracks()
                     if is_reset:
                         loopstation.reset_loop_of_all_tracks()
                     if is_play or is_stop or is_reset:
