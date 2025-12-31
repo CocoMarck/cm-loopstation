@@ -1,4 +1,0 @@
-python3-kivy
-python3-pyaudio
-pathlib
-logger
