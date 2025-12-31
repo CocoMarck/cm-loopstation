@@ -1,13 +1,23 @@
 from functools import partial
-from core.text_util import ignore_text_filter, PREFIX_NUMBER
-from core.android_fps_loopstation import FPSLoopstation
 
+from core.text_util import ignore_text_filter, PREFIX_NUMBER
+
+from core.android_microphone_recorder import AndroidMicrophoneRecorder
+from core.fps_sound_loopstation import FPSSoundLoopstation
+from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+
+from core.fps_timer import FPSTimer
+
+from config.paths import SAMPLE_FILES
+
+import pathlib
+from android.storage import app_storage_path
+ANDROID_MUSIC_PATH = pathlib.Path(app_storage_path())
 
 
 # Constantes necesarias
 VOLUME = float(1)
 FPS = float(20)
-BPM_TO_SECONDS = int(60)
 
 
 ## Colores
@@ -42,187 +52,7 @@ from kivy.clock import Clock
 
 # Estilo molon
 from kivy.lang import Builder
-kv = '''
-#:import Window kivy.core.window.Window
-<BoxLayout>
-    size_hint_y: None
-<ScrollView>
-    size_hint_y: None
-
-
-<Label>:
-    font_size: min(Window.width, Window.height) * 0.05
-<TextInput>
-    font_size: min(Window.width, Window.height) * 0.05
-<ToggleButton>:
-    font_size: min(Window.width, Window.height) * 0.05
-
-
-<LoopstationWindow>:
-    record_button: record
-    label_timer: timer_text
-    label_tracks: tracks_text
-    label_tracks_number: tracks_number
-    label_compass_to_record: compass_to_record
-    label_center: center_label
-
-    label_bpm: text_bpm
-    textinput_bpm: input_bpm
-
-
-    grid_tracks: track_container
-
-    button_play: play
-    button_stop: stop
-    button_restart: restart
-
-    togglebutton_automatic_stop: automatic_stop
-    togglebutton_play_beat: option_play_beat
-
-    textinput_compass_to_stop: compass_to_stop
-    textinput_timer: timer_input
-    textinput_beats: beats_input
-
-    metronome_container: metronome_box
-
-    BoxLayout:
-        width: root.width
-        height: root.height*0.5
-        y: root.height*0.5
-
-        orientation: "vertical"
-
-        # Fila 1
-        ## circulos del Metronomo
-        BoxLayout:
-            id: metronome_box
-            orientation: "horizontal"
-
-        # Fila 2
-        BoxLayout:
-            orientation: "horizontal"
-
-            ## timer
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: timer_text
-                    text: "timer"
-                TextInput:
-                    id: timer_input
-
-            ## Beats
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    text: "beats"
-                TextInput:
-                    id: beats_input
-                    text: "0"
-
-            ## BPM
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: text_bpm
-                    text: "bpm"
-                TextInput:
-                    id: input_bpm
-                    text: "0"
-
-        # Fila 3
-        BoxLayout:
-            orientation: "horizontal"
-
-            ## compases a grabar
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: compass_to_record
-                    text: "bars"
-
-                TextInput:
-                    id: compass_to_stop
-                    text: "0"
-
-            ## tracks
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: tracks_text
-                    text: "tracks"
-                Label:
-                    id: tracks_number
-                    text: "0"
-
-        # Fila 4
-        BoxLayout:
-            ## Widgets
-            orientation: "horizontal"
-
-            # Col 1
-            ToggleButton:
-                id: option_play_beat
-                text: "play beat"
-                state: "down"
-
-            ## Grabar
-            ToggleButton:
-                id: record
-                text: "record"
-
-            ## Opcion Parar grabación por numero de compass
-            ToggleButton:
-                id: automatic_stop
-                text: "limit bars"
-
-        BoxLayout:
-            ## Widgets
-            orientation: "horizontal"
-
-            ## Opciones de reproducción de tracks
-            Button:
-                id: play
-                text: 'play'
-
-            Button:
-                id: stop
-                text: 'stop'
-
-            Button:
-                id: restart
-                text: 'restart'
-
-
-    # Segunda mitad de window
-    # Scroll | Contenedor de Pistas
-    ScrollView:
-        width: root.width
-        height: root.height*0.5
-        y: 0
-        do_scroll_x: True
-        do_scroll_y: True
-
-        # CheckBox Tracks
-        GridLayout:
-            id: track_container
-            cols: 6
-
-            size_hint_y: None
-            height: self.minimum_height
-
-            row_default_height: dp( min(Window.width, Window.height) * 0.1 )
-            row_force_default: True
-
-    # Timer
-    FloatLayout:
-        Label:
-            id: center_label
-            center_x: root.center_x
-            center_y: root.center_y
-            opacity: 1
-
-'''
+from kvstring import kv
 Builder.load_string(kv)
 
 
@@ -266,7 +96,7 @@ class LoopstationWindow(Widget):
     label_timer = ObjectProperty(None)
     label_tracks = ObjectProperty(None)
     label_tracks_number = ObjectProperty(None)
-    label_compass_to_record = ObjectProperty(None)
+    label_record_bars = ObjectProperty(None)
     label_bpm = ObjectProperty(None)
     label_center = ObjectProperty(None)
 
@@ -277,20 +107,33 @@ class LoopstationWindow(Widget):
     button_stop = ObjectProperty(None)
     button_restart = ObjectProperty(None)
 
-    togglebutton_automatic_stop = ObjectProperty(None)
+    togglebutton_limit_record = ObjectProperty(None)
     togglebutton_play_beat = ObjectProperty(None)
 
-    textinput_compass_to_stop = ObjectProperty(None)
-    textinput_timer = ObjectProperty(None)
-    textinput_bpm = ObjectProperty(None)
-    textinput_beats = ObjectProperty(None)
+    textinput_record_bars = ObjectProperty(None)
+    slider_timer = ObjectProperty(None)
+    slider_bpm = ObjectProperty(None)
+    slider_beats = ObjectProperty(None)
 
     metronome_container = ObjectProperty(None)
 
     circles = []
 
     # FPSLoopstation
-    fps_loopstation = FPSLoopstation()
+    loopstation = FPSSoundLoopstation(
+        fps=FPS, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
+        beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
+    )
+    metronome = loopstation.fps_metronome
+    recorder_controller = FPSSoundLoopstationRecorderController(
+        fps_sound_loopstation=loopstation, recorder=AndroidMicrophoneRecorder(),
+        recorder_path=ANDROID_MUSIC_PATH
+    )
+    recorder_controller.limit_record = True
+    recorder_controller.record_bars = 1
+
+    # Timer
+    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
 
 
     # Posicionar metronomo
@@ -298,46 +141,66 @@ class LoopstationWindow(Widget):
         # Establecer circulos
         self.circles.clear()
         self.metronome_container.clear_widgets()
-        for x in range(0, self.fps_loopstation.beats_per_bar+1):
+        for x in range(0, self.metronome.beats_per_bar+1):
             circle = LoopstationCircle()
             self.circles.append( circle )
             self.metronome_container.add_widget(circle)
 
 
+    def set_slider_bpm(self):
+        self.slider_bpm.value = self.metronome.bpm
+        self.label_bpm.text = str(self.metronome.bpm)
 
+    def set_slider_beats(self):
+        self.slider_beats.value = self.metronome.beats_per_bar
 
-    def set_textinput_timer(self):
-        self.textinput_timer.text = str( self.fps_loopstation.timer_in_seconds )
+    def set_slider_timer(self):
+        self.slider_timer.value = self.timer.seconds
 
-    def set_textinput_bpm(self):
-        self.textinput_bpm.text = str( self.fps_loopstation.bpm )
-
-    def set_textinput_compass_to_stop(self):
-        self.textinput_compass_to_stop.text = str( self.fps_loopstation.recorder_limit_in_bars )
-
-    def set_textinput_beats(self):
-        self.textinput_beats.text = str( self.fps_loopstation.beats_per_bar+1 )
+    def set_textinput_record_bars(self):
+        self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
 
     def set_togglebutton_play_beat(self):
         state = "up"
-        if self.fps_loopstation.play_beat:
+        if self.metronome.play_beat:
             state = "down"
         self.togglebutton_play_beat.state = state
 
-    def set_togglebutton_automatic_stop(self):
+    def set_togglebutton_limit_record(self):
         state = "normal"
-        if self.fps_loopstation.limit_recording:
+        if self.recorder_controller.limit_record:
             state = "down"
-        self.togglebutton_automatic_stop.state = state
+        self.togglebutton_limit_record.state = state
 
     def set_label_tracks_number(self):
-        self.label_tracks_number.text = str( self.fps_loopstation.count_temp_sound )
+        self.label_tracks_number.text = str(self.loopstation.count_temp_sound)
 
 
 
 
     def on_play_beat(self, obj, value):
-        self.fps_loopstation.play_beat = value == "down"
+        self.metronome.play_beat = value == "down"
+
+    def on_timer(self, obj, value):
+        self.timer.set_seconds( seconds=value )
+
+    def on_beats_per_bar(self, obj, value):
+        self.metronome.beats_per_bar = round(value)
+        self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
+        self.update_metronome_circles()
+        self.set_widget_track_options()
+
+
+    def on_bpm(self, obj, value):
+        self.metronome.bpm = round(value)
+        self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
+        self.label_bpm.text = str(self.metronome.bpm)
+        self.set_widget_track_options()
+
+
+
 
 
     def filter_text_to_number(self, textinput:str):
@@ -352,78 +215,41 @@ class LoopstationWindow(Widget):
             number = int(text)
         return number
 
-
-
-
-    def on_bpm(self, obj, text):
-        number = self.filter_text_to_number( text )
-        if number >= 10:
-            self.fps_loopstation.bpm = number
-            self.fps_loopstation.reset_looping()
-            self.set_textinput_bpm()
-        self.set_widget_track_options()
-
-
-    def on_beats(self, obj, text):
-        number = self.filter_text_to_number( text )
-        if number >= 2:
-            self.fps_loopstation.beats_per_bar = number-1
-            self.fps_loopstation.reset_looping()
-            self.update_metronome_circles()
-            self.set_textinput_beats()
-        self.set_widget_track_options()
-
-
-    def on_timer(self, obj, text):
+    def on_record_bars(self, obj, text):
         number = self.filter_text_to_number(text)
         if number > 0:
-            self.fps_loopstation.timer_in_seconds = number
-            self.fps_loopstation.update_timer_duration()
-            self.set_textinput_timer()
-        if number == 0:
-            self.fps_loopstation.timer_in_seconds = number
-            self.fps_loopstation.update_timer_duration()
-
-    def on_compass_to_stop(self, obj, text):
-        number = self.filter_text_to_number(text)
-        if number >= 0:
-            if number > 100:
-                number = 100
-            self.fps_loopstation.recorder_limit_in_bars = number
-            self.fps_loopstation.update_recorder_limit()
-            if number != 0:
-                self.set_textinput_compass_to_stop()
-        if not self.fps_loopstation.limit_recording:
-            self.fps_loopstation.recorder_limit_in_bars = 0
-            self.fps_loopstation.update_recorder_limit()
+            self.recorder_controller.record_bars = number
+            self.set_textinput_record_bars()
+        else:
+            obj.text = ""
 
 
-    def on_automatic_stop(self, obj, state):
-        self.fps_loopstation.limit_recording = state == "down"
-        self.set_togglebutton_automatic_stop()
 
-    def on_record(self, obj, state):
-        self.fps_loopstation.recording = state == "down"
+
+
+    def on_limit_record(self, obj, state):
+        self.recorder_controller.limit_record = state == "down"
+        self.set_togglebutton_limit_record()
 
 
 
 
     def on_track_loop(self, track_id, widget):
         if widget.state == "down":
-            self.fps_loopstation.play_track_loop( track_id=track_id )
+            self.loopstation.play_track_loop( track_id=track_id )
         else:
-            self.fps_loopstation.break_track_loop( track_id=track_id )
+            self.loopstation.break_track_loop( track_id=track_id )
 
     def on_track_mute(self, track_id, widget):
-        track = self.fps_loopstation.dict_track[track_id]
+        track = self.loopstation.get_track(track_id)
         track['mute'] = (widget.state == "down")
 
     def on_track_volume(self, track_id, widget, value):
-        track = self.fps_loopstation.dict_track[track_id]
+        track = self.loopstation.get_track(track_id)
         track['volume'] = value
 
     def on_track_focus(self, track_id, widget, active):
-        track = self.fps_loopstation.dict_track[track_id]
+        track = self.loopstation.get_track(track_id)
         track['focus'] = active
 
 
@@ -432,8 +258,8 @@ class LoopstationWindow(Widget):
         Establecer widgets
         '''
         self.grid_tracks.clear_widgets()
-        for track_id in self.fps_loopstation.dict_track.keys():
-            track = self.fps_loopstation.dict_track[track_id]
+        for track_id in self.loopstation.get_track_ids():
+            track = self.loopstation.get_track( track_id )
 
             label_name = Label( text=str(track_id) )
             self.grid_tracks.add_widget(label_name)
@@ -446,9 +272,7 @@ class LoopstationWindow(Widget):
             else:
                 state = "normal"
             togglebutton_loop = ToggleButton( text="loop", state=state )
-            togglebutton_loop.bind(
-                on_press=partial(self.on_track_loop, track_id)
-            )
+            togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
             self.grid_tracks.add_widget( togglebutton_loop )
 
             if track['mute']:
@@ -478,58 +302,55 @@ class LoopstationWindow(Widget):
 
 
     def on_play_loop_of_all_tracks(self, widget, state):
-        self.fps_loopstation.play_loop_of_all_tracks()
+        self.loopstation.play_loop_of_all_tracks()
         self.set_widget_track_options()
 
     def on_break_loop_of_all_tracks(self, widget, state):
-        self.fps_loopstation.break_loop_of_all_tracks()
+        self.loopstation.break_loop_of_all_tracks()
         self.set_widget_track_options()
 
     def on_reset_loop_of_all_tracks(self, widget, state):
-        self.fps_loopstation.reset_loop_of_all_tracks()
+        self.loopstation.reset_loop_of_all_tracks()
         self.set_widget_track_options()
 
 
 
 
     def init_the_essential(self):
-        self.fps_loopstation.fps = FPS
-        self.fps_loopstation.volume = VOLUME
-        self.fps_loopstation.set_play_mode_beat( "emphasis_on_first" )
-        self.fps_loopstation.play_beat = True
-        self.fps_loopstation.recorder_limit_in_bars = 1
-        self.fps_loopstation.bpm_limit = 200
-        self.fps_loopstation.beats_limit_per_bar = 7
-        self.fps_loopstation.timer_limit_in_seconds = 20
-        self.fps_loopstation.limit_recording = True
-        self.fps_loopstation.sample_sound_limit = 3
-        self.fps_loopstation.temp_sound_limit = 3
-        self.fps_loopstation.update_all_data()
-
         self.update_metronome_circles()
 
+        self.slider_beats.min = 1
+        self.slider_beats.max = self.metronome.beats_limit_per_bar
+        self.slider_beats.step = 1
+
+        self.slider_bpm.min = 30
+        self.slider_bpm.max = self.metronome.bpm_limit
+        self.slider_bpm.step = 10
+
+        self.slider_timer.max = 20
+        self.slider_timer.step = 1
+
         # Samples
-        #self.fps_loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
-        #self.fps_loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+        #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+        #self.loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
 
         # Establecer primer estado de los widgets
-        self.set_textinput_bpm()
-        self.set_textinput_timer()
-        self.set_textinput_compass_to_stop()
-        self.set_textinput_beats()
+        self.set_slider_bpm()
+        self.set_slider_beats()
+        self.set_slider_timer()
+        self.set_textinput_record_bars()
         self.set_togglebutton_play_beat()
-        self.set_togglebutton_automatic_stop()
+        self.set_togglebutton_limit_record()
         self.set_label_tracks_number()
         self.set_widget_track_options()
 
         # Bind
+        self.slider_beats.bind( value=self.on_beats_per_bar )
+        self.slider_timer.bind( value=self.on_timer )
+        self.slider_bpm.bind( value=self.on_bpm )
+        self.textinput_record_bars.bind( text=self.on_record_bars )
         self.togglebutton_play_beat.bind( state=self.on_play_beat )
-        self.textinput_bpm.bind( text=self.on_bpm )
-        self.textinput_beats.bind( text=self.on_beats )
-        self.textinput_timer.bind( text=self.on_timer )
-        self.textinput_compass_to_stop.bind( text=self.on_compass_to_stop )
-        self.togglebutton_automatic_stop.bind( state=self.on_automatic_stop )
-        self.record_button.bind( state=self.on_record )
+        self.togglebutton_limit_record.bind( state=self.on_limit_record )
         self.button_play.bind( state=self.on_play_loop_of_all_tracks )
         self.button_stop.bind( state=self.on_break_loop_of_all_tracks )
         self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
@@ -542,38 +363,48 @@ class LoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
-        signals = self.fps_loopstation.looping()
+        loopstation_signals = self.loopstation.update()
+        metronome_signals = loopstation_signals['metronome']
+        recorder_controller_signals = self.recorder_controller.update(
+            metronome_signals=metronome_signals
+        )
 
-        # Parando grabación | Poner en falso el togglebutton
-        if signals['recorder_signal']['stop_recording']:
+        # Cuando se para la grabación
+        if recorder_controller_signals["stop_record"]:
             self.record_button.state = "normal"
             self.set_widget_track_options()
-            self.set_label_tracks_number()
 
-        # Visual timer de grabación
-        if (
-            (not signals['timer_signal']['completed']) and
-            signals['timer_signal']['count_fps'] > 0
-        ):
-            self.label_center.text = str(
-                round(
-                    (self.fps_loopstation.timer_in_fps -signals['timer_signal']['count_fps']) /
-                    self.fps_loopstation.fps
-                )
-            )
+        # Timer | Record
+        timer_current_fps = 0
+        if self.record_button.state == "down":
+            if self.timer.activate and (not self.recorder_controller.record):
+                timer_signals = self.timer.update()
+                timer_current_fps = timer_signals['current_fps']
+                if timer_signals['timer_finished']:
+                    self.recorder_controller.record = True
+            else:
+                self.recorder_controller.record = True
         else:
-            self.label_center.text = ""
-
+            self.recorder_controller.record = False
+            self.timer.reset()
 
         # Metronomo | Visual
         for i in range( 0, len(self.circles) ):
-            if not self.fps_loopstation.current_beat == i:
+            if not metronome_signals['current_beat'] == i:
                 self.circles[i].color.rgb = RGB_OFF_TEMPO
 
-        if self.fps_loopstation.is_first_beat:
-            self.circles[self.fps_loopstation.current_beat].color.rgb = RGB_FIRST_TEMPO
-        elif self.fps_loopstation.first_frame_of_beat:
-            self.circles[self.fps_loopstation.current_beat].color.rgb = RGB_ANOTHER_TEMPO
+        if loopstation_signals['emphasis_of_beat']['emphasis']:
+            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
+        elif loopstation_signals['emphasis_of_beat']['neutral']:
+            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
+
+        # Visual Timer
+        if timer_current_fps > 0:
+            self.label_center.text = str(
+                round( (self.timer.seconds_in_fps-timer_current_fps) / FPS)
+            )
+        else:
+            self.label_center.text = ""
 
 
 

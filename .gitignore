@@ -2,4 +2,4 @@ __pycache__/
 .buildozer/
 *.pyc
 bin/
-*.spec
+#*.spec
