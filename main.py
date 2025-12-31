@@ -1,9 +1,12 @@
 from functools import partial
 
+from core.text_util import ignore_text_filter, PREFIX_NUMBER
+
 from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
-from core.fps_timer import FPSTimer
 from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+
+from core.fps_timer import FPSTimer
 
 from config.paths import SAMPLE_FILES
 
@@ -84,7 +87,7 @@ kv = '''
     togglebutton_limit_record: limit_record
     togglebutton_play_beat: option_play_beat
 
-    slider_record_bars: record_bars
+    textinput_record_bars: record_bars
     slider_timer: timer_slider
     slider_beats: beats_slider
 
@@ -282,7 +285,7 @@ class LoopstationWindow(Widget):
     togglebutton_limit_record = ObjectProperty(None)
     togglebutton_play_beat = ObjectProperty(None)
 
-    slider_record_bars = ObjectProperty(None)
+    textinput_record_bars = ObjectProperty(None)
     slider_timer = ObjectProperty(None)
     slider_bpm = ObjectProperty(None)
     slider_beats = ObjectProperty(None)
@@ -324,8 +327,11 @@ class LoopstationWindow(Widget):
     def set_slider_beats(self):
         self.slider_beats.value = self.metronome.beats_per_bar
 
+    def set_slider_timer(self):
+        self.slider_timer.value = self.timer.seconds
+
     def set_textinput_record_bars(self):
-        self.slider_record_bars.text = str(self.recorder_controller.record_bars)
+        self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
 
     def set_togglebutton_play_beat(self):
         state = "up"
@@ -348,6 +354,12 @@ class LoopstationWindow(Widget):
     def on_play_beat(self, obj, value):
         self.metronome.play_beat = value == "down"
 
+    def on_timer(self, obj, value):
+        self.timer.set_seconds( seconds=value )
+
+
+
+
 
     def filter_text_to_number(self, textinput:str):
         '''
@@ -360,6 +372,17 @@ class LoopstationWindow(Widget):
         else:
             number = int(text)
         return number
+
+    def on_record_bars(self, obj, text):
+        number = self.filter_text_to_number(text)
+        if number > 0:
+            self.recorder_controller.record_bars = number
+            self.set_textinput_record_bars()
+        else:
+            obj.text = ""
+
+
+
 
 
     def on_limit_record(self, obj, state):
@@ -456,6 +479,7 @@ class LoopstationWindow(Widget):
 
         self.slider_beats.max = self.metronome.beats_limit_per_bar
         self.slider_bpm.max = self.metronome.bpm_limit
+        self.slider_timer.max = 20
 
         # Samples
         #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
@@ -464,6 +488,7 @@ class LoopstationWindow(Widget):
         # Establecer primer estado de los widgets
         self.set_slider_bpm()
         self.set_slider_beats()
+        self.set_slider_timer()
         self.set_textinput_record_bars()
         self.set_togglebutton_play_beat()
         self.set_togglebutton_limit_record()
@@ -471,6 +496,8 @@ class LoopstationWindow(Widget):
         self.set_widget_track_options()
 
         # Bind
+        self.slider_timer.bind( value=self.on_timer )
+        self.textinput_record_bars.bind( text=self.on_record_bars )
         self.togglebutton_play_beat.bind( state=self.on_play_beat )
         self.togglebutton_limit_record.bind( state=self.on_limit_record )
         self.button_play.bind( state=self.on_play_loop_of_all_tracks )
