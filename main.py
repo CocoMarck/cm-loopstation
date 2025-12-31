@@ -48,186 +48,7 @@ from kivy.clock import Clock
 
 # Estilo molon
 from kivy.lang import Builder
-kv = '''
-#:import Window kivy.core.window.Window
-#<BoxLayout>
-    #size_hint_y: None
-    #height: dp( min(Window.width, Window.height)*0.1 )
-#<ScrollView>
-    #size_hint_y: None
-    #height: dp( min(Window.width, Window.height)*0.1 )
-
-
-<Label>:
-    font_size: min(Window.width, Window.height) * 0.05
-<TextInput>
-    font_size: min(Window.width, Window.height) * 0.05
-<ToggleButton>:
-    font_size: min(Window.width, Window.height) * 0.05
-
-
-<LoopstationWindow>:
-    record_button: record
-    label_timer: timer_text
-    label_tracks: tracks_text
-    label_tracks_number: tracks_number
-    label_record_bars: record_bars_text
-    label_center: center_label
-
-    label_bpm: text_bpm
-    slider_bpm: bpm_slider
-
-
-    grid_tracks: track_container
-
-    button_play: play
-    button_stop: stop
-    button_restart: restart
-
-    togglebutton_limit_record: limit_record
-    togglebutton_play_beat: option_play_beat
-
-    textinput_record_bars: record_bars
-    slider_timer: timer_slider
-    slider_beats: beats_slider
-
-    metronome_container: metronome_box
-
-    BoxLayout:
-        width: root.width
-        height: root.height*0.5
-        y: root.height*0.5
-
-        orientation: "vertical"
-
-        # Fila 1
-        ## circulos del Metronomo
-        BoxLayout:
-            id: metronome_box
-            orientation: "horizontal"
-
-        # Fila 2
-        BoxLayout:
-            orientation: "horizontal"
-
-            ## timer
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: timer_text
-                    text: "timer"
-                Slider:
-                    id: timer_slider
-
-            ## Beats
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    text: "beats"
-                Slider:
-                    id: beats_slider
-
-            ## BPM
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: text_bpm
-                    text: "bpm"
-                Slider:
-                    id: bpm_slider
-
-        # Fila 3
-        BoxLayout:
-            orientation: "horizontal"
-
-            ## compases a grabar
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: record_bars_text
-                    text: "bars"
-
-                TextInput:
-                    id: record_bars
-
-            ## tracks
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: tracks_text
-                    text: "tracks"
-                Label:
-                    id: tracks_number
-                    text: "0"
-
-        # Fila 4
-        BoxLayout:
-            ## Widgets
-            orientation: "horizontal"
-
-            # Col 1
-            ToggleButton:
-                id: option_play_beat
-                text: "play beat"
-                state: "down"
-
-            ## Grabar
-            ToggleButton:
-                id: record
-                text: "record"
-
-            ## Opcion Parar grabación por numero de compass
-            ToggleButton:
-                id: limit_record
-                text: "limit bars"
-
-        BoxLayout:
-            ## Widgets
-            orientation: "horizontal"
-
-            ## Opciones de reproducción de tracks
-            Button:
-                id: play
-                text: 'play'
-
-            Button:
-                id: stop
-                text: 'stop'
-
-            Button:
-                id: restart
-                text: 'restart'
-
-
-    # Segunda mitad de window
-    # Scroll | Contenedor de Pistas
-    ScrollView:
-        width: root.width
-        height: root.height*0.5
-        y: 0
-        do_scroll_x: True
-        do_scroll_y: True
-
-        # CheckBox Tracks
-        GridLayout:
-            id: track_container
-            cols: 6
-
-            size_hint_y: None
-            height: self.minimum_height
-
-            row_default_height: dp( min(Window.width, Window.height) * 0.1 )
-            row_force_default: True
-
-    # Timer
-    FloatLayout:
-        Label:
-            id: center_label
-            center_x: root.center_x
-            center_y: root.center_y
-            opacity: 1
-
-'''
+from kvstring import kv
 Builder.load_string(kv)
 
 
@@ -323,6 +144,7 @@ class LoopstationWindow(Widget):
 
     def set_slider_bpm(self):
         self.slider_bpm.value = self.metronome.bpm
+        self.label_bpm.text = str(self.metronome.bpm)
 
     def set_slider_beats(self):
         self.slider_beats.value = self.metronome.beats_per_bar
@@ -356,6 +178,16 @@ class LoopstationWindow(Widget):
 
     def on_timer(self, obj, value):
         self.timer.set_seconds( seconds=value )
+
+    def on_beats_per_bar(self, obj, value):
+        self.metronome.beats_per_bar = round(value)
+        self.metronome.reset_settings()
+        self.update_metronome_circles()
+
+    def on_bpm(self, obj, value):
+        self.metronome.bpm = round(value)
+        self.metronome.reset_settings()
+        self.label_bpm.text = str(self.metronome.bpm)
 
 
 
@@ -477,9 +309,16 @@ class LoopstationWindow(Widget):
     def init_the_essential(self):
         self.update_metronome_circles()
 
+        self.slider_beats.min = 1
         self.slider_beats.max = self.metronome.beats_limit_per_bar
+        self.slider_beats.step = 1
+
+        self.slider_bpm.min = 30
         self.slider_bpm.max = self.metronome.bpm_limit
+        self.slider_bpm.step = 10
+
         self.slider_timer.max = 20
+        self.slider_timer.step = 1
 
         # Samples
         #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
@@ -496,7 +335,9 @@ class LoopstationWindow(Widget):
         self.set_widget_track_options()
 
         # Bind
+        self.slider_beats.bind( value=self.on_beats_per_bar )
         self.slider_timer.bind( value=self.on_timer )
+        self.slider_bpm.bind( value=self.on_bpm )
         self.textinput_record_bars.bind( text=self.on_record_bars )
         self.togglebutton_play_beat.bind( state=self.on_play_beat )
         self.togglebutton_limit_record.bind( state=self.on_limit_record )
