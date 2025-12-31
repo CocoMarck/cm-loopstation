@@ -1,7 +1,6 @@
 from controller.logging_controller import LoggingController
 
 # Uso de para loopstation
-from .microphone_recorder import MicrophoneRecorder
 from .fps_metronome import (FPSMetronome, BPM_IN_SECONDS)
 from .sound_manager import SoundManager
 
