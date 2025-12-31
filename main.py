@@ -182,12 +182,17 @@ class LoopstationWindow(Widget):
     def on_beats_per_bar(self, obj, value):
         self.metronome.beats_per_bar = round(value)
         self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
         self.update_metronome_circles()
+        self.set_widget_track_options()
+
 
     def on_bpm(self, obj, value):
         self.metronome.bpm = round(value)
         self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
         self.label_bpm.text = str(self.metronome.bpm)
+        self.set_widget_track_options()
 
 
 
@@ -375,6 +380,7 @@ class LoopstationWindow(Widget):
             else:
                 self.recorder_controller.record = True
         else:
+            self.recorder_controller.record = False
             self.timer.reset()
 
         # Metronomo | Visual
