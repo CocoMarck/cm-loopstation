@@ -299,6 +299,7 @@ class SpriteSlider( SpriteSurf ):
         self.value = 0
         self.max_value = 100
         self.step = 0
+        self.porcent = 0
 
 
 
