@@ -1,7 +1,6 @@
 from controller.logging_controller import LoggingController
 
 # Uso de para loopstation
-from .microphone_recorder import MicrophoneRecorder
 from .fps_metronome import (FPSMetronome, BPM_IN_SECONDS)
 from .sound_manager import SoundManager
 
@@ -322,6 +321,14 @@ class FPSSoundLoopstation():
         # Parar sonido, y iniciar loop en todas las pistas
         for track_id in self.get_track_ids():
             self.reset_track_loop( track_id )
+
+    def mute_all_tracks(self):
+        for track_id in self.get_track_ids():
+            self.mute_track( track_id )
+
+    def unmute_all_tracks(self):
+        for track_id in self.get_track_ids():
+            self.unmute_track( track_id )
 
 
     def update_track_bars(self, track_id):

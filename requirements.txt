@@ -1,0 +1,9 @@
+# essentials
+kivy
+python3
+
+# pc
+pygame
+
+# android
+jnius
