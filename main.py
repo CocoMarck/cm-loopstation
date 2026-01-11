@@ -1,44 +1,25 @@
+from functools import partial
+
 from core.text_util import ignore_text_filter, PREFIX_NUMBER
-from utils import ResourceLoader
 
-resource_loader = ResourceLoader()
-TEMP_DIR = resource_loader.base_dir.joinpath('tmp')
-AUDIO_DIR = resource_loader.resources_dir.joinpath( 'audio' )
-TEMPO_DIR = AUDIO_DIR.joinpath( 'tempo' )
-SAMPLE_DIR = AUDIO_DIR.joinpath( 'sample' )
-
-DICT_SAMPLE_DIR = resource_loader.get_recursive_tree( SAMPLE_DIR )
-SAMPLE_FILES = DICT_SAMPLE_DIR['file']
-
-DICT_TEMPO_DIR = resource_loader.get_recursive_tree( TEMPO_DIR )
-TEMPO_FILES = DICT_TEMPO_DIR["file"]
-
-
-# Grabador de microfonillo
 from core.microphone_recorder import MicrophoneRecorder
+from core.fps_sound_loopstation import FPSSoundLoopstation
+from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+
+from core.fps_timer import FPSTimer
+
+from config.paths import SAMPLE_FILES
+
 
 # Constantes necesarias
-VOLUME = float(0.2)
+VOLUME = float(1)
 FPS = float(20)
-BPM_TO_SECONDS = int(60)
 
 
-## Sonido
-from kivy.core.audio import SoundLoader
-SOUNDS = []
-
-TEMPO_SOUNDS = []
-for audio in TEMPO_FILES:
-    TEMPO_SOUNDS.append( SoundLoader.load( str(audio) ) )
-SOUNDS.extend(TEMPO_SOUNDS)
-
-SAMPLE_SOUNDS = []
-for audio in SAMPLE_FILES:
-    SAMPLE_SOUNDS.append( SoundLoader.load( str(audio) ) )
-SOUNDS.extend(SAMPLE_SOUNDS)
-
-for sound in SOUNDS:
-    sound.volume = VOLUME
+## Colores
+RGB_OFF_TEMPO = [1,1,1]
+RGB_FIRST_TEMPO = [0,1,0]
+RGB_ANOTHER_TEMPO = [1,0,0]
 
 
 # Primer forzar FPS
@@ -65,6 +46,12 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 
 
+# Estilo molon
+from kivy.lang import Builder
+from kvstring import kv
+Builder.load_string(kv)
+
+
 
 
 # Objeto criculos del metronomo
@@ -84,8 +71,14 @@ class LoopstationCircle(Widget):
         '''
         Necesario para actualizar graficos, se usa en automatico.
         '''
-        self.ellipse.pos = self.pos
-        self.ellipse.size = self.size
+        min_size = min(self.size)
+        good_size = [ min_size, min_size ]
+        self.ellipse.size = good_size
+
+        good_pos = [0, 0]
+        good_pos[0] = self.x + (self.width -good_size[0]) / 2
+        good_pos[1] = self.y + (self.height -good_size[1]) / 2
+        self.ellipse.pos = good_pos
 
 
 # Ventana, el loop del porgrama
@@ -98,8 +91,10 @@ class LoopstationWindow(Widget):
 
     label_timer = ObjectProperty(None)
     label_tracks = ObjectProperty(None)
-    label_compass_to_record = ObjectProperty(None)
+    label_tracks_number = ObjectProperty(None)
+    label_record_bars = ObjectProperty(None)
     label_bpm = ObjectProperty(None)
+    label_center = ObjectProperty(None)
 
 
     grid_tracks = ObjectProperty(None)
@@ -108,353 +103,100 @@ class LoopstationWindow(Widget):
     button_stop = ObjectProperty(None)
     button_restart = ObjectProperty(None)
 
-    togglebutton_automatic_stop = ObjectProperty(None)
+    togglebutton_limit_record = ObjectProperty(None)
     togglebutton_play_beat = ObjectProperty(None)
 
-    textinput_compass_to_stop = ObjectProperty(None)
-    textinput_timer = ObjectProperty(None)
-    textinput_bpm = ObjectProperty(None)
-    textinput_beats = ObjectProperty(None)
+    textinput_record_bars = ObjectProperty(None)
+    slider_timer = ObjectProperty(None)
+    slider_bpm = ObjectProperty(None)
+    slider_beats = ObjectProperty(None)
 
     metronome_container = ObjectProperty(None)
 
-    # Variables para el metrnomo
-    bpm = 120
-    beats = 4 # Cantidad de tiempos
-    count_beats = 0 # Contador de tiempos
-    beat_in_fps = 0 # Tiempo individual.
-    count = 0
-    compass_in_fps = 0
-    play_beat = False
-
-    # Para dibujar el tempo
     circles = []
 
-    # Cambio de tempo y sonidotos
-    change_tempo = False
-    change_compass = False
-    first_beat = False
-    last_beat = False
-    init_tempo = False
-
-    # Diccionario para sonidos a reproducir
-    track_name = str
-    dict_tracks = {}
-    track_count_repeated_times = {}
-
-    # Grabar
-    microphone_recorder = MicrophoneRecorder(
-        output_filename=str( TEMP_DIR.joinpath("audio-test-1.wav") )
+    # FPSLoopstation
+    loopstation = FPSSoundLoopstation(
+        fps=FPS, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
+        beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
     )
-    record_files_count = 0
-    record_files_limit = 4
-    record_limit = False
-    record_count = 0
-    record = False
+    metronome = loopstation.fps_metronome
+    recorder_controller = FPSSoundLoopstationRecorderController(
+        fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+    )
+    recorder_controller.limit_record = True
+    recorder_controller.record_bars = 1
 
-    # Temporizador
-    timer_completed = False
-    timer_in_seconds = 0
-    timer_in_fps = 0
-    timer_count = 0
+    # Timer
+    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
 
-    # Detener segun x cantidad de compases
-    record_compass_to_stop = 4
-    record_force_stop = False
-    record_automatic_stop = False
-
-    current_save_sound_key = None
-
-    # Diccionario | Contenedor de tracks
-    dict_track_options = {}
-    dict_track_values = {}
-
-    # Debug
-    verbose = True
-
-
-    def on_size(self, *args):
-        '''
-        Se llama automáticamente cada vez que cambia el tamaño del widget
-        '''
-        self.set_circle_position(0)
-
-    def debug(self, text):
-        if self.verbose:
-            print(text)
 
     # Posicionar metronomo
     def update_metronome_circles(self):
         # Establecer circulos
         self.circles.clear()
         self.metronome_container.clear_widgets()
-        for x in range(0, self.beats):
+        for x in range(0, self.metronome.beats_per_bar+1):
             circle = LoopstationCircle()
             self.circles.append( circle )
             self.metronome_container.add_widget(circle)
 
-    def set_circle_position(self, dt):
-        pass
-        '''
-        # Posicionar
-        first_position = [self.width * 0.4, self.height * 0.75]
-        multipler = 0
-        for circle in self.circles:
-            circle.x = first_position[0] + circle.width * multipler
-            circle.y = first_position[1]
-            multipler += 1
-        '''
+
+    def set_slider_bpm(self):
+        self.slider_bpm.value = self.metronome.bpm
+        self.label_bpm.text = str(self.metronome.bpm)
+
+    def set_slider_beats(self):
+        self.slider_beats.value = self.metronome.beats_per_bar
+
+    def set_slider_timer(self):
+        self.slider_timer.value = self.timer.seconds
+
+    def set_textinput_record_bars(self):
+        self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
+
+    def set_togglebutton_play_beat(self):
+        state = "up"
+        if self.metronome.play_beat:
+            state = "down"
+        self.togglebutton_play_beat.state = state
+
+    def set_togglebutton_limit_record(self):
+        state = "normal"
+        if self.recorder_controller.limit_record:
+            state = "down"
+        self.togglebutton_limit_record.state = state
+
+    def set_label_tracks_number(self):
+        self.label_tracks_number.text = str(self.loopstation.count_temp_sound)
 
 
 
-    def play_sound(self):
-        if self.track_name in self.dict_tracks.keys():
-            self.dict_tracks[self.track_name][1] = True
-
-    def stop_sound(self):
-        if self.track_name in self.dict_tracks.keys():
-            self.dict_tracks[self.track_name][1] = False
-
-
-    def set_dict_track_options(self):
-        self.dict_track_options.clear()
-        for key in self.dict_tracks.keys():
-            self.dict_track_options.update( {key: []} )
-
-
-    def set_widget_tracks(self):
-        '''
-        Agragar widgets al scroll
-
-        Se llama al inicio del probrama, y cada stop de grabación.
-        '''
-        self.set_dict_track_options()
-        self.grid_tracks.clear_widgets()
-        for key in self.dict_tracks.keys():
-            sound_values = self.dict_tracks[key]
-
-            label_name = Label( text=str(key) )
-            self.grid_tracks.add_widget(label_name)
-
-            label_compass = Label( text=f"compass: {round(sound_values['repeated-times'])}" )
-            self.grid_tracks.add_widget( label_compass )
-
-
-            if sound_values['loop']:
-                state, text = "down", "play"
-            else:
-                state, text= "normal", "stop"
-            togglebutton_play = ToggleButton( text=text, state=state )
-            self.grid_tracks.add_widget( togglebutton_play )
-
-            if sound_values['mute']:
-                state = "down"
-            else:
-                state = "normal"
-            togglebutton_mute = ToggleButton( text="mute", state=state )
-            self.grid_tracks.add_widget( togglebutton_mute )
-
-            slider_volume = Slider(
-                min=0, max=100, value=int(sound_values['volume']*100), orientation='horizontal'
-            )
-            self.grid_tracks.add_widget( slider_volume )
-
-            checkbox = CheckBox( group="focus" )
-            checkbox.active = sound_values['focus']
-            self.grid_tracks.add_widget(checkbox)
-
-            self.dict_track_options[key] = [
-                togglebutton_play, togglebutton_mute, slider_volume, checkbox
-            ]
-
-
-    def set_dict_track_values(self):
-        '''
-        Establecer el reproducir o no
-        name:str, play:bool, mute:bool, volume:float, focus:bool
-        '''
-        self.dict_track_values.clear()
-        for key in self.dict_track_options.keys():
-            togglebutton_play, togglebutton_mute, slider_volume, checkbox = (
-                self.dict_track_options[key]
-            )
-            nested_dict = {
-                'play': togglebutton_play.state == 'down',
-                'mute': togglebutton_mute.state == 'down',
-                'volume': slider_volume.value_normalized,
-                'focus': checkbox.state == 'down'
-            }
-            self.dict_track_values.update( {key: nested_dict} )
-
-
-
-    def update_compass(self):
-        '''
-        Establecer compass basado en fps
-        '''
-        self.compass_in_fps = self.beat_in_fps * self.beats
-
-    def update_timer(self):
-        '''
-        Establecer timer basado en fps
-        '''
-        self.timer_in_fps = self.timer_in_seconds*FPS
-
-    def init_track_count_repeated_times(self):
-        self.track_count_repeated_times.clear()
-        for key in self.dict_tracks.keys():
-            self.track_count_repeated_times.update( {key: 0} )
-
-    def get_sound_repetition_limit(self, name):
-        return self.dict_tracks[name]['repeated-times']*self.compass_in_fps
-
-    def get_sound_reached_repetition_limit(self, name):
-        limit = self.get_sound_repetition_limit(name)
-        count = self.track_count_repeated_times[name]
-        return count >= limit
-
-
-    def get_times_in_loop(self, seconds):
-        return ( seconds / (self.compass_in_fps/FPS) )
-
-
-    def save_sound(
-            self, name:str, sound:SoundLoader, loop=False, sample=False
-        ):
-        good_name = isinstance(name, str)
-        good_sound = True #isinstance(sound, SoundLoader)
-        good_loop = isinstance(loop, bool)
-
-        save = good_name and good_sound and good_loop
-        if save:
-            length = sound.length
-            self.dict_tracks.update(
-                {name:
-                  {
-                   'sound': sound,
-                   'length': length,
-                   'source': sound.source,
-                   'loop': loop,
-                   'volume': VOLUME,
-                   'mute': False,
-                   'sample': sample,
-                   'repeated-times': self.get_times_in_loop( length ),
-                   'focus': False
-                  }
-                }
-            )
-
-        self.init_track_count_repeated_times()
-
-        return save
-
-    def update_tracks(self):
-        for key in self.dict_tracks.keys():
-            values = self.dict_tracks[key]
-            values['sound'].stop()
-            values['repeated-times'] = self.get_times_in_loop( values['length'] )
-            values['volume'] = VOLUME
-            values['mute'] = False
-
-
-    def set_bpm(self):
-        '''
-        Establecer bpm, y inicializar todo.
-        '''
-        if self.bpm <= 0:
-            self.bpm = 1
-        self.beat_in_fps = FPS * (BPM_TO_SECONDS / self.bpm)
-        self.update_compass()
-        self.count = 0
-        self.count_beats = 0
-        self.update_tracks()
-        self.init_track_count_repeated_times()
-        self.set_widget_tracks()
-
-
-    def update_beats(self):
-        '''
-        Actualizar beats, inicializar y actualizar todo lo relacionado
-        '''
-        self.count = 0
-        self.count_beats = 0
-        self.update_compass()
-        self.update_metronome_circles()
-        self.update_tracks()
-        self.init_track_count_repeated_times()
-        self.set_widget_tracks()
-
-
-
-    def init_the_essential(self):
-        self.update_metronome_circles()
-
-        # Obtener datos adecuados
-        self.set_bpm()
-        self.update_timer()
-
-        # Establecer contador de repetición
-        self.init_track_count_repeated_times()
-
-        # Agregar samples
-        #self.save_sound( "party", SAMPLE_SOUNDS[0], False, sample=True )
-        #self.save_sound( "macaco", SAMPLE_SOUNDS[1], False, sample=True )
-        #self.save_sound( "do-scale", SAMPLE_SOUNDS[2], False, sample=True )
-        #self.save_sound( "metro", SAMPLE_SOUNDS[3], False, sample=True )
-
-        # Reproductor de pistas
-        self.set_widget_tracks()
-
-        # Widgets
-        self.on_play_beat(
-            self.togglebutton_play_beat, self.togglebutton_play_beat.state
-        )
-
-
-        self.textinput_compass_to_stop.text = str(self.record_compass_to_stop)
-        self.textinput_bpm.text = str(self.bpm)
-        self.textinput_beats.text = str(self.beats)
-
-        self.on_bpm(self.textinput_bpm, self.textinput_bpm.text)
-        self.set_record(self.record_button, self.record_button.state)
-        self.on_record_compsss_to_stop(
-            self.textinput_compass_to_stop, self.textinput_compass_to_stop.text
-        )
-        self.on_timer( self.textinput_timer, self.textinput_timer.text)
-
-        # Bind widgets
-        self.record_button.bind(state=self.set_record)
-        self.togglebutton_automatic_stop.bind(state=self.on_record_automatic_stop)
-        self.togglebutton_play_beat.bind(state=self.on_play_beat)
-
-        self.textinput_compass_to_stop.bind(text=self.on_record_compsss_to_stop)
-        self.textinput_bpm.bind(text=self.on_bpm)
-        self.textinput_timer.bind(text=self.on_timer)
-        self.textinput_beats.bind(text=self.on_beats)
-
-        self.button_play.bind(state=self.on_tracks_play)
-        self.button_stop.bind(state=self.on_tracks_stop)
-        self.button_restart.bind(state=self.on_tracks_restart)
-
-
-
-    def set_record(self, obj, value):
-        '''
-        Variable que indica el estado de la grabación
-        '''
-        self.record = value == "down"
-        if self.record:
-            obj.text = "stop record"
-        else:
-            obj.text = "record"
 
     def on_play_beat(self, obj, value):
-        self.play_beat = value == "down"
+        self.metronome.play_beat = value == "down"
+
+    def on_timer(self, obj, value):
+        self.timer.set_seconds( seconds=value )
+
+    def on_beats_per_bar(self, obj, value):
+        self.metronome.beats_per_bar = round(value)
+        self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
+        self.update_metronome_circles()
+        self.set_widget_track_options()
 
 
-    def on_record_automatic_stop(self, obj, value):
-        '''Establecer parar grabación de forma automatica'''
-        self.record_automatic_stop = value == "down"
+    def on_bpm(self, obj, value):
+        self.metronome.bpm = round(value)
+        self.metronome.reset_settings()
+        self.loopstation.update_all_track_bars()
+        self.label_bpm.text = str(self.metronome.bpm)
+        self.set_widget_track_options()
+
+
+
+
 
     def filter_text_to_number(self, textinput:str):
         '''
@@ -468,69 +210,145 @@ class LoopstationWindow(Widget):
             number = int(text)
         return number
 
-    def on_record_compsss_to_stop(self, obj, text):
+    def on_record_bars(self, obj, text):
+        number = self.filter_text_to_number(text)
+        if number > 0:
+            self.recorder_controller.record_bars = number
+            self.set_textinput_record_bars()
+        else:
+            obj.text = ""
+
+
+
+
+
+    def on_limit_record(self, obj, state):
+        self.recorder_controller.limit_record = state == "down"
+        self.set_togglebutton_limit_record()
+
+
+
+
+    def on_track_loop(self, track_id, widget):
+        if widget.state == "down":
+            self.loopstation.play_track_loop( track_id=track_id )
+        else:
+            self.loopstation.break_track_loop( track_id=track_id )
+
+    def on_track_mute(self, track_id, widget):
+        track = self.loopstation.get_track(track_id)
+        track['mute'] = (widget.state == "down")
+
+    def on_track_volume(self, track_id, widget, value):
+        track = self.loopstation.get_track(track_id)
+        track['volume'] = value
+
+    def on_track_focus(self, track_id, widget, active):
+        track = self.loopstation.get_track(track_id)
+        track['focus'] = active
+
+
+    def set_widget_track_options(self):
         '''
-        Establecer la cantidad de compases a grabar
+        Establecer widgets
         '''
-        self.record_compass_to_stop = self.filter_text_to_number( text )
-        if self.record_compass_to_stop == 0:
-            obj.text = ""
-        else:
-            obj.text = str(self.record_compass_to_stop)
+        self.grid_tracks.clear_widgets()
+        for track_id in self.loopstation.get_track_ids():
+            track = self.loopstation.get_track( track_id )
 
-    def on_bpm(self, obj, text):
-        self.bpm = self.filter_text_to_number( text )
-        if self.bpm == 0 or self.bpm > 200:
-            self.bpm == 1
-            obj.text = ""
-        else:
-            obj.text = str(self.bpm)
-        self.set_bpm()
+            label_name = Label( text=str(track_id) )
+            self.grid_tracks.add_widget(label_name)
 
-    def on_timer(self, obj, text):
-        self.timer_in_seconds = self.filter_text_to_number( text )
-        if self.timer_in_seconds > 30:
-            self.timer_in_seconds = 0
+            label_bars = Label( text=f"bars: {round(track['bars'])}" )
+            self.grid_tracks.add_widget( label_bars )
 
-        if self.timer_in_seconds == 0:
-            obj.text = ""
-        else:
-            obj.text = str(self.timer_in_seconds)
-        self.update_timer()
+            if track['loop']:
+                state = "down"
+            else:
+                state = "normal"
+            togglebutton_loop = ToggleButton( text="loop", state=state )
+            togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
+            self.grid_tracks.add_widget( togglebutton_loop )
 
-    def on_beats(self, obj, text):
-        self.beats = self.filter_text_to_number( text )
-        if self.beats <= 1 or self.beats >= 10:
-            self.beats = 2
-            obj.text = ""
-        else:
-            obj.text = str(self.beats)
-        self.update_beats
+            if track['mute']:
+                state = "down"
+            else:
+                state = "normal"
+            togglebutton_mute = ToggleButton( text="mute", state=state )
+            togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
+            self.grid_tracks.add_widget( togglebutton_mute )
 
-    def on_tracks_play(self, obj, state):
-        if state == "down":
-            for key in self.dict_tracks.keys():
-                sound = self.dict_tracks[key]
-                sound['loop'] = True
-            self.set_widget_tracks()
-            self.init_track_count_repeated_times()
+            slider_volume = Slider(
+                min=0, max=100, value=int(track['volume']*100), orientation='horizontal'
+            )
+            slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
+            self.grid_tracks.add_widget( slider_volume )
 
-    def on_tracks_stop(self, obj, state):
-        if state == "down":
-            for key in self.dict_tracks.keys():
-                sound = self.dict_tracks[key]
-                sound['loop'] = False
-            self.set_widget_tracks()
-            self.init_track_count_repeated_times()
+            if track['sample']:
+                label = Label( text=str("sample") )
+                self.grid_tracks.add_widget(label)
+            else:
+                checkbox = CheckBox( group="focus" )
+                checkbox.active = track['focus']
+                checkbox.bind( active=partial(self.on_track_focus, track_id) )
+                self.grid_tracks.add_widget(checkbox)
 
-    def on_tracks_restart(self, obj, state):
-        if state == "down":
-            for key in self.dict_tracks.keys():
-                sound = self.dict_tracks[key]
-                sound['sound'].stop()
-                sound['loop'] = True
-            self.set_widget_tracks()
-            self.init_track_count_repeated_times()
+
+
+
+    def on_play_loop_of_all_tracks(self, widget, state):
+        self.loopstation.play_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+    def on_break_loop_of_all_tracks(self, widget, state):
+        self.loopstation.break_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+    def on_reset_loop_of_all_tracks(self, widget, state):
+        self.loopstation.reset_loop_of_all_tracks()
+        self.set_widget_track_options()
+
+
+
+
+    def init_the_essential(self):
+        self.update_metronome_circles()
+
+        self.slider_beats.min = 1
+        self.slider_beats.max = self.metronome.beats_limit_per_bar
+        self.slider_beats.step = 1
+
+        self.slider_bpm.min = 30
+        self.slider_bpm.max = self.metronome.bpm_limit
+        self.slider_bpm.step = 10
+
+        self.slider_timer.max = 20
+        self.slider_timer.step = 1
+
+        # Samples
+        #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+        #self.loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+
+        # Establecer primer estado de los widgets
+        self.set_slider_bpm()
+        self.set_slider_beats()
+        self.set_slider_timer()
+        self.set_textinput_record_bars()
+        self.set_togglebutton_play_beat()
+        self.set_togglebutton_limit_record()
+        self.set_label_tracks_number()
+        self.set_widget_track_options()
+
+        # Bind
+        self.slider_beats.bind( value=self.on_beats_per_bar )
+        self.slider_timer.bind( value=self.on_timer )
+        self.slider_bpm.bind( value=self.on_bpm )
+        self.textinput_record_bars.bind( text=self.on_record_bars )
+        self.togglebutton_play_beat.bind( state=self.on_play_beat )
+        self.togglebutton_limit_record.bind( state=self.on_limit_record )
+        self.button_play.bind( state=self.on_play_loop_of_all_tracks )
+        self.button_stop.bind( state=self.on_break_loop_of_all_tracks )
+        self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
 
 
 
@@ -540,288 +358,65 @@ class LoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
-
-        # Relacionado con el metronomo.
-        self.change_tempo = self.count >= self.beat_in_fps
-
-        ## Cambio de tempo
-        if self.change_tempo:
-            self.count = 0
-            self.count_beats += 1
-
-        ## Inicio de tempo
-        self.init_tempo = self.count == 0
-
-        ## Fin de compas
-        self.change_compass = self.count_beats == self.beats
-        if self.change_compass:
-            self.count = 0
-            self.count_beats = 0
-
-
-        # Inicio de tempo | Tipo de inicio de tempo
-        self.first_beat, self.last_beat, self.other_beat = False, False, False
-        if self.init_tempo:
-            self.first_beat = self.count_beats == 0
-            self.last_beat = self.count_beats == self.beats-1
-            self.other_beat = not(self.first_beat and self.last_beat)
-
-
-        # Grabar | Sonidos grabados
-        # Esta en bind -> `self.record = self.record_button.state == "down"`
-
-        self.first_frame_of_recording = (
-         self.record and self.timer_completed and self.record_count == 0 and self.first_beat
+        loopstation_signals = self.loopstation.update()
+        metronome_signals = loopstation_signals['metronome']
+        recorder_controller_signals = self.recorder_controller.update(
+            metronome_signals=metronome_signals
         )
 
-        ## Limite de record
-        self.record_limit = self.record_files_count >= self.record_files_limit
-
-        # Timer
-        self.timer_completed = self.timer_count >= self.timer_in_fps
-        if self.record:
-            if not self.timer_completed:
-                self.timer_count += 1
-        else:
-            self.timer_count = 0
-
-
-        # Grabar o guardar grabación
-        if self.first_frame_of_recording:
-            ## Solo guardar cuando esta en focus, o no esta en alcanzado limite de tracks
-            ## Se establece nombre de archivo.
-            sound_source = None
-            for key in self.dict_tracks.keys():
-                sound = self.dict_tracks[key]
-                if sound['focus'] == True and not sound['sample']:
-                    sound_source = sound['source']
-                    self.current_save_sound_key = key
-                    break
-            new_sound = sound_source == None and not self.record_limit
-            if new_sound:
-                self.current_save_sound_key = f"track-{self.record_files_count}"
-                sound_source = str( TEMP_DIR.joinpath(f"{self.current_save_sound_key}.wav") )
-
-            self.microphone_recorder.WAVE_OUTPUT_FILENAME = sound_source
-
-            if sound_source != None:
-                self.microphone_recorder.record()
-                if new_sound:
-                    self.record_files_count += 1
-
-        if (
-            self.record == False and self.microphone_recorder.state == "record"
-            and self.first_beat
-        ):
-            self.microphone_recorder.stop()
-            sound_microphone = SoundLoader.load(self.microphone_recorder.WAVE_OUTPUT_FILENAME)
-            sound_microphone.volume = VOLUME
-            self.save_sound( self.current_save_sound_key, sound_microphone, True, sample=False )
-
-            ## Actualizar lista de pistas
-            self.set_widget_tracks()
-
-
-        # Grabar | Cuenta los frames que sucedan al grabar
-        if self.microphone_recorder.state == "record":
-            self.record_count += 1
-        else:
-            self.record_count = 0
-
-
-        # Grabar | Forzar detencción
-        self.record_force_stop = (
-            (self.record_count >= self.record_compass_to_stop*self.compass_in_fps) and
-            (self.record_compass_to_stop >= 1) and self.record_automatic_stop
-        )
-        if self.record_force_stop:
+        # Cuando se para la grabación
+        if recorder_controller_signals["stop_record"]:
             self.record_button.state = "normal"
+            self.set_widget_track_options()
 
-
-        # Sonido | Reproducir o no pista/sample
-        debug_play_sounds = []
-        for key in self.dict_tracks.keys():
-            # Variables necesarias
-            sound = self.dict_tracks[key]['sound']
-            loop = self.dict_tracks[key]['loop']
-            repeated_times = self.dict_tracks[key]['repeated-times']
-
-            # Reproducción Modo contador de repeticione
-            ## Determinar el contar o no
-            count_play = repeated_times > 0
-
-            if count_play and loop:
-                ## Repeticiones | Sonido se reproduce, contador de reprodución
-                #if add_seconds:
-                debug_add_sounds = False
-                if sound.state == "stop" and self.first_beat:
-                    sound.play()
-                    debug_add_sounds = True
-
-                if sound.state == "play":
-                    self.track_count_repeated_times[key] += 1
-                count = self.track_count_repeated_times[key]
-
-                ## Alcanzo el limite
-                if (
-                    (self.get_sound_reached_repetition_limit(key) and self.first_beat) or
-                    self.first_frame_of_recording
-                ):
-                    debug_add_sounds = True
-                    self.track_count_repeated_times[key] = 0
-                    sound.stop()
-                    sound.play()
-
-                ## Debug | Determinar agregar soniditos
-                if debug_add_sounds:
-                    debug_play_sounds.append(
-                     [
-                      sound.source, count, self.get_sound_repetition_limit(key)
-                     ]
-                    )
-
-            # Reproducción por unicamente detección de tempo
-            if loop and not count_play:
-                if self.first_frame_of_recording:
-                    sound.stop()
-                    sound.play()
-                elif sound.state == "stop" and self.first_beat:
-                    # Reproducir
-                    debug_play_sounds.append( [sound.source, 0, 0] )
-                    sound.play()
-
-
-
-
-
-
-        # Sonido | Metrónomo
-        # Detección frame 1, del; Primer tempo, ultimo tempo, y otro tempo
-        if self.play_beat:
-            if self.first_beat:
-                TEMPO_SOUNDS[0].play()
-            elif self.last_beat or self.other_beat:
-                TEMPO_SOUNDS[2].play()
-
-
-
-        # Tracks | Opciones de reproducción
-        self.set_dict_track_values()
-        for key in self.dict_track_options.keys():
-            # Valores necesarios
-            sound_values = self.dict_tracks[key]
-            values = self.dict_track_values[key]
-
-            update_track_options = False
-
-            # Focus
-            sound_values['focus'] = values['focus']
-
-            # Volumen
-            ## Mute o no
-            sound_values['mute'] = values['mute']
-            if values["mute"]:
-                sound_values['sound'].volume = 0
+        # Timer | Record
+        timer_current_fps = 0
+        if self.record_button.state == "down":
+            if self.timer.activate and (not self.recorder_controller.record):
+                timer_signals = self.timer.update()
+                timer_current_fps = timer_signals['current_fps']
+                if timer_signals['timer_finished']:
+                    self.recorder_controller.record = True
             else:
-                sound_values['sound'].volume = values['volume']
-
-            # Reproducir o no
-            if values['play'] and not sound_values['loop']:
-                update_track_options = True
-                sound_values['loop'] = True
-            elif not values['play'] and sound_values['loop']:
-                update_track_options = True
-                sound_values['loop'] = False
-
-                sound_values['sound'].stop()
-                self.track_count_repeated_times[key] = 0
-
-            # Actualizar track widget options o no
-            if update_track_options:
-                self.set_widget_tracks()
-
-
-
-
-
-
-        # Visual | Métrononmo | Cambiar de color
-        RGB_OFF_TEMPO = [1,1,1]
-        RGB_FIRST_TEMPO = [0,1,0]
-        RGB_TEMPO = [1,0,0]
-        if self.count_beats == 0:
-            # Aun en primer tempo | Mostrar en verde
-            rgb = RGB_FIRST_TEMPO
+                self.recorder_controller.record = True
         else:
-            # Otro tipo de tempo
-            rgb = RGB_TEMPO
-        self.circles[self.count_beats].color.rgb = rgb
+            self.recorder_controller.record = False
+            self.timer.reset()
 
-        for index in range( 0, len(self.circles) ):
-            if self.count_beats != index:
-                # Circulos no perteneciente al tempo | Apagado
-                self.circles[index].color.rgb = RGB_OFF_TEMPO
+        # Metronomo | Visual
+        for i in range( 0, len(self.circles) ):
+            if not metronome_signals['current_beat'] == i:
+                self.circles[i].color.rgb = RGB_OFF_TEMPO
 
+        if loopstation_signals['emphasis_of_beat']['emphasis']:
+            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
+        elif loopstation_signals['emphasis_of_beat']['neutral']:
+            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
 
-        ## Visual record y timer
-        timer_count_in_seconds = (self.timer_in_fps -self.timer_count)/FPS
-        if timer_count_in_seconds > 0 and self.record and self.microphone_recorder.state == "stop":
-            self.record_button.text = f"record...{round(timer_count_in_seconds)}"
-
-        ## Cantidad de pistas
-        self.label_tracks.text = f"tracks {self.record_files_count}"
-
-
-        # Contador de tempo
-        self.count += 1
-
-
-
-
-        # Debug
-        ## Debug | Cambio de compas
-        if self.change_compass:
-            self.debug(f"--Fin de compas de {self.beats} beats--")
-
-        ## Debug | Reproducir sonidos
-        for source, count, limit in debug_play_sounds:
-            self.debug(
-             (
-              f"++Reproducir: '{source}'++\n"
-              f"++Contador: {count}++\n"
-              f"++Limite: {limit}++"
-             )
+        # Visual Timer
+        if timer_current_fps > 0:
+            self.label_center.text = str(
+                round( (self.timer.seconds_in_fps-timer_current_fps) / FPS)
             )
+        else:
+            self.label_center.text = ""
 
-        ## Debug | Cambio de beats
-        if self.first_beat:
-            self.debug("Primer pulso")
-        elif self.last_beat:
-            self.debug("Ultimo pulso")
-        elif self.other_beat:
-            self.debug(f"Pulso: {self.count_beats}")
-
-        ## Debug | Boton grabador
-        if self.first_frame_of_recording:
-            self.debug(f"@@Grabando | Frame {self.record_count}@@")
-        if self.record_force_stop:
-            self.debug(f"Forzando parar en compas {self.record_compass_to_stop}")
 
 
 
 '''
 Constructor de aplicación
 '''
-Window.size = (960, 540)
-Window.resizable = True
+#Window.size = (960, 540)
+#Window.resizable = True
 class LoopstationApp(App):
     def build(self):
-        loopstation = LoopstationWindow()
-        loopstation.init_the_essential()
+        window = LoopstationWindow()
+        window.init_the_essential()
 
-        Clock.schedule_interval(loopstation.update, 1.0/FPS)
+        Clock.schedule_interval(window.update, 1.0/FPS)
 
-        return loopstation
+        return window
 
 if __name__ == '__main__':
     LoopstationApp().run()
