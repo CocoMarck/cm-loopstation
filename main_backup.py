@@ -7,9 +7,6 @@ from core.fps_sound_loopstation import FPSSoundLoopstation
 from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 
 from core.fps_timer import FPSTimer
-from core.fps_loop import FPSLoop
-
-from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
 from config.paths import SAMPLE_FILES
 
@@ -25,12 +22,10 @@ RGB_FIRST_TEMPO = [0,1,0]
 RGB_ANOTHER_TEMPO = [1,0,0]
 
 
-
-
 # Primer forzar FPS
 from kivy.config import Config
-#Config.set('graphics', 'vsync', '0')
-#Config.set('graphics', 'maxfps', str(FPS))
+Config.set('graphics', 'vsync', '0')
+Config.set('graphics', 'maxfps', str(FPS))
 
 # App
 from kivy.app import App
@@ -120,7 +115,7 @@ class LoopstationWindow(Widget):
 
     circles = []
 
-    # LoopstationEngine
+    # FPSLoopstation
     loopstation = FPSSoundLoopstation(
         fps=FPS, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
         beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
@@ -131,11 +126,9 @@ class LoopstationWindow(Widget):
     )
     recorder_controller.limit_record = True
     recorder_controller.record_bars = 1
-    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
 
-    engine = FPSSoundLoopstationEngine(
-        sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
-    )
+    # Timer
+    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
 
 
     # Posicionar metronomo
@@ -315,11 +308,10 @@ class LoopstationWindow(Widget):
         self.loopstation.reset_loop_of_all_tracks()
         self.set_widget_track_options()
 
-    def build(self):
-        # Loop
-        self.engine.start()
 
-        # widgets
+
+
+    def init_the_essential(self):
         self.update_metronome_circles()
 
         self.slider_beats.min = 1
@@ -366,10 +358,11 @@ class LoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
-        loopstation_signals = self.engine.last_signals['loopstation']
-        metronome_signals = self.engine.last_signals['metronome']
-        recorder_controller_signals = self.engine.last_signals['recorder_controller']
-        timer_signals = self.engine.last_signals['timer']
+        loopstation_signals = self.loopstation.update()
+        metronome_signals = loopstation_signals['metronome']
+        recorder_controller_signals = self.recorder_controller.update(
+            metronome_signals=metronome_signals
+        )
 
         # Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
@@ -380,6 +373,7 @@ class LoopstationWindow(Widget):
         timer_current_fps = 0
         if self.record_button.state == "down":
             if self.timer.activate and (not self.recorder_controller.record):
+                timer_signals = self.timer.update()
                 timer_current_fps = timer_signals['current_fps']
                 if timer_signals['timer_finished']:
                     self.recorder_controller.record = True
@@ -418,9 +412,9 @@ Constructor de aplicación
 class LoopstationApp(App):
     def build(self):
         window = LoopstationWindow()
-        window.build()
+        window.init_the_essential()
 
-        Clock.schedule_interval(window.update, 1.0/100)
+        Clock.schedule_interval(window.update, 1.0/FPS)
 
         return window
 
