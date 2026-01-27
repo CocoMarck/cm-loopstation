@@ -4,6 +4,8 @@ from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopsta
 from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 
+from threading import Lock
+
 
 class FPSSoundLoopstationEngine():
     def __init__(
@@ -20,7 +22,10 @@ class FPSSoundLoopstationEngine():
             callback=self.tick
         )
 
-        self.last_signals = None
+        self._last_signals = None
+
+        # Bloquear
+        self._lock = Lock()
 
     def tick(self):
         loopstation_signals = self.sound_loopstation.update()
@@ -30,12 +35,20 @@ class FPSSoundLoopstationEngine():
         )
         timer_signals = self.timer.update()
 
-        self.last_signals = {
+        signals = {
             "loopstation": loopstation_signals,
             "metronome": metronome_signals,
             "recorder_controller": recorder_controller_signals,
             "timer": timer_signals,
         }
+
+        with self._lock:
+            self._last_signals = signals
+
+    def get_last_signals(self):
+        with self._lock:
+            return dict(self._last_signals) if self._last_signals else None
+        return None
 
     def start(self):
         self.loop.start()

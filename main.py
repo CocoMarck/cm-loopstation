@@ -29,7 +29,7 @@ RGB_ANOTHER_TEMPO = [1,0,0]
 
 # Primer forzar FPS
 from kivy.config import Config
-#Config.set('graphics', 'vsync', '0')
+Config.set('graphics', 'vsync', '0')
 #Config.set('graphics', 'maxfps', str(FPS))
 
 # App
@@ -131,7 +131,7 @@ class LoopstationWindow(Widget):
     )
     recorder_controller.limit_record = True
     recorder_controller.record_bars = 1
-    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
+    timer = FPSTimer( fps=FPS, seconds=10, activate=False )
 
     engine = FPSSoundLoopstationEngine(
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
@@ -366,10 +366,14 @@ class LoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
-        loopstation_signals = self.engine.last_signals['loopstation']
-        metronome_signals = self.engine.last_signals['metronome']
-        recorder_controller_signals = self.engine.last_signals['recorder_controller']
-        timer_signals = self.engine.last_signals['timer']
+        signals = self.engine.get_last_signals()
+        if not signals:
+            return
+
+        loopstation_signals = signals['loopstation']
+        metronome_signals = signals['metronome']
+        recorder_controller_signals = signals['recorder_controller']
+        timer_signals = signals['timer']
 
         # Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
@@ -379,6 +383,7 @@ class LoopstationWindow(Widget):
         # Timer | Record
         timer_current_fps = 0
         if self.record_button.state == "down":
+            self.timer.activate = True
             if self.timer.activate and (not self.recorder_controller.record):
                 timer_current_fps = timer_signals['current_fps']
                 if timer_signals['timer_finished']:
@@ -387,6 +392,7 @@ class LoopstationWindow(Widget):
                 self.recorder_controller.record = True
         else:
             self.recorder_controller.record = False
+            self.timer.activate = False
             self.timer.reset()
 
         # Metronomo | Visual
@@ -420,7 +426,7 @@ class LoopstationApp(App):
         window = LoopstationWindow()
         window.build()
 
-        Clock.schedule_interval(window.update, 1.0/100)
+        Clock.schedule_interval(window.update, 0)
 
         return window
 
