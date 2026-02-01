@@ -137,6 +137,8 @@ class LoopstationWindow(Widget):
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
     )
 
+    current_count_temp_sound = loopstation.count_temp_sound
+
 
     # Posicionar metronomo
     def update_metronome_circles(self):
@@ -377,7 +379,16 @@ class LoopstationWindow(Widget):
 
         # Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
+            ## Parar con señal, pero aveces no jala.
+            self.current_count_temp_sound = self.loopstation.count_temp_sound
             self.record_button.state = "normal"
+            self.set_widget_track_options()
+
+        if self.current_count_temp_sound != self.loopstation.count_temp_sound:
+            ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
+            self.current_count_temp_sound = self.loopstation.count_temp_sound
+            self.record_button.state = "normal"
+            self.recorder_controller.record = False
             self.set_widget_track_options()
 
         # Timer | Record
@@ -394,6 +405,7 @@ class LoopstationWindow(Widget):
             self.recorder_controller.record = False
             self.timer.activate = False
             self.timer.reset()
+
 
         # Metronomo | Visual
         for i in range( 0, len(self.circles) ):
