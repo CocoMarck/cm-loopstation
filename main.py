@@ -30,7 +30,7 @@ RGB_ANOTHER_TEMPO = [1,0,0]
 # Primer forzar FPS
 from kivy.config import Config
 Config.set('graphics', 'vsync', '0')
-#Config.set('graphics', 'maxfps', str(FPS))
+Config.set('graphics', 'maxfps', str(FPS))
 
 # App
 from kivy.app import App
@@ -137,7 +137,13 @@ class LoopstationWindow(Widget):
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
     )
 
+    last_record_state = recorder_controller.record
     current_count_temp_sound = loopstation.count_temp_sound
+
+    # Update widget
+    update_tracks = False
+    update_interval_tracks = 0.5 # Medio segundo.
+    accum_update_tracks = 0 # Contador de delta time
 
 
     # Posicionar metronomo
@@ -377,19 +383,37 @@ class LoopstationWindow(Widget):
         recorder_controller_signals = signals['recorder_controller']
         timer_signals = signals['timer']
 
-        # Cuando se para la grabación
+        # Señal | Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
+            pass
             ## Parar con señal, pero aveces no jala.
-            self.current_count_temp_sound = self.loopstation.count_temp_sound
-            self.record_button.state = "normal"
-            self.set_widget_track_options()
+            #self.current_count_temp_sound = self.loopstation.count_temp_sound
+            #self.record_button.state = "normal"
+            #self.set_widget_track_options()
 
-        if self.current_count_temp_sound != self.loopstation.count_temp_sound:
+        # Actualizar ultimo estado de grabación. Determinar parar no.
+        if self.last_record_state != self.recorder_controller.record:
             ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
+            self.last_record_state = self.recorder_controller.record
+            if self.last_record_state == False:
+                self.record_button.state = "normal"
+                self.update_tracks = True # Pedir actualización
+
+        # Obtener tracks | Insertar track
+        if self.current_count_temp_sound != self.loopstation.count_temp_sound:
+            self.update_tracks = False
             self.current_count_temp_sound = self.loopstation.count_temp_sound
-            self.record_button.state = "normal"
-            self.recorder_controller.record = False
             self.set_widget_track_options()
+            self.set_label_tracks_number()
+
+        # Obtener tracks | Actualización de track
+        if self.update_tracks:
+            if self.accum_update_tracks >= self.update_interval_tracks:
+                self.update_tracks = False
+                self.accum_update_tracks = 0.0
+                self.set_widget_track_options()
+                self.set_label_tracks_number()
+            self.accum_update_tracks += dt
 
         # Timer | Record
         timer_current_fps = 0
@@ -438,7 +462,7 @@ class LoopstationApp(App):
         window = LoopstationWindow()
         window.build()
 
-        Clock.schedule_interval(window.update, 0)
+        Clock.schedule_interval(window.update, 1.0/FPS)
 
         return window
 
