@@ -1,4 +1,3 @@
-from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
 from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from core.fps_timer import FPSTimer
