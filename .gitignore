@@ -1,5 +1,6 @@
 __pycache__/
 .buildozer/
+bin/
 *.pyc
 bin/
 #*.spec
