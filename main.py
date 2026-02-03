@@ -7,6 +7,9 @@ from core.fps_sound_loopstation import FPSSoundLoopstation
 from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 
 from core.fps_timer import FPSTimer
+from core.fps_loop import FPSLoop
+
+from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
 from config.paths import SAMPLE_FILES
 
@@ -20,6 +23,8 @@ FPS = float(20)
 RGB_OFF_TEMPO = [1,1,1]
 RGB_FIRST_TEMPO = [0,1,0]
 RGB_ANOTHER_TEMPO = [1,0,0]
+
+
 
 
 # Primer forzar FPS
@@ -115,7 +120,7 @@ class LoopstationWindow(Widget):
 
     circles = []
 
-    # FPSLoopstation
+    # LoopstationEngine
     loopstation = FPSSoundLoopstation(
         fps=FPS, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
         beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
@@ -126,9 +131,19 @@ class LoopstationWindow(Widget):
     )
     recorder_controller.limit_record = True
     recorder_controller.record_bars = 1
+    timer = FPSTimer( fps=FPS, seconds=10, activate=False )
 
-    # Timer
-    timer = FPSTimer( fps=FPS, seconds=10, activate=True )
+    engine = FPSSoundLoopstationEngine(
+        sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
+    )
+
+    last_record_state = recorder_controller.record
+    current_count_temp_sound = loopstation.count_temp_sound
+
+    # Update widget
+    update_tracks = False
+    update_interval_tracks = 0.5 # Medio segundo.
+    accum_update_tracks = 0 # Contador de delta time
 
 
     # Posicionar metronomo
@@ -308,10 +323,11 @@ class LoopstationWindow(Widget):
         self.loopstation.reset_loop_of_all_tracks()
         self.set_widget_track_options()
 
+    def build(self):
+        # Loop
+        self.engine.start()
 
-
-
-    def init_the_essential(self):
+        # widgets
         self.update_metronome_circles()
 
         self.slider_beats.min = 1
@@ -358,22 +374,45 @@ class LoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
-        loopstation_signals = self.loopstation.update()
-        metronome_signals = loopstation_signals['metronome']
-        recorder_controller_signals = self.recorder_controller.update(
-            metronome_signals=metronome_signals
-        )
+        signals = self.engine.get_last_signals()
+        if not signals:
+            return
 
-        # Cuando se para la grabación
-        if recorder_controller_signals["stop_record"]:
-            self.record_button.state = "normal"
+        loopstation_signals = signals['loopstation']
+        metronome_signals = signals['metronome']
+        recorder_controller_signals = signals['recorder_controller']
+        timer_signals = signals['timer']
+
+        # Señal | Cuando se para la grabación
+        # Actualizar ultimo estado de grabación. Determinar parar no.
+        if self.last_record_state != self.recorder_controller.record:
+            ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
+            self.last_record_state = self.recorder_controller.record
+            if self.last_record_state == False:
+                self.record_button.state = "normal"
+                self.update_tracks = True # Pedir actualización
+
+        # Obtener tracks | Insertar track
+        if self.current_count_temp_sound != self.loopstation.count_temp_sound:
+            self.update_tracks = False
+            self.current_count_temp_sound = self.loopstation.count_temp_sound
             self.set_widget_track_options()
+            self.set_label_tracks_number()
+
+        # Obtener tracks | Actualización de track
+        if self.update_tracks:
+            if self.accum_update_tracks >= self.update_interval_tracks:
+                self.update_tracks = False
+                self.accum_update_tracks = 0.0
+                self.set_widget_track_options()
+                self.set_label_tracks_number()
+            self.accum_update_tracks += dt
 
         # Timer | Record
         timer_current_fps = 0
         if self.record_button.state == "down":
+            self.timer.activate = True
             if self.timer.activate and (not self.recorder_controller.record):
-                timer_signals = self.timer.update()
                 timer_current_fps = timer_signals['current_fps']
                 if timer_signals['timer_finished']:
                     self.recorder_controller.record = True
@@ -381,7 +420,9 @@ class LoopstationWindow(Widget):
                 self.recorder_controller.record = True
         else:
             self.recorder_controller.record = False
+            self.timer.activate = False
             self.timer.reset()
+
 
         # Metronomo | Visual
         for i in range( 0, len(self.circles) ):
@@ -412,7 +453,7 @@ Constructor de aplicación
 class LoopstationApp(App):
     def build(self):
         window = LoopstationWindow()
-        window.init_the_essential()
+        window.build()
 
         Clock.schedule_interval(window.update, 1.0/FPS)
 
