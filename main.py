@@ -11,12 +11,13 @@ from core.fps_loop import FPSLoop
 
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
-from config.paths import SAMPLE_FILES
+from config.paths import SAMPLE_FILES, TEMP_DIR
 
 
 # Constantes necesarias
 VOLUME = float(1)
-FPS = float(20)
+FPS_ENGINE = float(20)
+FPS_GUI = float(60)
 
 
 ## Colores
@@ -30,7 +31,7 @@ RGB_ANOTHER_TEMPO = [1,0,0]
 # Primer forzar FPS
 from kivy.config import Config
 Config.set('graphics', 'vsync', '0')
-Config.set('graphics', 'maxfps', str(FPS))
+Config.set('graphics', 'maxfps', str(FPS_ENGINE))
 
 # App
 from kivy.app import App
@@ -122,16 +123,17 @@ class LoopstationWindow(Widget):
 
     # LoopstationEngine
     loopstation = FPSSoundLoopstation(
-        fps=FPS, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
+        fps=FPS_ENGINE, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
         beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
     )
     metronome = loopstation.fps_metronome
     recorder_controller = FPSSoundLoopstationRecorderController(
-        fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+        fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder(),
+        recorder_path=TEMP_DIR, fileformat="wav"
     )
     recorder_controller.limit_record = True
     recorder_controller.record_bars = 1
-    timer = FPSTimer( fps=FPS, seconds=10, activate=False )
+    timer = FPSTimer( fps=FPS_ENGINE, seconds=10, activate=False )
 
     engine = FPSSoundLoopstationEngine(
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
@@ -444,7 +446,7 @@ class LoopstationWindow(Widget):
         # Visual Timer
         if timer_current_fps > 0:
             self.label_center.text = str(
-                round( (self.timer.seconds_in_fps-timer_current_fps) / FPS)
+                round( (self.timer.seconds_in_fps-timer_current_fps) / FPS_ENGINE)
             )
         else:
             self.label_center.text = ""
@@ -462,7 +464,7 @@ class LoopstationApp(App):
         window = LoopstationWindow()
         window.build()
 
-        Clock.schedule_interval(window.update, 1.0/FPS)
+        Clock.schedule_interval(window.update, 1.0/FPS_GUI)
 
         return window
 
