@@ -144,7 +144,7 @@ class LoopstationWindow(Widget):
 
     # Update widget
     update_tracks = False
-    update_interval_tracks = 0.5 # Medio segundo.
+    update_interval_tracks = 1 # Medio segundo.
     accum_update_tracks = 0 # Contador de delta time
 
 
@@ -408,6 +408,7 @@ class LoopstationWindow(Widget):
             self.current_count_temp_sound = self.loopstation.count_temp_sound
             self.set_widget_track_options()
             self.set_label_tracks_number()
+            print( f'sound temp: {self.current_count_temp_sound}')
 
         # Obtener tracks | Actualización de track
         if self.update_tracks:
