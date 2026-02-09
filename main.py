@@ -416,7 +416,9 @@ class LoopstationWindow(Widget):
                 self.update_tracks = False
                 self.set_widget_track_options()
                 self.set_label_tracks_number()
-            self.accum_update_tracks += dt
+                self.accum_update_tracks = 0.0
+            else:
+                self.accum_update_tracks += dt
 
         # Timer | Record
         timer_current_fps = 0
