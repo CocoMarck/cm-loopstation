@@ -397,9 +397,10 @@ class LoopstationWindow(Widget):
         if self.last_record_state != self.recorder_controller.record:
             ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
             self.last_record_state = self.recorder_controller.record
-            if self.last_record_state == False:
+            if self.recorder_controller.record == False:
                 self.record_button.state = "normal"
                 self.update_tracks = True # Pedir actualización
+                self.accum_update_tracks = 0.0
 
         # Obtener tracks | Insertar track
         if self.current_count_temp_sound != self.loopstation.count_temp_sound:
@@ -412,7 +413,6 @@ class LoopstationWindow(Widget):
         if self.update_tracks:
             if self.accum_update_tracks >= self.update_interval_tracks:
                 self.update_tracks = False
-                self.accum_update_tracks = 0.0
                 self.set_widget_track_options()
                 self.set_label_tracks_number()
             self.accum_update_tracks += dt
