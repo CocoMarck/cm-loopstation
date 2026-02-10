@@ -127,8 +127,9 @@ class LoopstationWindow(Widget):
         beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
     )
     metronome = loopstation.fps_metronome
+    microphone_recorder = MicrophoneRecorder()
     recorder_controller = FPSSoundLoopstationRecorderController(
-        fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder(),
+        fps_sound_loopstation=loopstation, recorder=microphone_recorder,
         recorder_path=TEMP_DIR, fileformat="wav"
     )
     recorder_controller.limit_record = True
@@ -139,12 +140,12 @@ class LoopstationWindow(Widget):
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
     )
 
-    last_record_state = recorder_controller.record
+    last_microphone_recorder_state = recorder_controller.record
     current_count_temp_sound = loopstation.count_temp_sound
 
     # Update widget
     update_tracks = False
-    update_interval_tracks = 1 # Medio segundo.
+    update_interval_tracks = 0.5 # Medio segundo.
     accum_update_tracks = 0 # Contador de delta time
 
 
@@ -387,20 +388,21 @@ class LoopstationWindow(Widget):
 
         # Señal | Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
-            pass
             ## Parar con señal, pero aveces no jala.
-            #self.current_count_temp_sound = self.loopstation.count_temp_sound
-            #self.record_button.state = "normal"
-            #self.set_widget_track_options()
+            self.current_count_temp_sound = self.loopstation.count_temp_sound
+            self.record_button.state = "normal"
+            self.set_widget_track_options()
 
         # Actualizar ultimo estado de grabación. Determinar parar no.
-        if self.last_record_state != self.recorder_controller.record:
+        if self.last_microphone_recorder_state != self.microphone_recorder.state:
             ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
-            self.last_record_state = self.recorder_controller.record
-            if self.recorder_controller.record == False:
+            self.last_microphone_recorder_state = self.microphone_recorder.state
+
+            ## Se supone que ya debe jalar mejor sin limit bars. Testear grabar sin limit bars.
+            ## El Engine jala bien, el problema son las señales, pero pos ya deberian jalar.
+            if self.microphone_recorder.state == "stop":
                 self.record_button.state = "normal"
                 self.update_tracks = True # Pedir actualización
-                self.accum_update_tracks = 0.0
 
         # Obtener tracks | Insertar track
         if self.current_count_temp_sound != self.loopstation.count_temp_sound:
@@ -408,15 +410,17 @@ class LoopstationWindow(Widget):
             self.current_count_temp_sound = self.loopstation.count_temp_sound
             self.set_widget_track_options()
             self.set_label_tracks_number()
-            print( f'sound temp: {self.current_count_temp_sound}')
 
         # Obtener tracks | Actualización de track
+        if self.update_tracks == False:
+            # Asegurarse de reiniciar conteo de actualización de tracks
+            self.accum_update_tracks = 0.0
+
         if self.update_tracks:
             if self.accum_update_tracks >= self.update_interval_tracks:
                 self.update_tracks = False
                 self.set_widget_track_options()
                 self.set_label_tracks_number()
-                self.accum_update_tracks = 0.0
             else:
                 self.accum_update_tracks += dt
 
