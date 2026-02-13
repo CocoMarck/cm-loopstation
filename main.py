@@ -140,7 +140,7 @@ class LoopstationWindow(Widget):
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
     )
 
-    last_microphone_recorder_state = recorder_controller.record
+    last_microphone_recorder_state = microphone_recorder.state
     current_count_temp_sound = loopstation.count_temp_sound
 
     # Update widget

@@ -4,3 +4,6 @@ track-*.wav
 *.log
 bin/
 .buildozer/
+dist/
+build/
+*.spec
