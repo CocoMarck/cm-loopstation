@@ -130,8 +130,9 @@ class LoopstationWindow(Widget):
         beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
     )
     metronome = loopstation.fps_metronome
+    microphone_recorder = AndroidMicrophoneRecorder()
     recorder_controller = FPSSoundLoopstationRecorderController(
-        fps_sound_loopstation=loopstation, recorder=AndroidMicrophoneRecorder(),
+        fps_sound_loopstation=loopstation, recorder=microphone_recorder,
         fileformat="wav", recorder_path=ANDROID_MUSIC_PATH
     )
     recorder_controller.limit_record = True
