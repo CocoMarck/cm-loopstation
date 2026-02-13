@@ -142,7 +142,7 @@ class LoopstationWindow(Widget):
         sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
     )
 
-    last_record_state = recorder_controller.record
+    last_microphone_recorder_state = microphone_recorder.state
     current_count_temp_sound = loopstation.count_temp_sound
 
     # Update widget
@@ -389,11 +389,20 @@ class LoopstationWindow(Widget):
         timer_signals = signals['timer']
 
         # Señal | Cuando se para la grabación
+        if recorder_controller_signals["stop_record"]:
+            ## Parar con señal, pero aveces no jala.
+            self.current_count_temp_sound = self.loopstation.count_temp_sound
+            self.record_button.state = "normal"
+            self.set_widget_track_options()
+
         # Actualizar ultimo estado de grabación. Determinar parar no.
-        if self.last_record_state != self.recorder_controller.record:
+        if self.last_microphone_recorder_state != self.microphone_recorder.state:
             ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
-            self.last_record_state = self.recorder_controller.record
-            if self.last_record_state == False:
+            self.last_microphone_recorder_state = self.microphone_recorder.state
+
+            ## Se supone que ya debe jalar mejor sin limit bars. Testear grabar sin limit bars.
+            ## El Engine jala bien, el problema son las señales, pero pos ya deberian jalar.
+            if self.microphone_recorder.state == "stop":
                 self.record_button.state = "normal"
                 self.update_tracks = True # Pedir actualización
 
@@ -405,13 +414,17 @@ class LoopstationWindow(Widget):
             self.set_label_tracks_number()
 
         # Obtener tracks | Actualización de track
+        if self.update_tracks == False:
+            # Asegurarse de reiniciar conteo de actualización de tracks
+            self.accum_update_tracks = 0.0
+
         if self.update_tracks:
             if self.accum_update_tracks >= self.update_interval_tracks:
                 self.update_tracks = False
-                self.accum_update_tracks = 0.0
                 self.set_widget_track_options()
                 self.set_label_tracks_number()
-            self.accum_update_tracks += dt
+            else:
+                self.accum_update_tracks += dt
 
         # Timer | Record
         timer_current_fps = 0
