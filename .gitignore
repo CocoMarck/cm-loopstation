@@ -9,3 +9,4 @@ bin/
 *.kate-swp
 buildozer.spec
 keypassword.md
+*.jar

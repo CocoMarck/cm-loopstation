@@ -7,7 +7,7 @@ title = FPSLoopstation
 package.name = fpsloopstation
 
 # (str) Package domain (needed for android/ios packaging)
-package.domain = org.fpsloopstation
+package.domain = org.cocomarck
 
 # (str) Source code where the main.py live
 source.dir = .
@@ -287,7 +287,7 @@ android.archs = arm64-v8a, armeabi-v7a
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing
-# android.numeric_version = 1
+android.numeric_version = 1
 
 # (bool) enables Android auto backup feature (Android API >=23)
 android.allow_backup = True
@@ -305,7 +305,12 @@ android.allow_backup = True
 # android.no-byte-compile-python = False
 
 # (str) The format used to package the app for release mode (aab or apk or aar).
-# android.release_artifact = aab
+android.release_artifact = aab
+
+android.keystore = android-fpsloopstation.jks
+android.keystore_passwd = ${KEYSTORE_PASS}
+android.keyalias = ${KEYALIAS}
+android.keyalias_passwd = ${KEYSTORE_PASS}
 
 # (str) The format used to package the app for debug mode (apk or aar).
 # android.debug_artifact = apk
