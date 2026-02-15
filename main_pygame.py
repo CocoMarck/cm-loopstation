@@ -2,7 +2,7 @@
 from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
 from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
-from config.paths import SAMPLE_FILES
+from config.paths import SAMPLE_FILES, ICON
 
 FPS = 20
 FRAME_TIME = 1.0 / FPS
@@ -32,6 +32,9 @@ import pygame
 
 # pygame setup
 pygame.init()
+
+pygame_icon = pygame.image.load( ICON )
+pygame.display.set_icon( pygame_icon )
 screen = pygame.display.set_mode( SCREEN_SIZE, pygame.RESIZABLE)
 
 scene = pygame.Surface( SCENE_SIZE )
