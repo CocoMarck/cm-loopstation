@@ -10,4 +10,6 @@ DICT_SAMPLE_DIR = resource_loader.get_recursive_tree( SAMPLE_DIR )
 SAMPLE_FILES = DICT_SAMPLE_DIR['file']
 
 DICT_TEMPO_DIR = resource_loader.get_recursive_tree( TEMPO_DIR )
-TEMPO_FILES = DICT_TEMPO_DIR["file"]
+TEMPO_FILES = sorted( DICT_TEMPO_DIR["file"] )
+
+ICON = resource_loader.get_icon('fps-sound-loopstation.png')

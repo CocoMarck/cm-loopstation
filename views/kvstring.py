@@ -16,7 +16,7 @@ kv = '''
     font_size: min(Window.width, Window.height) * 0.05
 
 
-<LoopstationWindow>:
+<FPSSoundLoopstationWindow>:
     record_button: record
     label_timer: timer_text
     label_tracks: tracks_text
@@ -33,19 +33,31 @@ kv = '''
     button_play: play
     button_stop: stop
     button_restart: restart
+    button_about: _button_about
 
     togglebutton_limit_record: limit_record
     togglebutton_play_beat: option_play_beat
 
     textinput_record_bars: record_bars
-    slider_timer: timer_slider
+    textinput_timer: timer_textinput
     slider_beats: beats_slider
 
     metronome_container: metronome_box
 
     BoxLayout:
         width: root.width
-        height: root.height*0.5
+        height: root.height*0.05
+        y: root.height*0.95
+
+        orientation: "vertical"
+
+        Button:
+            id: _button_about
+            text: "about"
+
+    BoxLayout:
+        width: root.width
+        height: root.height*0.45
         y: root.height*0.5
 
         orientation: "vertical"
@@ -66,8 +78,8 @@ kv = '''
                 Label:
                     id: timer_text
                     text: "timer"
-                Slider:
-                    id: timer_slider
+                TextInput:
+                    id: timer_textinput
 
             ## Beats
             BoxLayout:
