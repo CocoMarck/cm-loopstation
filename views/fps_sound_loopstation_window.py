@@ -12,6 +12,8 @@ from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.slider import Slider
+from kivy.uix.popup import Popup
+from kivy.uix.gridlayout import GridLayout
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
@@ -69,6 +71,7 @@ class FPSSoundLoopstationWindow(Widget):
         super().__init__(**kwargs)
 
         # Recordatorio de widgets inyectados | Objetos del `archivo.kv`
+        # Se inyectarion en el `super().__init__(**kwargs)`
         '''
         self.record_button
 
@@ -134,8 +137,8 @@ class FPSSoundLoopstationWindow(Widget):
     def set_slider_beats(self):
         self.slider_beats.value = self.metronome.beats_per_bar
 
-    def set_slider_timer(self):
-        self.slider_timer.value = self.timer.seconds
+    def set_textinput_timer(self):
+        self.textinput_timer.text = str(self.timer.seconds)
 
     def set_textinput_record_bars(self):
         self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
@@ -160,9 +163,6 @@ class FPSSoundLoopstationWindow(Widget):
 
     def on_play_beat(self, obj, value):
         self.metronome.play_beat = value == "down"
-
-    def on_timer(self, obj, value):
-        self.timer.set_seconds( seconds=value )
 
     def on_beats_per_bar(self, obj, value):
         self.metronome.beats_per_bar = round(value)
@@ -202,6 +202,14 @@ class FPSSoundLoopstationWindow(Widget):
             self.set_textinput_record_bars()
         else:
             obj.text = ""
+
+    def on_timer(self, obj, text):
+        number = self.filter_text_to_number(text)
+        if number > 0:
+            obj.text = str(number)
+        else:
+            obj.text = ""
+        self.timer.set_seconds( seconds=number )
 
 
 
@@ -293,6 +301,45 @@ class FPSSoundLoopstationWindow(Widget):
         self.loopstation.reset_loop_of_all_tracks()
         self.set_widget_track_options()
 
+
+    def on_about(self, button):
+        layout = BoxLayout( orientation="vertical" )
+
+        label = Label(
+            text=(
+                "[b]Sound loop recorder[/b]: version 0.3.4-alpha\n\n"
+                "- developer: [b]Jean Abraham Chacón Candanosa[/b]\n"
+                "- website: [b]github.com/CocoMarck[/b]"
+            ),
+            #size_hint_y=None,
+            markup=True,
+            halign="left",
+            valign="top"
+        )
+        layout.add_widget(label)
+
+        # Salto de linea automatico, para que se vea bien | Ajuste de texto
+        label.bind(
+            width=lambda instance, value: setattr(instance, 'text_size', (value, None))
+        )
+        # Evita exceso de texto, haciendolo mas pequeño. No se necesita, esto ya lo ahce mi `file.kv`
+        #label.bind(
+        #    texture_size=lambda instance, value: setattr(instance, 'height', value[1])
+        #)
+
+        button = Button(text="ok", size_hint_y=None)
+        layout.add_widget(button)
+
+        # Momento popup, message molon
+        popup = Popup(
+            title="about",
+            content=layout,
+            size_hint=(0.8, 0.8)
+        )
+        button.bind(on_press=popup.dismiss)
+        popup.open()
+
+
     def build(self):
         # Loop
         self.engine.start()
@@ -309,9 +356,6 @@ class FPSSoundLoopstationWindow(Widget):
         self.slider_bpm.max = self.metronome.bpm_limit
         self.slider_bpm.step = 10
 
-        self.slider_timer.max = 20
-        self.slider_timer.step = 1
-
         # Samples
         #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
         #self.loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
@@ -319,7 +363,7 @@ class FPSSoundLoopstationWindow(Widget):
         # Establecer primer estado de los widgets
         self.set_slider_bpm()
         self.set_slider_beats()
-        self.set_slider_timer()
+        self.set_textinput_timer()
         self.set_textinput_record_bars()
         self.set_togglebutton_play_beat()
         self.set_togglebutton_limit_record()
@@ -328,7 +372,7 @@ class FPSSoundLoopstationWindow(Widget):
 
         # Bind
         self.slider_beats.bind( value=self.on_beats_per_bar )
-        self.slider_timer.bind( value=self.on_timer )
+        self.textinput_timer.bind( text=self.on_timer )
         self.slider_bpm.bind( value=self.on_bpm )
         self.textinput_record_bars.bind( text=self.on_record_bars )
         self.togglebutton_play_beat.bind( state=self.on_play_beat )
@@ -336,6 +380,7 @@ class FPSSoundLoopstationWindow(Widget):
         self.button_play.bind( state=self.on_play_loop_of_all_tracks )
         self.button_stop.bind( state=self.on_break_loop_of_all_tracks )
         self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
+        self.button_about.bind( on_press=self.on_about )
 
 
 

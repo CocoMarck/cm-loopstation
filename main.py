@@ -44,6 +44,7 @@ engine = FPSSoundLoopstationEngine(
 from kivy.config import Config
 Config.set('graphics', 'vsync', '0')
 Config.set('graphics', 'maxfps', str(FPS_GUI))
+Config.set('kivy', 'window_icon', str(ICON))
 
 # Inicializar
 from kivy.app import App
