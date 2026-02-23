@@ -101,7 +101,7 @@ android.permissions = RECORD_AUDIO, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAG
 #android.features = android.hardware.usb.host
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 31
+android.api = 35
 
 # (int) Minimum API your APK / AAB will support.
 #android.minapi = 21
@@ -305,12 +305,12 @@ android.allow_backup = True
 # android.no-byte-compile-python = False
 
 # (str) The format used to package the app for release mode (aab or apk or aar).
-android.release_artifact = aab
+android.release_artifact=aab
 
-android.keystore = android-fpsloopstation.jks
-android.keystore_password = ${KEYSTORE_PASS}
-android.keyalias = ${KEYALIAS}
-android.keyalias_password = ${KEYSTORE_PASS}
+android.keystore=android-fpsloopstation.jks
+android.keystore_password=${APP_ANDROID_KEYSTORE_PASS}
+android.keyalias=${KEYALIAS}
+android.keyalias_password=${APP_ANDROID_KEYALIAS_PASS}
 
 # (str) The format used to package the app for debug mode (apk or aar).
 # android.debug_artifact = apk
