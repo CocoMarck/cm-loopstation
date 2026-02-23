@@ -308,9 +308,9 @@ android.allow_backup = True
 android.release_artifact = aab
 
 android.keystore = android-fpsloopstation.jks
-android.keystore_passwd = ${KEYSTORE_PASS}
+android.keystore_password = ${KEYSTORE_PASS}
 android.keyalias = ${KEYALIAS}
-android.keyalias_passwd = ${KEYSTORE_PASS}
+android.keyalias_password = ${KEYSTORE_PASS}
 
 # (str) The format used to package the app for debug mode (apk or aar).
 # android.debug_artifact = apk

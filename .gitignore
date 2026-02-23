@@ -1,6 +1,7 @@
 __pycache__/
 .buildozer/
 bin/
+bin_backup/
 *.pyc
 bin/
 *.spec
@@ -10,3 +11,5 @@ bin/
 buildozer.spec
 keypassword.md
 *.jar
+*.zip
+*.pem
