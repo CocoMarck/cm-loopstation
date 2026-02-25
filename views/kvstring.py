@@ -9,14 +9,14 @@ kv = '''
 
 
 <Label>:
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 <TextInput>
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 <ToggleButton>:
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 
 
-<LoopstationWindow>:
+<FPSSoundLoopstationWindow>:
     record_button: record
     label_timer: timer_text
     label_tracks: tracks_text
@@ -33,20 +33,33 @@ kv = '''
     button_play: play
     button_stop: stop
     button_restart: restart
+    button_about: _button_about
 
     togglebutton_limit_record: limit_record
     togglebutton_play_beat: option_play_beat
 
     textinput_record_bars: record_bars
-    slider_timer: timer_slider
+    textinput_timer: timer_textinput
     slider_beats: beats_slider
 
     metronome_container: metronome_box
 
+    FloatLayout:
     BoxLayout:
-        width: root.width
-        height: root.height*0.5
-        y: root.height*0.5
+        width: dp(Window.width)
+        height: dp(Window.height)*0.05
+        y: dp(Window.height)*0.95
+
+        orientation: "vertical"
+
+        Button:
+            id: _button_about
+            text: "about"
+
+    BoxLayout:
+        width: dp(Window.width)
+        height: dp(Window.height)*0.45
+        y: dp(Window.height)*0.5
 
         orientation: "vertical"
 
@@ -66,8 +79,8 @@ kv = '''
                 Label:
                     id: timer_text
                     text: "timer"
-                Slider:
-                    id: timer_slider
+                TextInput:
+                    id: timer_textinput
 
             ## Beats
             BoxLayout:
@@ -152,8 +165,8 @@ kv = '''
     # Segunda mitad de window
     # Scroll | Contenedor de Pistas
     ScrollView:
-        width: root.width
-        height: root.height*0.5
+        width: dp(Window.width)
+        height: dp(Window.height*0.5)
         y: 0
         do_scroll_x: True
         do_scroll_y: True
