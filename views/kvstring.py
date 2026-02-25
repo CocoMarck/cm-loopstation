@@ -9,11 +9,11 @@ kv = '''
 
 
 <Label>:
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 <TextInput>
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 <ToggleButton>:
-    font_size: min(Window.width, Window.height) * 0.05
+    font_size: sp( min(Window.width, Window.height)*0.05 )
 
 
 <FPSSoundLoopstationWindow>:
@@ -44,10 +44,11 @@ kv = '''
 
     metronome_container: metronome_box
 
+    FloatLayout:
     BoxLayout:
-        width: root.width
-        height: root.height*0.05
-        y: root.height*0.95
+        width: dp(Window.width)
+        height: dp(Window.height)*0.05
+        y: dp(Window.height)*0.95
 
         orientation: "vertical"
 
@@ -56,9 +57,9 @@ kv = '''
             text: "about"
 
     BoxLayout:
-        width: root.width
-        height: root.height*0.45
-        y: root.height*0.5
+        width: dp(Window.width)
+        height: dp(Window.height)*0.45
+        y: dp(Window.height)*0.5
 
         orientation: "vertical"
 
@@ -164,8 +165,8 @@ kv = '''
     # Segunda mitad de window
     # Scroll | Contenedor de Pistas
     ScrollView:
-        width: root.width
-        height: root.height*0.5
+        width: dp(Window.width)
+        height: dp(Window.height*0.5)
         y: 0
         do_scroll_x: True
         do_scroll_y: True
