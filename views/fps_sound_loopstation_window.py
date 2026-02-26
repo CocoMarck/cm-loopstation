@@ -131,6 +131,7 @@ class FPSSoundLoopstationWindow(Widget):
         # Puede que solo jale en PC
         print("ventana restaurada (widget)")
         self.engine.start()
+        self.set_widget_track_options()
 
     # Pause en android
     def on_pause(self):
@@ -139,6 +140,7 @@ class FPSSoundLoopstationWindow(Widget):
 
     def on_resume(self):
         self.engine.start()
+        self.set_widget_track_options()
 
 
     # Posicionar metronomo
