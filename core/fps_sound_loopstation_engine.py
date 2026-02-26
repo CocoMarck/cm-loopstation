@@ -16,10 +16,7 @@ class FPSSoundLoopstationEngine():
         self.recorder_controller = recorder_controller
         self.timer = timer
 
-        self.loop = FPSLoop(
-            fps=self.metronome.fps,
-            callback=self.tick
-        )
+        self.loop = None
 
         self._last_signals = None
 
@@ -49,5 +46,16 @@ class FPSSoundLoopstationEngine():
             return dict(self._last_signals) if self._last_signals else None
         return None
 
+    def stop(self):
+        self.loop.stop()
+        self.loop.join()
+        self.sound_loopstation.reset_loop_of_all_tracks()
+
     def start(self):
+        if self.loop and self.loop.is_alive():
+            return
+        self.loop = FPSLoop(
+            fps=self.metronome.fps,
+            callback=self.tick
+        )
         self.loop.start()
