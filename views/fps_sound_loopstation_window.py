@@ -118,6 +118,28 @@ class FPSSoundLoopstationWindow(Widget):
         self.update_interval_tracks = 0.5 # Medio segundo.
         self.accum_update_tracks = 0 # Contador de delta time
 
+        # Eventos de PC (desktop)
+        Window.bind(on_minimize=self._on_minimize)
+        Window.bind(on_restore=self._on_restore)
+
+    def _on_minimize(self, *args):
+        # Puede que solo jale en PC
+        print("ventana minimizada (widget)")
+        self.engine.stop()
+
+    def _on_restore(self, *args):
+        # Puede que solo jale en PC
+        print("ventana restaurada (widget)")
+        self.engine.start()
+
+    # Pause en android
+    def on_pause(self):
+        self.engine.stop()
+        return True
+
+    def on_resume(self):
+        self.engine.start()
+
 
     # Posicionar metronomo
     def update_metronome_circles(self):
@@ -390,6 +412,9 @@ class FPSSoundLoopstationWindow(Widget):
         '''
         Para la sincronización
         '''
+        # Puase/Minimizar
+
+        # Señales
         signals = self.engine.get_last_signals()
         if not signals:
             return

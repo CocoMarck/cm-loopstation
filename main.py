@@ -64,5 +64,13 @@ class FPSSoundLoopstationApp(App):
 
         return window
 
+    # Pause y resume an android
+    def on_puase(self):
+        return self.window.on_pause()
+
+    def on_resume(self):
+        self.window.on_resume()
+
+
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
