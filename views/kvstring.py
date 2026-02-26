@@ -2,18 +2,18 @@ kv = '''
 #:import Window kivy.core.window.Window
 #<BoxLayout>
     #size_hint_y: None
-    #height: dp( min(Window.width, Window.height)*0.1 )
+    #height: ( min(Window.width, Window.height)*0.1 )
 #<ScrollView>
     #size_hint_y: None
-    #height: dp( min(Window.width, Window.height)*0.1 )
+    #height: ( min(Window.width, Window.height)*0.1 )
 
 
 <Label>:
-    font_size: sp( min(Window.width, Window.height)*0.05 )
+    font_size: ( min(Window.width, Window.height)*0.05 )
 <TextInput>
-    font_size: sp( min(Window.width, Window.height)*0.05 )
+    font_size: ( min(Window.width, Window.height)*0.05 )
 <ToggleButton>:
-    font_size: sp( min(Window.width, Window.height)*0.05 )
+    font_size: ( min(Window.width, Window.height)*0.05 )
 
 
 <FPSSoundLoopstationWindow>:
@@ -46,9 +46,9 @@ kv = '''
 
     FloatLayout:
     BoxLayout:
-        width: dp(Window.width)
-        height: dp(Window.height)*0.05
-        y: dp(Window.height)*0.95
+        width: (Window.width)
+        height: (Window.height)*0.05
+        y: (Window.height)*0.95
 
         orientation: "vertical"
 
@@ -57,9 +57,9 @@ kv = '''
             text: "about"
 
     BoxLayout:
-        width: dp(Window.width)
-        height: dp(Window.height)*0.45
-        y: dp(Window.height)*0.5
+        width: (Window.width)
+        height: (Window.height)*0.45
+        y: (Window.height)*0.5
 
         orientation: "vertical"
 
@@ -165,8 +165,8 @@ kv = '''
     # Segunda mitad de window
     # Scroll | Contenedor de Pistas
     ScrollView:
-        width: dp(Window.width)
-        height: dp(Window.height*0.5)
+        width: (Window.width)
+        height: (Window.height*0.5)
         y: 0
         do_scroll_x: True
         do_scroll_y: True
@@ -179,7 +179,7 @@ kv = '''
             size_hint_y: None
             height: self.minimum_height
 
-            row_default_height: dp( min(Window.width, Window.height) * 0.1 )
+            row_default_height: ( min(Window.width, Window.height) * 0.1 )
             row_force_default: True
 
     # Timer
