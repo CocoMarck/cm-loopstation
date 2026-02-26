@@ -51,6 +51,8 @@ class FPSSoundLoopstationEngine():
         self.loop.join()
 
     def start(self):
+        if self.loop and self.loop.is_alive():
+            return
         self.loop = FPSLoop(
             fps=self.metronome.fps,
             callback=self.tick
