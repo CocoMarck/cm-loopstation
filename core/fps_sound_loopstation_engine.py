@@ -49,6 +49,7 @@ class FPSSoundLoopstationEngine():
     def stop(self):
         self.loop.stop()
         self.loop.join()
+        self.sound_loopstation.reset_loop_of_all_tracks()
 
     def start(self):
         if self.loop and self.loop.is_alive():
