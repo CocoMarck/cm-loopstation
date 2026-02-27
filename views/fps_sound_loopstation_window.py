@@ -332,7 +332,7 @@ class FPSSoundLoopstationWindow(Widget):
 
         label = Label(
             text=(
-                f"[b]{NAME}r[/b]: version {VERSION}\n\n"
+                f"[b]{NAME}[/b]: version {VERSION}\n\n"
                 f"- developer: [b]{DEVELOPER}[/b]\n"
                 f"- website: [b]{WEBSITE}[/b]"
             ),
