@@ -3,6 +3,7 @@ from core.text_util import ignore_text_filter, PREFIX_NUMBER
 
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
+from config.constants import VERSION, DEVELOPER, WEBSITE, NAME
 
 # Kivy
 from kivy.uix.widget import Widget
@@ -331,9 +332,9 @@ class FPSSoundLoopstationWindow(Widget):
 
         label = Label(
             text=(
-                "[b]Sound loop recorder[/b]: version 0.3.5-alpha\n\n"
-                "- developer: [b]Jean Abraham Chacón Candanosa[/b]\n"
-                "- website: [b]github.com/CocoMarck[/b]"
+                f"[b]{NAME}r[/b]: version {VERSION}\n\n"
+                f"- developer: [b]{DEVELOPER}[/b]\n"
+                f"- website: [b]{WEBSITE}[/b]"
             ),
             #size_hint_y=None,
             markup=True,

@@ -1,0 +1,183 @@
+#:import Window kivy.core.window.Window
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
+
+
+<Label>:
+    font_size: sp(18)
+<TextInput>
+    font_size: sp(18)
+<ToggleButton>:
+    font_size: sp(18)
+
+
+<FPSSoundLoopstationWindow>:
+    record_button: _record_button
+    label_timer: _label_timer
+    label_tracks: _label_tracks
+    label_tracks_number: _label_tracks_number
+    label_record_bars: _label_record_bars
+    label_center: _label_center
+
+    label_bpm: _label_bpm
+    slider_bpm: _slider_bpm
+
+    grid_tracks: _grid_tracks
+
+    button_play: _button_play
+    button_stop: _button_stop
+    button_restart: _button_restart
+    button_about: _button_about
+
+    togglebutton_limit_record: _togglebutton_limit_record
+    togglebutton_play_beat: _togglebutton_play_beat
+
+    textinput_record_bars: _textinput_record_bars
+    textinput_timer: _textinput_timer
+    slider_beats: _slider_beats
+
+    metronome_container: _metronome_container
+
+    BoxLayout:
+        size_hint_x: 1
+        size_hint_y: 0.05
+        pos_hint: {"x":0, "y":0.95}
+
+        orientation: "vertical"
+
+        Button:
+            id: _button_about
+            text: "about"
+
+    BoxLayout:
+        size_hint_x: 1
+        size_hint_y: 0.45
+        pos_hint: {"x":0, "y":0.5}
+
+        orientation: "vertical"
+
+        # Fila 1
+        ## circulos del Metronomo
+        BoxLayout:
+            id: _metronome_container
+            orientation: "horizontal"
+
+        # Fila 2
+        BoxLayout:
+            orientation: "horizontal"
+
+            ## timer
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_timer
+                    text: "timer"
+                TextInput:
+                    id: _textinput_timer
+
+            ## Beats
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    text: "beats"
+                Slider:
+                    id: _slider_beats
+
+            ## BPM
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_bpm
+                    text: "bpm"
+                Slider:
+                    id: _slider_bpm
+
+        # Fila 3
+        BoxLayout:
+            orientation: "horizontal"
+
+            ## compases a grabar
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_record_bars
+                    text: "bars"
+
+                TextInput:
+                    id: _textinput_record_bars
+
+            ## tracks
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_tracks
+                    text: "tracks"
+                Label:
+                    id: _label_tracks_number
+                    text: "0"
+
+        # Fila 4
+        BoxLayout:
+            ## Widgets
+            orientation: "horizontal"
+
+            # Col 1
+            ToggleButton:
+                id: _togglebutton_play_beat
+                text: "play beat"
+                state: "down"
+
+            ## Grabar
+            ToggleButton:
+                id: _record_button
+                text: "record"
+
+            ## Opcion Parar grabación por numero de compass
+            ToggleButton:
+                id: _togglebutton_limit_record
+                text: "limit bars"
+
+        BoxLayout:
+            ## Widgets
+            orientation: "horizontal"
+
+            ## Opciones de reproducción de tracks
+            Button:
+                id: _button_play
+                text: 'play'
+
+            Button:
+                id: _button_stop
+                text: 'stop'
+
+            Button:
+                id: _button_restart
+                text: 'restart'
+
+    # Segunda mitad de window
+    # Scroll | Contenedor de Pistas
+    ScrollView:
+        size_hint_x: 1
+        size_hint_y: 0.5
+        pos_hint: {"x":0,"y":0}
+
+        do_scroll_x: True
+        do_scroll_y: True
+
+        # CheckBox Tracks
+        GridLayout:
+            id: _grid_tracks
+            cols: 6
+
+            size_hint_y: None
+            height: self.minimum_height
+
+            row_default_height: dp(20)
+            row_force_default: True
+
+    # Timer
+    FloatLayout:
+        Label:
+            id: _label_center
+            pos_hint: {"center_x":0.5,"center_y":0.5}
+            opacity: 1
