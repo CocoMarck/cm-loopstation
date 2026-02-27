@@ -20,6 +20,7 @@ from kivy.properties import (
 )
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
+from kivy.uix.screenmanager import Screen
 
 
 # Estilo molon
@@ -60,9 +61,8 @@ class LoopstationCircle(Widget):
         good_pos[1] = self.y + (self.height -good_size[1]) / 2
         self.ellipse.pos = good_pos
 
-
 # Ventana, el loop del porgrama
-class FPSSoundLoopstationWindow(Widget):
+class FPSSoundLoopstationWindow(Screen):
     '''
     El tempo de preferencia que sea un entero.
     '''
@@ -332,7 +332,7 @@ class FPSSoundLoopstationWindow(Widget):
 
         label = Label(
             text=(
-                f"[b]{NAME}r[/b]: version {VERSION}\n\n"
+                f"[b]{NAME}[/b]: version {VERSION}\n\n"
                 f"- developer: [b]{DEVELOPER}[/b]\n"
                 f"- website: [b]{WEBSITE}[/b]"
             ),

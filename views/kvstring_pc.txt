@@ -1,4 +1,6 @@
 #:import Window kivy.core.window.Window
+#:import dp kivy.metrics.dp
+#:import sp kivy.metrics.sp
 
 
 <Label>:
@@ -20,7 +22,6 @@
     label_bpm: _label_bpm
     slider_bpm: _slider_bpm
 
-
     grid_tracks: _grid_tracks
 
     button_play: _button_play
@@ -38,9 +39,9 @@
     metronome_container: _metronome_container
 
     BoxLayout:
-        width: (Window.width)
-        height: (Window.height)*0.05
-        y: (Window.height)*0.95
+        size_hint_x: 1
+        size_hint_y: 0.05
+        pos_hint: {"x":0, "y":0.95}
 
         orientation: "vertical"
 
@@ -49,9 +50,9 @@
             text: "about"
 
     BoxLayout:
-        width: (Window.width)
-        height: (Window.height)*0.45
-        y: (Window.height)*0.5
+        size_hint_x: 1
+        size_hint_y: 0.45
+        pos_hint: {"x":0, "y":0.5}
 
         orientation: "vertical"
 
@@ -153,13 +154,13 @@
                 id: _button_restart
                 text: 'restart'
 
-
     # Segunda mitad de window
     # Scroll | Contenedor de Pistas
     ScrollView:
-        width: (Window.width)
-        height: (Window.height*0.5)
-        y: 0
+        size_hint_x: 1
+        size_hint_y: 0.5
+        pos_hint: {"x":0,"y":0}
+
         do_scroll_x: True
         do_scroll_y: True
 
@@ -178,6 +179,5 @@
     FloatLayout:
         Label:
             id: _label_center
-            center_x: root.center_x
-            center_y: root.center_y
+            pos_hint: {"center_x":0.5,"center_y":0.5}
             opacity: 1

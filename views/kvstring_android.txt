@@ -4,11 +4,11 @@
 
 
 <Label>:
-    font_size: sp(18)
+    font_size: ( min(Window.width, Window.height)*0.05 )
 <TextInput>
-    font_size: sp(18)
+    font_size: ( min(Window.width, Window.height)*0.05 )
 <ToggleButton>:
-    font_size: sp(18)
+    font_size: ( min(Window.width, Window.height)*0.05 )
 
 
 <FPSSoundLoopstationWindow>:
@@ -172,7 +172,7 @@
             size_hint_y: None
             height: self.minimum_height
 
-            row_default_height: dp(20)
+            row_default_height: ( min(Window.width, Window.height) * 0.1 )
             row_force_default: True
 
     # Timer
