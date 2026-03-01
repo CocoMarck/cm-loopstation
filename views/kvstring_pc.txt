@@ -1,15 +1,7 @@
 #:import Window kivy.core.window.Window
-#:import dp kivy.metrics.dp
-#:import sp kivy.metrics.sp
 
-
-<Label>:
+<Label, TextInput, ToggleButton, height>:
     font_size: ( min(Window.width, Window.height)*0.05 )
-<TextInput>
-    font_size: ( min(Window.width, Window.height)*0.05 )
-<ToggleButton>:
-    font_size: ( min(Window.width, Window.height)*0.05 )
-
 
 <FPSSoundLoopstationWindow>:
     record_button: _record_button
@@ -18,9 +10,8 @@
     label_tracks_number: _label_tracks_number
     label_record_bars: _label_record_bars
     label_center: _label_center
-
+    label_beats: _label_beats
     label_bpm: _label_bpm
-    slider_bpm: _slider_bpm
 
     grid_tracks: _grid_tracks
 
@@ -34,51 +25,39 @@
 
     textinput_record_bars: _textinput_record_bars
     textinput_timer: _textinput_timer
+
     slider_beats: _slider_beats
+    slider_bpm: _slider_bpm
 
     metronome_container: _metronome_container
 
     BoxLayout:
+        # Base
         size_hint_x: 1
-        size_hint_y: 0.05
-        pos_hint: {"x":0, "y":0.95}
+        size_hint_y: 1
+        pos_hint: {"x":0,"y":0}
 
         orientation: "vertical"
 
-        Button:
-            id: _button_about
-            text: "about"
-
-    BoxLayout:
-        size_hint_x: 1
-        size_hint_y: 0.45
-        pos_hint: {"x":0, "y":0.5}
-
-        orientation: "vertical"
-
-        # Fila 1
-        ## circulos del Metronomo
         BoxLayout:
+            # Circulos del Metronomo
+            size_hint_y: 0.125
             id: _metronome_container
             orientation: "horizontal"
 
-        # Fila 2
         BoxLayout:
-            orientation: "horizontal"
+            # Sección | Control de Grabación y metronomo
+            size_hint_y: 0.125
 
-            ## timer
-            BoxLayout:
-                orientation: "horizontal"
-                Label:
-                    id: _label_timer
-                    text: "timer"
-                TextInput:
-                    id: _textinput_timer
+            Button:
+                id: _button_about
+                text: "about"
 
             ## Beats
             BoxLayout:
                 orientation: "horizontal"
                 Label:
+                    id: _label_beats
                     text: "beats"
                 Slider:
                     id: _slider_beats
@@ -92,19 +71,18 @@
                 Slider:
                     id: _slider_bpm
 
-        # Fila 3
         BoxLayout:
+            # Sección | Información de aplicación
             orientation: "horizontal"
+            size_hint_y: 0.125
 
-            ## compases a grabar
             BoxLayout:
                 orientation: "horizontal"
                 Label:
-                    id: _label_record_bars
-                    text: "bars"
-
+                    id: _label_timer
+                    text: "timer"
                 TextInput:
-                    id: _textinput_record_bars
+                    id: _textinput_timer
 
             ## tracks
             BoxLayout:
@@ -116,12 +94,20 @@
                     id: _label_tracks_number
                     text: "0"
 
-        # Fila 4
-        BoxLayout:
-            ## Widgets
-            orientation: "horizontal"
+            BoxLayout:
+                orientation: "horizontal"
 
-            # Col 1
+                Label:
+                    id: _label_record_bars
+                    text: "bars"
+                TextInput:
+                    id: _textinput_record_bars
+
+        BoxLayout:
+            # Sección | Funciónes principales
+            orientation: "horizontal"
+            size_hint_y: 0.125
+
             ToggleButton:
                 id: _togglebutton_play_beat
                 text: "play beat"
@@ -138,10 +124,10 @@
                 text: "limit bars"
 
         BoxLayout:
-            ## Widgets
+            # Sección | Control global de pistas
+            size_hint_y: 0.125
             orientation: "horizontal"
 
-            ## Opciones de reproducción de tracks
             Button:
                 id: _button_play
                 text: 'play'
@@ -154,30 +140,25 @@
                 id: _button_restart
                 text: 'restart'
 
-    # Segunda mitad de window
-    # Scroll | Contenedor de Pistas
-    ScrollView:
-        size_hint_x: 1
-        size_hint_y: 0.5
-        pos_hint: {"x":0,"y":0}
+        ScrollView:
+            # Scroll | Contenedor de Pistas
+            size_hint_y: 0.5
 
-        do_scroll_x: True
-        do_scroll_y: True
+            do_scroll_x: True
+            do_scroll_y: True
 
-        # CheckBox Tracks
-        GridLayout:
-            id: _grid_tracks
-            cols: 6
+            # CheckBox Tracks
+            GridLayout:
+                id: _grid_tracks
+                cols: 6
 
-            size_hint_y: None
-            height: self.minimum_height
-
-            row_default_height: ( min(Window.width, Window.height) * 0.1 )
-            row_force_default: True
+                row_default_height: ( min(Window.width, Window.height) * 0.1 )
+                row_force_default: True
 
     # Timer
     FloatLayout:
         Label:
             id: _label_center
-            pos_hint: {"center_x":0.5,"center_y":0.5}
+            pos_hint: {"center_x":0.5,"center_y":0.8}
             opacity: 1
+            color: "yellow"
