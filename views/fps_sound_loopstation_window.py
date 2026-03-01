@@ -154,13 +154,19 @@ class FPSSoundLoopstationWindow(Screen):
             self.circles.append( circle )
             self.metronome_container.add_widget(circle)
 
+    def build_bpm_text(self):
+        return "bpm: " + str(self.metronome.bpm)
+
+    def build_beats_text(self):
+        return "beats: " + str(self.metronome.beats_per_bar+1)
 
     def set_slider_bpm(self):
         self.slider_bpm.value = self.metronome.bpm
-        self.label_bpm.text = str(self.metronome.bpm)
+        self.label_bpm.text = self.build_bpm_text()
 
     def set_slider_beats(self):
         self.slider_beats.value = self.metronome.beats_per_bar
+        self.label_beats.text = self.build_beats_text()
 
     def set_textinput_timer(self):
         self.textinput_timer.text = str(self.timer.seconds)
@@ -191,6 +197,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def on_beats_per_bar(self, obj, value):
         self.metronome.beats_per_bar = round(value)
+        self.label_beats.text = self.build_beats_text()
         self.metronome.reset_settings()
         self.loopstation.update_all_track_bars()
         self.update_metronome_circles()
@@ -201,7 +208,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.metronome.bpm = round(value)
         self.metronome.reset_settings()
         self.loopstation.update_all_track_bars()
-        self.label_bpm.text = str(self.metronome.bpm)
+        self.label_bpm.text = self.build_bpm_text()
         self.set_widget_track_options()
 
 
