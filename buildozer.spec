@@ -29,7 +29,7 @@ source.include_exts = py,png,jpg,kv,atlas,wav,3gp,m4a,txt
 #source.exclude_patterns = license,images/*/*.jpg
 
 # (str) Application versioning (method 1)
-version = 0.3.6
+version = 0.3.7
 
 # (str) Application versioning (method 2)
 # version.regex = __version__ = ['"](.*)['"]
@@ -64,7 +64,7 @@ orientation = portrait,landscape
 # author = © Copyright Info
 
 # change the major version of python used by the app
-osx.python_version = 3
+osx.python_version = 4
 
 # Kivy version to use
 osx.kivy_version = 2.3.1
