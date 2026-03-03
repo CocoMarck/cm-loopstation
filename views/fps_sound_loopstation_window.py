@@ -21,6 +21,12 @@ from kivy.properties import (
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
+from kivy.uix.image import Image
+
+# Images
+from config.paths import ICON
+record_image = Image( source=str(ICON) )
+
 
 
 # Estilo molon
@@ -28,38 +34,15 @@ from kivy.lang import Builder
 from views.kvstring import kv
 Builder.load_string(kv)
 
+# Function
+from views.pykivy.widgets.sticky_image import StickyImage
+from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 
 # Constantes | Colores
 RGB_OFF_TEMPO = [1,1,1]
 RGB_FIRST_TEMPO = [0,1,0]
 RGB_ANOTHER_TEMPO = [1,0,0]
 
-
-# Objeto criculos del metronomo
-class LoopstationCircle(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.size = (32,32)
-
-        with self.canvas:
-            self.color = Color(1,1,1,1)
-            self.ellipse = Ellipse(pos=self.pos, size=self.size)
-
-        # Cuando cambie la posición o tamaño del widget → mover el círculo
-        self.bind(pos=self.update_graphics, size=self.update_graphics)
-
-    def update_graphics(self, *args):
-        '''
-        Necesario para actualizar graficos, se usa en automatico.
-        '''
-        min_size = min(self.size)
-        good_size = [ min_size, min_size ]
-        self.ellipse.size = good_size
-
-        good_pos = [0, 0]
-        good_pos[0] = self.x + (self.width -good_size[0]) / 2
-        good_pos[1] = self.y + (self.height -good_size[1]) / 2
-        self.ellipse.pos = good_pos
 
 # Ventana, el loop del porgrama
 class FPSSoundLoopstationWindow(Screen):
@@ -125,6 +108,17 @@ class FPSSoundLoopstationWindow(Screen):
         # Eventos de PC (desktop)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
+
+        # Botones con imagen.
+        self.buttons_with_image = [
+            self.record_button
+        ]
+        for button in self.buttons_with_image:
+            button.text=""
+            #button.background_color = (0,0,0,0)
+            #button.background_color = (0,1.0,0.8,1)
+            #button.background_color = (1,1,1,0.5)
+
 
     def _on_minimize(self, *args):
         # Puede que solo jale en PC
@@ -383,6 +377,11 @@ class FPSSoundLoopstationWindow(Screen):
         # Loop
         self.engine.start()
         self.icon = ICON
+
+        # Images
+        self.sticky_image_record_button = StickyImage(
+            image=record_image, widget=self.record_button
+        )
 
         # widgets
         self.update_metronome_circles()
