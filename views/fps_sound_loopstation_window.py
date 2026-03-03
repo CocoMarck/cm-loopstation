@@ -24,8 +24,11 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
 
 # Images
-from config.paths import ICON
-record_image = Image( source=str(ICON) )
+from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE
+record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
+play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
+stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
+restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 
 
 
@@ -111,12 +114,15 @@ class FPSSoundLoopstationWindow(Screen):
 
         # Botones con imagen.
         self.buttons_with_image = [
-            self.record_button
+            self.record_button,
+            self.button_play,
+            self.button_stop,
+            self.button_restart
         ]
         for button in self.buttons_with_image:
             button.text=""
             #button.background_color = (0,0,0,0)
-            #button.background_color = (0,1.0,0.8,1)
+            #button.background_color = (0, 0.5, 0.4, 1)
             #button.background_color = (1,1,1,0.5)
 
 
@@ -379,9 +385,20 @@ class FPSSoundLoopstationWindow(Screen):
         self.icon = ICON
 
         # Images
-        self.sticky_image_record_button = StickyImage(
-            image=record_image, widget=self.record_button
-        )
+        self.sticky_images = {
+            "record": StickyImage(
+                image=record_image, widget=self.record_button
+            ),
+            "play": StickyImage(
+                image=play_image, widget=self.button_play
+            ),
+            "stop": StickyImage(
+                image=stop_image, widget=self.button_stop
+            ),
+            "restart": StickyImage(
+                image=restart_image, widget=self.button_restart
+            )
+        }
 
         # widgets
         self.update_metronome_circles()

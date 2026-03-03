@@ -17,3 +17,9 @@ ICON = resource_loader.get_icon('fps-sound-loopstation.png')
 
 KVSTRING_PC = VIEWS_DIR.joinpath('kvstring_pc.txt')
 KVSTRING_ANDROID = VIEWS_DIR.joinpath('kvstring_android.txt')
+
+
+PLAY_IMAGE = resource_loader.get_icon('play.png')
+STOP_IMAGE = resource_loader.get_icon('stop.png')
+RESTART_IMAGE = resource_loader.get_icon('restart.png')
+RECORD_IMAGE = resource_loader.get_icon('record.png')
