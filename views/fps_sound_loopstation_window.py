@@ -21,6 +21,16 @@ from kivy.properties import (
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
+from kivy.uix.image import Image
+
+# Images
+from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE
+record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
+play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
+stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
+restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
+about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
+
 
 
 # Estilo molon
@@ -28,38 +38,15 @@ from kivy.lang import Builder
 from views.kvstring import kv
 Builder.load_string(kv)
 
+# Function
+from views.pykivy.widgets.sticky_image import StickyImage
+from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 
 # Constantes | Colores
 RGB_OFF_TEMPO = [1,1,1]
 RGB_FIRST_TEMPO = [0,1,0]
 RGB_ANOTHER_TEMPO = [1,0,0]
 
-
-# Objeto criculos del metronomo
-class LoopstationCircle(Widget):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.size = (32,32)
-
-        with self.canvas:
-            self.color = Color(1,1,1,1)
-            self.ellipse = Ellipse(pos=self.pos, size=self.size)
-
-        # Cuando cambie la posición o tamaño del widget → mover el círculo
-        self.bind(pos=self.update_graphics, size=self.update_graphics)
-
-    def update_graphics(self, *args):
-        '''
-        Necesario para actualizar graficos, se usa en automatico.
-        '''
-        min_size = min(self.size)
-        good_size = [ min_size, min_size ]
-        self.ellipse.size = good_size
-
-        good_pos = [0, 0]
-        good_pos[0] = self.x + (self.width -good_size[0]) / 2
-        good_pos[1] = self.y + (self.height -good_size[1]) / 2
-        self.ellipse.pos = good_pos
 
 # Ventana, el loop del porgrama
 class FPSSoundLoopstationWindow(Screen):
@@ -119,9 +106,27 @@ class FPSSoundLoopstationWindow(Screen):
         self.update_interval_tracks = 0.5 # Medio segundo.
         self.accum_update_tracks = 0 # Contador de delta time
 
+        # Sliders
+        self.sliders = []
+
         # Eventos de PC (desktop)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
+
+        # Botones con imagen.
+        self.buttons_with_image = [
+            self.record_button,
+            self.button_play,
+            self.button_stop,
+            self.button_restart,
+            self.button_about
+        ]
+        for button in self.buttons_with_image:
+            button.text=""
+            #button.background_color = (0,0,0,0)
+            #button.background_color = (0, 0.5, 0.4, 1)
+            #button.background_color = (1,1,1,0.5)
+
 
     def _on_minimize(self, *args):
         # Puede que solo jale en PC
@@ -277,6 +282,8 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         Establecer widgets
         '''
+        self.sliders.clear()
+        self.sliders.extend( [self.slider_beats, self.slider_bpm] )
         self.grid_tracks.clear_widgets()
         for track_id in self.loopstation.get_track_ids():
             track = self.loopstation.get_track( track_id )
@@ -304,9 +311,11 @@ class FPSSoundLoopstationWindow(Screen):
             self.grid_tracks.add_widget( togglebutton_mute )
 
             slider_volume = Slider(
-                min=0, max=100, value=int(track['volume']*100), orientation='horizontal'
+                min=0, max=100, value=int(track['volume']*100),
+                orientation=self.get_screen_orientation()
             )
             slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
+            self.sliders.append( slider_volume )
             self.grid_tracks.add_widget( slider_volume )
 
             if track['sample']:
@@ -377,6 +386,25 @@ class FPSSoundLoopstationWindow(Screen):
         self.engine.start()
         self.icon = ICON
 
+        # Images
+        self.sticky_images = {
+            "record": StickyImage(
+                image=record_image, widget=self.record_button
+            ),
+            "play": StickyImage(
+                image=play_image, widget=self.button_play
+            ),
+            "stop": StickyImage(
+                image=stop_image, widget=self.button_stop
+            ),
+            "restart": StickyImage(
+                image=restart_image, widget=self.button_restart
+            ),
+            "about": StickyImage(
+                image=about_image, widget=self.button_about
+            )
+        }
+
         # widgets
         self.update_metronome_circles()
 
@@ -387,6 +415,8 @@ class FPSSoundLoopstationWindow(Screen):
         self.slider_bpm.min = 30
         self.slider_bpm.max = self.metronome.bpm_limit
         self.slider_bpm.step = 10
+
+        self.sliders.extend( [self.slider_beats, self.slider_bpm] )
 
         # Samples
         #self.loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
@@ -415,33 +445,31 @@ class FPSSoundLoopstationWindow(Screen):
         self.button_about.bind( on_press=self.on_about )
 
 
-
-
-    # Actualizar todo
-    def update(self, dt):
+    def get_screen_orientation(self):
         '''
-        Para la sincronización
+        Determinar orientación de ventana, segun tamaño xy de ventana.
         '''
-        # Puase/Minimizar
+        if self.height > self.width:
+            return  "vertical"
+        return "horizontal"
 
-        # Señales
-        signals = self.engine.get_last_signals()
-        if not signals:
-            return
+    def guide_sliders(self, orientation):
+        '''
+        Acomodar orientación de sliders, segun tamaño xy de ventana.
+        '''
+        for slider in self.sliders:
+            if slider.orientation != orientation:
+                slider.orientation = orientation
 
-        loopstation_signals = signals['loopstation']
-        metronome_signals = signals['metronome']
-        recorder_controller_signals = signals['recorder_controller']
-        timer_signals = signals['timer']
-
+    def update_last_record_state(self, recorder_controller_signals):
         # Señal | Cuando se para la grabación
         if recorder_controller_signals["stop_record"]:
             ## Parar con señal, pero aveces no jala.
-            self.current_count_temp_sound = self.loopstation.count_temp_sound
+            self.last_microphone_recorder_state = self.microphone_recorder.state
             self.record_button.state = "normal"
-            self.set_widget_track_options()
+            self.update_tracks = True # Pedir actualización
 
-        # Actualizar ultimo estado de grabación. Determinar parar no.
+        # Actualizar ultimo estado de grabación. Determinar parar o no.
         if self.last_microphone_recorder_state != self.microphone_recorder.state:
             ## Forzar parar, por que aveces no llega la señal de parar. (Es por el loop del kivy
             self.last_microphone_recorder_state = self.microphone_recorder.state
@@ -452,14 +480,22 @@ class FPSSoundLoopstationWindow(Screen):
                 self.record_button.state = "normal"
                 self.update_tracks = True # Pedir actualización
 
-        # Obtener tracks | Insertar track
+    def insert_track_options(self):
+        '''
+        Obtener tracks | Insertar track
+        '''
         if self.current_count_temp_sound != self.loopstation.count_temp_sound:
             self.update_tracks = False
             self.current_count_temp_sound = self.loopstation.count_temp_sound
             self.set_widget_track_options()
             self.set_label_tracks_number()
+            return True
+        return False
 
-        # Obtener tracks | Actualización de track
+    def update_track_options(self, dt):
+        '''
+        Obtener tracks | Actualización de track
+        '''
         if self.update_tracks == False:
             # Asegurarse de reiniciar conteo de actualización de tracks
             self.accum_update_tracks = 0.0
@@ -469,10 +505,16 @@ class FPSSoundLoopstationWindow(Screen):
                 self.update_tracks = False
                 self.set_widget_track_options()
                 self.set_label_tracks_number()
+                return True
             else:
                 self.accum_update_tracks += dt
+        return False
 
-        # Timer | Record
+
+    def record_with_timer(self, timer_signals):
+        '''
+        Timer | Record
+        '''
         timer_current_fps = 0
         if self.record_button.state == "down":
             self.timer.activate = True
@@ -486,22 +528,58 @@ class FPSSoundLoopstationWindow(Screen):
             self.recorder_controller.record = False
             self.timer.activate = False
             self.timer.reset()
+        return timer_current_fps
 
 
-        # Metronomo | Visual
+    def metronome_view(self, loopstation_signals, metronome_signals):
+        '''
+        Metronomo | Visual
+        '''
         for i in range( 0, len(self.circles) ):
             if not metronome_signals['current_beat'] == i:
                 self.circles[i].color.rgb = RGB_OFF_TEMPO
 
-        if loopstation_signals['emphasis_of_beat']['emphasis']:
-            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
-        elif loopstation_signals['emphasis_of_beat']['neutral']:
-            self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
+        if metronome_signals['current_beat'] in range(0, len(self.circles) ):
+            # Solo beats existentes en circles.
+            if loopstation_signals['emphasis_of_beat']['emphasis']:
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
+            elif loopstation_signals['emphasis_of_beat']['neutral']:
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
 
-        # Visual Timer
+
+    def timer_view(self, timer_current_fps):
+        '''
+        Visual Timer
+        '''
         if timer_current_fps > 0:
             self.label_center.text = str(
                 round( (self.timer.seconds_in_fps-timer_current_fps) / self.timer.fps)
             )
         else:
             self.label_center.text = ""
+
+
+    # Actualizar todo
+    def update(self, dt):
+        '''
+        Para la sincronización
+        '''
+        self.guide_sliders( self.get_screen_orientation() )
+
+        # Señales
+        signals = self.engine.get_last_signals()
+        if not signals:
+            return
+
+        loopstation_signals = signals['loopstation']
+        metronome_signals = signals['metronome']
+        recorder_controller_signals = signals['recorder_controller']
+        timer_signals = signals['timer']
+
+        self.update_last_record_state( recorder_controller_signals )
+        insert = self.insert_track_options()
+        if not insert:
+            update = self.update_track_options(dt)
+        timer_in_fps = self.record_with_timer( timer_signals )
+        self.metronome_view( loopstation_signals, metronome_signals )
+        self.timer_view( timer_in_fps )
