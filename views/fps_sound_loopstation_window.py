@@ -24,11 +24,12 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
 
 # Images
-from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE
+from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE
 record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
 play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
 stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
+about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
 
 
 
@@ -117,7 +118,8 @@ class FPSSoundLoopstationWindow(Screen):
             self.record_button,
             self.button_play,
             self.button_stop,
-            self.button_restart
+            self.button_restart,
+            self.button_about
         ]
         for button in self.buttons_with_image:
             button.text=""
@@ -397,6 +399,9 @@ class FPSSoundLoopstationWindow(Screen):
             ),
             "restart": StickyImage(
                 image=restart_image, widget=self.button_restart
+            ),
+            "about": StickyImage(
+                image=about_image, widget=self.button_about
             )
         }
 
