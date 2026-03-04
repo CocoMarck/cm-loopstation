@@ -3,6 +3,10 @@
 <Label, TextInput, ToggleButton, height>:
     font_size: ( min(Window.width, Window.height)*0.05 )
 
+<TextInput>:
+    background_color: (0, 0.3, 0.5, 0.5)
+    foreground_color: (1, 1, 1, 1)
+
 <FPSSoundLoopstationWindow>:
     record_button: _record_button
     label_timer: _label_timer
@@ -40,6 +44,14 @@
         orientation: "vertical"
 
         BoxLayout:
+            size_hint_y: 0.055
+            Button:
+                size_hint_x: None
+                width: root.width * 0.2
+                id: _button_about
+                text: "about"
+
+        BoxLayout:
             # Circulos del Metronomo
             size_hint_y: 0.125
             id: _metronome_container
@@ -47,11 +59,7 @@
 
         BoxLayout:
             # Sección | Control de Grabación y metronomo
-            size_hint_y: 0.125
-
-            Button:
-                id: _button_about
-                text: "about"
+            size_hint_y: 0.08
 
             ## Beats
             BoxLayout:
@@ -74,7 +82,7 @@
         BoxLayout:
             # Sección | Información de aplicación
             orientation: "horizontal"
-            size_hint_y: 0.125
+            size_hint_y: 0.08
 
             BoxLayout:
                 orientation: "horizontal"
@@ -106,7 +114,7 @@
         BoxLayout:
             # Sección | Funciónes principales
             orientation: "horizontal"
-            size_hint_y: 0.125
+            size_hint_y: 0.08
 
             ToggleButton:
                 id: _togglebutton_play_beat
@@ -125,7 +133,7 @@
 
         BoxLayout:
             # Sección | Control global de pistas
-            size_hint_y: 0.125
+            size_hint_y: 0.08
             orientation: "horizontal"
 
             Button:
@@ -152,7 +160,7 @@
                 id: _grid_tracks
                 cols: 6
 
-                row_default_height: ( min(Window.width, Window.height) * 0.1 )
+                row_default_height: Window.height * 0.075
                 row_force_default: True
 
     # Timer
