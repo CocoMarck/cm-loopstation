@@ -47,6 +47,9 @@ Config.set('graphics', 'maxfps', str(FPS_GUI))
 Config.set('kivy', 'window_icon', str(ICON))
 
 # Inicializar
+from kivy.core.window import Window
+from kivy.properties import ListProperty
+from kivy.metrics import dp
 from kivy.app import App
 from kivy.clock import Clock
 
@@ -57,15 +60,21 @@ Constructor de aplicación
 #Window.resizable = True
 class FPSSoundLoopstationApp(App):
     def build(self):
-        window = FPSSoundLoopstationWindow( engine )
+
+        window = FPSSoundLoopstationWindow(
+            engine,
+            vertical_padding_offsets=[0,0,0,0],
+            horizontal_padding_offsets=[0,0,0,0]
+        )
         window.build()
 
+        # Delta Time, GUI loop
         Clock.schedule_interval(window.update, 1.0/FPS_GUI)
 
         return window
 
     # Pause y resume an android
-    def on_puase(self):
+    def on_pause(self):
         return self.window.on_pause()
 
     def on_resume(self):

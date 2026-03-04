@@ -35,10 +35,13 @@
 
     metronome_container: _metronome_container
 
+    main_layout: _main_layout
+
     BoxLayout:
+        id:_main_layout
+
         # Base
-        size_hint_x: 1
-        size_hint_y: 1
+        size_hint: (1, 1)
         pos_hint: {"x":0,"y":0}
 
         orientation: "vertical"

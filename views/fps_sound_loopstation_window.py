@@ -22,6 +22,7 @@ from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
+from kivy.metrics import dp
 
 # Images
 from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE
@@ -54,7 +55,9 @@ class FPSSoundLoopstationWindow(Screen):
     El tempo de preferencia que sea un entero.
     '''
     def __init__(
-        self, engine: FPSSoundLoopstationEngine, **kwargs
+        self, engine: FPSSoundLoopstationEngine,
+        vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
+        **kwargs
     ):
         super().__init__(**kwargs)
 
@@ -109,7 +112,7 @@ class FPSSoundLoopstationWindow(Screen):
         # Sliders
         self.sliders = []
 
-        # Eventos de PC (desktop)
+        # Eventos de PC (desktop, pero creo que lo usa android tambien)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
 
@@ -127,6 +130,33 @@ class FPSSoundLoopstationWindow(Screen):
             #button.background_color = (0, 0.5, 0.4, 1)
             #button.background_color = (1,1,1,0.5)
 
+        # Padding
+        self.last_orientation = None
+        self.vertical_padding_offsets = vertical_padding_offsets
+        self.horizontal_padding_offsets = horizontal_padding_offsets
+
+    def get_screen_orientation(self):
+        '''
+        Determinar orientación de ventana, segun tamaño xy de ventana.
+        '''
+        if self.height > self.width:
+            return  "vertical"
+        return "horizontal"
+
+    def _update_padding(self, orientation):
+        # Usa DP
+        padding_using_dp = []
+        if orientation == "vertical":
+            for x in self.vertical_padding_offsets:
+                padding_using_dp.append( dp(x) )
+        else:
+            for x in self.horizontal_padding_offsets:
+                padding_using_dp.append( dp(x) )
+        if (
+            len(padding_using_dp) == 4 #and
+            #padding_using_dp != self.main_layout.padding
+        ):
+            self.main_layout.padding = padding_using_dp
 
     def _on_minimize(self, *args):
         # Puede que solo jale en PC
@@ -444,15 +474,6 @@ class FPSSoundLoopstationWindow(Screen):
         self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
         self.button_about.bind( on_press=self.on_about )
 
-
-    def get_screen_orientation(self):
-        '''
-        Determinar orientación de ventana, segun tamaño xy de ventana.
-        '''
-        if self.height > self.width:
-            return  "vertical"
-        return "horizontal"
-
     def guide_sliders(self, orientation):
         '''
         Acomodar orientación de sliders, segun tamaño xy de ventana.
@@ -564,7 +585,12 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         Para la sincronización
         '''
-        self.guide_sliders( self.get_screen_orientation() )
+        orientation = self.get_screen_orientation()
+
+        if orientation != self.last_orientation:
+            self.guide_sliders( orientation )
+            self._update_padding( orientation )
+            self.last_orientation = orientation
 
         # Señales
         signals = self.engine.get_last_signals()
