@@ -194,6 +194,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def start_engine(self):
         self.engine.start()
+        self.set_widget_track_options()
 
     def on_start_engine(self, button):
         self.start_engine()
