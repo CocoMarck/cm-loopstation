@@ -26,12 +26,15 @@ from kivy.uix.image import Image
 from kivy.metrics import dp
 
 # Images
-from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE
+from config.paths import (
+    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE
+)
 record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
 play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
 stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
+menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
 
 
 
@@ -136,7 +139,8 @@ class FPSSoundLoopstationWindow(Screen):
             self.button_play,
             self.button_stop,
             self.button_restart,
-            self.menu_buttons["about"]
+            self.menu_buttons["about"],
+            self.button_menu,
         ]
         for button in self.buttons_with_image:
             button.text=""
@@ -155,7 +159,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def resize_menu_buttons(self):
         for button in self.menu_buttons.values():
-            button.height = self.height*0.1
+            button.height = self.height*0.055
 
     def on_menu(self, button):
         self.resize_menu_buttons()
@@ -470,6 +474,9 @@ class FPSSoundLoopstationWindow(Screen):
             ),
             "about": StickyImage(
                 image=about_image, widget=self.menu_buttons["about"]
+            ),
+            "menu": StickyImage(
+                image=menu_image, widget=self.button_menu
             )
         }
 

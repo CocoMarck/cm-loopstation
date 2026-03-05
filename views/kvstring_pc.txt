@@ -47,6 +47,7 @@
         orientation: "vertical"
 
         BoxLayout:
+
             size_hint_y: 0.055
             Button:
                 id: _button_menu
@@ -154,7 +155,7 @@
         ScrollView:
             # Scroll | Contenedor de Pistas
 
-            # Color de fondo
+            ## Color de fondo
             canvas.before:
                 Color:
                     rgba: (0.1,0.1,0.1,1)
