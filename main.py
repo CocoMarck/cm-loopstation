@@ -63,8 +63,8 @@ class FPSSoundLoopstationApp(App):
 
         window = FPSSoundLoopstationWindow(
             engine,
-            vertical_padding_offsets=[0,0,0,0],
-            horizontal_padding_offsets=[0,0,0,0]
+            vertical_padding_offsets=[0,0.05, 0,0.08],
+            horizontal_padding_offsets=[0.1,0.05, 0.1,0]
         )
         window.build()
 

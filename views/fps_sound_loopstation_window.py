@@ -172,20 +172,37 @@ class FPSSoundLoopstationWindow(Screen):
             return  "vertical"
         return "horizontal"
 
-    def _update_padding(self, orientation):
-        # Usa DP
-        padding_using_dp = []
+    def build_padding_offsets(self, orientation, using):
         if orientation == "vertical":
-            for x in self.vertical_padding_offsets:
-                padding_using_dp.append( dp(x) )
+            number = self.height
+            padding_offsets = self.vertical_padding_offsets
         else:
-            for x in self.horizontal_padding_offsets:
-                padding_using_dp.append( dp(x) )
+            number = self.width
+            padding_offsets = self.horizontal_padding_offsets
+        padding = []
+        if using == "dpi":
+            for x in padding_offsets:
+                padding.append( dp(x) )
+        elif using == "resolution":
+            for x in padding_offsets:
+                padding.append( number*x )
+        return padding
+
+    def _update_padding(self, orientation, using ):
+        # Usa DP
+        padding = self.build_padding_offsets( orientation, using )
         if (
-            len(padding_using_dp) == 4 #and
-            #padding_using_dp != self.main_layout.padding
+            len(padding) == 4 #and
+            #padding != self.main_layout.padding
         ):
-            self.main_layout.padding = padding_using_dp
+            self.main_layout.padding = padding
+
+    def _update_padding_using_dpi(self, orientation ):
+        self._update_padding( orientation, "dpi" )
+
+    def _update_padding_using_resolution(self, orientation ):
+        self._update_padding( orientation, "resolution" )
+
 
     def stop_engine(self):
         self.engine.stop()
@@ -638,7 +655,7 @@ class FPSSoundLoopstationWindow(Screen):
 
         if orientation != self.last_orientation:
             self.guide_sliders( orientation )
-            self._update_padding( orientation )
+            self._update_padding_using_resolution( orientation )
             self.last_orientation = orientation
 
         # Señales
