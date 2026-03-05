@@ -43,9 +43,11 @@ from kivy.lang import Builder
 from views.kvstring import kv
 Builder.load_string(kv)
 
-# Function
+# Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
 from views.pykivy.widgets.loopstation_circle import LoopstationCircle
+from views.pykivy.widgets.popup_box_layout import PopupBoxLayout
+from views.pykivy.widgets.popup_information import PopupInformation
 
 # Constantes | Colores
 RGB_OFF_TEMPO = [1,1,1]
@@ -121,6 +123,8 @@ class FPSSoundLoopstationWindow(Screen):
         self.menu_buttons = {
             "start": None,
             "stop": None,
+            "settings": None,
+            "help": None,
             "about": None
         }
         for key in self.menu_buttons.keys():
@@ -130,6 +134,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.menu_buttons["about"].bind( on_press=self.on_about )
         self.menu_buttons["start"].bind( on_press=self.on_start_engine )
         self.menu_buttons["stop"].bind( on_press=self.on_stop_engine )
+        self.menu_buttons["help"].bind( on_press=self.on_help )
         self.button_menu.bind( on_press=self.on_menu )
         self.button_menu.bind( on_release=self.dropdown.open )
 
@@ -433,42 +438,34 @@ class FPSSoundLoopstationWindow(Screen):
         self.set_widget_track_options()
 
 
-    def on_about(self, button):
-        layout = BoxLayout( orientation="vertical" )
+    def open_popup_information(self, title, text_information):
+        popup = PopupInformation(
+            title=title, size_hint=(0.8, 0.8),
+            text_information=text_information,
+            text_ok="ok"
+        )
+        popup.open()
 
-        label = Label(
-            text=(
+    def on_about(self, button):
+        self.open_popup_information(
+            title="about", text_information=(
                 f"[b]{NAME}[/b]: version {VERSION}\n\n"
                 f"- developer: [b]{DEVELOPER}[/b]\n"
                 f"- website: [b]{WEBSITE}[/b]"
-            ),
-            #size_hint_y=None,
-            markup=True,
-            halign="left",
-            valign="top"
+            )
         )
-        layout.add_widget(label)
 
-        # Salto de linea automatico, para que se vea bien | Ajuste de texto
-        label.bind(
-            width=lambda instance, value: setattr(instance, 'text_size', (value, None))
+    def on_help(self, button):
+        self.open_popup_information(
+            title="help", text_information=(
+                "Aplicación para reproducir grabaciones de audio en bucle.\n"
+                "- Numero `timer`: Espera para empezar agrabar.\n"
+                "- Numero `bars`: Cantidad de barras a grabar.\n"
+                "- Boton limit bars: Limita la cantidad de barras a grabar.\n"
+                "- Boton de grabación: Envia una señal, para empezar a grabar en primer beat de inicio de un compas.\n"
+                "- Control global de pistas: Iniciar, Parar, y Reiniciar"
+            )
         )
-        # Evita exceso de texto, haciendolo mas pequeño. No se necesita, esto ya lo ahce mi `file.kv`
-        #label.bind(
-        #    texture_size=lambda instance, value: setattr(instance, 'height', value[1])
-        #)
-
-        button = Button(text="ok", size_hint_y=None)
-        layout.add_widget(button)
-
-        # Momento popup, message molon
-        popup = Popup(
-            title="about",
-            content=layout,
-            size_hint=(0.8, 0.8)
-        )
-        button.bind(on_press=popup.dismiss)
-        popup.open()
 
 
     def build(self):
@@ -655,8 +652,8 @@ class FPSSoundLoopstationWindow(Screen):
 
         if orientation != self.last_orientation:
             self.guide_sliders( orientation )
-            self._update_padding_using_resolution( orientation )
             self.last_orientation = orientation
+        self._update_padding_using_resolution( orientation )
 
         # Señales
         signals = self.engine.get_last_signals()

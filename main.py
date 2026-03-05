@@ -58,17 +58,17 @@ Constructor de aplicación
 '''
 # Standard de celus: `16:9`, `20:9`, `19:9`.
 #Window.size = (20*50, 9*50)
-#Window.size = (9*50, 20*50)
+Window.size = (9*50, 20*50)
 #Window.size = (16*50, 9*50)
-Window.size = (512, 512)
+#Window.size = (512, 512)
 #Window.resizable = True
 class FPSSoundLoopstationApp(App):
     def build(self):
 
         window = FPSSoundLoopstationWindow(
             engine,
-            #vertical_padding_offsets=[0,0.05, 0,0.08],
-            #horizontal_padding_offsets=[0,0.05, 0.08,0]
+            vertical_padding_offsets=[0,0.05, 0,0.08],
+            horizontal_padding_offsets=[0,0.05, 0.08,0]
         )
         window.build()
 
