@@ -56,7 +56,9 @@ from kivy.clock import Clock
 '''
 Constructor de aplicación
 '''
-#Window.size = (960, 540)
+# Standard de celus: `16:9`, `20:9`, `19:9`.
+#Window.size = (20*50, 9*50)
+Window.size = (9*50, 20*50)
 #Window.resizable = True
 class FPSSoundLoopstationApp(App):
     def build(self):
@@ -64,7 +66,7 @@ class FPSSoundLoopstationApp(App):
         window = FPSSoundLoopstationWindow(
             engine,
             vertical_padding_offsets=[0,0.05, 0,0.08],
-            horizontal_padding_offsets=[0.1,0.05, 0.1,0]
+            horizontal_padding_offsets=[0,0.05, 0.08,0]
         )
         window.build()
 
