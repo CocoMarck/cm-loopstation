@@ -169,7 +169,7 @@ class FPSSoundLoopstationWindow(Screen):
         Determinar orientación de ventana, segun tamaño xy de ventana.
         '''
         if self.height > self.width:
-            return  "vertical"
+            return "vertical"
         return "horizontal"
 
     def build_padding_offsets(self, orientation, using):
