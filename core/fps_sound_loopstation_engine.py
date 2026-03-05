@@ -4,6 +4,15 @@ from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 
 from threading import Lock
+from enum import Enum
+
+
+class EngineState(Enum):
+    IDLE = "idle"
+    RUNNING = "running"
+    PAUSED = "paused"
+    STOPPED = "stopped"
+    ERROR = "error"
 
 
 class FPSSoundLoopstationEngine():
@@ -19,6 +28,9 @@ class FPSSoundLoopstationEngine():
         self.loop = None
 
         self._last_signals = None
+
+        # Estados
+        self.state = EngineState.IDLE
 
         # Bloquear
         self._lock = Lock()
@@ -46,10 +58,18 @@ class FPSSoundLoopstationEngine():
             return dict(self._last_signals) if self._last_signals else None
         return None
 
-    def stop(self):
+    def pause(self):
+        self.sound_loopstation.break_loop_of_all_tracks()
         self.loop.stop()
         self.loop.join()
+        self.state = EngineState.PAUSED
+
+    def stop(self):
+        self.metronome.reset_settings()
         self.sound_loopstation.break_loop_of_all_tracks()
+        self.loop.stop()
+        self.loop.join()
+        self.state = EngineState.STOPPED
 
     def start(self):
         if self.loop and self.loop.is_alive():
@@ -59,3 +79,4 @@ class FPSSoundLoopstationEngine():
             callback=self.tick
         )
         self.loop.start()
+        self.state = EngineState.RUNNING

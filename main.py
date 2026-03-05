@@ -51,6 +51,9 @@ Config.set('graphics', 'vsync', '0')
 Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 # Inicializar
+from kivy.core.window import Window
+from android import api_version
+from kivy.metrics import dp
 from kivy.app import App
 from kivy.clock import Clock
 
@@ -59,6 +62,7 @@ Constructor de aplicación
 '''
 class FPSSoundLoopstationApp(App):
     def build(self):
+        # Permisos
         from android.permissions import request_permissions, Permission
         request_permissions([
             Permission.RECORD_AUDIO,
@@ -66,15 +70,26 @@ class FPSSoundLoopstationApp(App):
             Permission.WRITE_EXTERNAL_STORAGE
         ])
 
-        window = FPSSoundLoopstationWindow( engine )
+        # Ventana
+        vertical_padding_offsets = [0,0,0,0]
+        horizontal_padding_offsets = [0,0,0,0]
+        if api_version > 35:
+            # Android 15 (API 35) y 16 son los que fuerzan el Edge-to-Edge
+            vertical_padding_offsets = [0, 30, 0, 50]
+            horizontal_padding_offsets = [40, 10, 40, 20]
+
+        window = FPSSoundLoopstationWindow(
+            engine, vertical_padding_offsets, horizontal_padding_offsets
+        )
         window.build()
 
+        # Delta Time
         Clock.schedule_interval(window.update, 1.0/FPS_GUI)
 
         return window
 
     # Pause y resume an android
-    def on_puase(self):
+    def on_pause(self):
         return self.window.on_pause()
 
     def on_resume(self):

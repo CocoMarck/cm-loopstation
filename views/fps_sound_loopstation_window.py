@@ -15,6 +15,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.slider import Slider
 from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.dropdown import DropDown
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
@@ -22,14 +23,18 @@ from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
+from kivy.metrics import dp
 
 # Images
-from config.paths import ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE
+from config.paths import (
+    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE
+)
 record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
 play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
 stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
+menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
 
 
 
@@ -54,7 +59,9 @@ class FPSSoundLoopstationWindow(Screen):
     El tempo de preferencia que sea un entero.
     '''
     def __init__(
-        self, engine: FPSSoundLoopstationEngine, **kwargs
+        self, engine: FPSSoundLoopstationEngine,
+        vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
+        **kwargs
     ):
         super().__init__(**kwargs)
 
@@ -106,38 +113,103 @@ class FPSSoundLoopstationWindow(Screen):
         self.update_interval_tracks = 0.5 # Medio segundo.
         self.accum_update_tracks = 0 # Contador de delta time
 
-        # Sliders
+        # Widgets | Sliders list
         self.sliders = []
 
-        # Eventos de PC (desktop)
-        Window.bind(on_minimize=self._on_minimize)
-        Window.bind(on_restore=self._on_restore)
+        # Widget | DropDown | Menu
+        self.dropdown = DropDown()
+        self.menu_buttons = {
+            "start": None,
+            "stop": None,
+            "about": None
+        }
+        for key in self.menu_buttons.keys():
+            button = Button( text=key, size_hint_y=None )
+            self.menu_buttons[key] = button
+            self.dropdown.add_widget( button )
+        self.menu_buttons["about"].bind( on_press=self.on_about )
+        self.menu_buttons["start"].bind( on_press=self.on_start_engine )
+        self.menu_buttons["stop"].bind( on_press=self.on_stop_engine )
+        self.button_menu.bind( on_press=self.on_menu )
+        self.button_menu.bind( on_release=self.dropdown.open )
 
-        # Botones con imagen.
+        # Widgets | Botones con imagen.
         self.buttons_with_image = [
             self.record_button,
             self.button_play,
             self.button_stop,
             self.button_restart,
-            self.button_about
+            self.menu_buttons["about"],
+            self.button_menu,
         ]
         for button in self.buttons_with_image:
             button.text=""
             #button.background_color = (0,0,0,0)
             #button.background_color = (0, 0.5, 0.4, 1)
-            #button.background_color = (1,1,1,0.5)
+            #button.background_color = (0,0.4,0.4,1)
 
+        # Padding
+        self.last_orientation = None
+        self.vertical_padding_offsets = vertical_padding_offsets
+        self.horizontal_padding_offsets = horizontal_padding_offsets
+
+        # Eventos de PC (desktop, pero creo que lo usa android tambien)
+        Window.bind(on_minimize=self._on_minimize)
+        Window.bind(on_restore=self._on_restore)
+
+    def resize_menu_buttons(self):
+        for button in self.menu_buttons.values():
+            button.height = self.height*0.1
+
+    def on_menu(self, button):
+        self.resize_menu_buttons()
+
+    def get_screen_orientation(self):
+        '''
+        Determinar orientación de ventana, segun tamaño xy de ventana.
+        '''
+        if self.height > self.width:
+            return  "vertical"
+        return "horizontal"
+
+    def _update_padding(self, orientation):
+        # Usa DP
+        padding_using_dp = []
+        if orientation == "vertical":
+            for x in self.vertical_padding_offsets:
+                padding_using_dp.append( dp(x) )
+        else:
+            for x in self.horizontal_padding_offsets:
+                padding_using_dp.append( dp(x) )
+        if (
+            len(padding_using_dp) == 4 #and
+            #padding_using_dp != self.main_layout.padding
+        ):
+            self.main_layout.padding = padding_using_dp
+
+    def stop_engine(self):
+        self.engine.stop()
+        self.update_metronome_circles()
+        self.set_widget_track_options()
+
+    def start_engine(self):
+        self.engine.start()
+
+    def on_start_engine(self, button):
+        self.start_engine()
+
+    def on_stop_engine(self, button):
+        self.stop_engine()
 
     def _on_minimize(self, *args):
         # Puede que solo jale en PC
-        print("ventana minimizada (widget)")
-        self.engine.stop()
+        print(f"Minimize Window")
+        self.engine.pause()
 
     def _on_restore(self, *args):
         # Puede que solo jale en PC
-        print("ventana restaurada (widget)")
-        self.engine.start()
-        self.set_widget_track_options()
+        print(f"Restore Window")
+        self.start_engine()
 
     # Pause en android
     def on_pause(self):
@@ -401,7 +473,10 @@ class FPSSoundLoopstationWindow(Screen):
                 image=restart_image, widget=self.button_restart
             ),
             "about": StickyImage(
-                image=about_image, widget=self.button_about
+                image=about_image, widget=self.menu_buttons["about"]
+            ),
+            "menu": StickyImage(
+                image=menu_image, widget=self.button_menu
             )
         }
 
@@ -442,16 +517,6 @@ class FPSSoundLoopstationWindow(Screen):
         self.button_play.bind( state=self.on_play_loop_of_all_tracks )
         self.button_stop.bind( state=self.on_break_loop_of_all_tracks )
         self.button_restart.bind( state=self.on_reset_loop_of_all_tracks )
-        self.button_about.bind( on_press=self.on_about )
-
-
-    def get_screen_orientation(self):
-        '''
-        Determinar orientación de ventana, segun tamaño xy de ventana.
-        '''
-        if self.height > self.width:
-            return  "vertical"
-        return "horizontal"
 
     def guide_sliders(self, orientation):
         '''
@@ -530,6 +595,10 @@ class FPSSoundLoopstationWindow(Screen):
             self.timer.reset()
         return timer_current_fps
 
+    def turn_off_metronome_view(self):
+        for i in range( 0, len(self.circles) ):
+            if self.circles[i].color.rgb != RGB_OFF_TEMPO:
+                self.circles[i].color.rgb = RGB_OFF_TEMPO
 
     def metronome_view(self, loopstation_signals, metronome_signals):
         '''
@@ -539,7 +608,7 @@ class FPSSoundLoopstationWindow(Screen):
             if not metronome_signals['current_beat'] == i:
                 self.circles[i].color.rgb = RGB_OFF_TEMPO
 
-        if metronome_signals['current_beat'] in range(0, len(self.circles) ):
+        if ( metronome_signals['current_beat'] in range(0, len(self.circles) ) ):
             # Solo beats existentes en circles.
             if loopstation_signals['emphasis_of_beat']['emphasis']:
                 self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
@@ -564,7 +633,12 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         Para la sincronización
         '''
-        self.guide_sliders( self.get_screen_orientation() )
+        orientation = self.get_screen_orientation()
+
+        if orientation != self.last_orientation:
+            self.guide_sliders( orientation )
+            self._update_padding( orientation )
+            self.last_orientation = orientation
 
         # Señales
         signals = self.engine.get_last_signals()
@@ -581,5 +655,8 @@ class FPSSoundLoopstationWindow(Screen):
         if not insert:
             update = self.update_track_options(dt)
         timer_in_fps = self.record_with_timer( timer_signals )
-        self.metronome_view( loopstation_signals, metronome_signals )
+        if self.engine.state.value == "running":
+            self.metronome_view( loopstation_signals, metronome_signals )
+        if self.engine.state.value == "stopped":
+            self.turn_off_metronome_view()
         self.timer_view( timer_in_fps )

@@ -22,7 +22,7 @@
     button_play: _button_play
     button_stop: _button_stop
     button_restart: _button_restart
-    button_about: _button_about
+    button_menu: _button_menu
 
     togglebutton_limit_record: _togglebutton_limit_record
     togglebutton_play_beat: _togglebutton_play_beat
@@ -35,10 +35,13 @@
 
     metronome_container: _metronome_container
 
+    main_layout: _main_layout
+
     BoxLayout:
+        id:_main_layout
+
         # Base
-        size_hint_x: 1
-        size_hint_y: 1
+        size_hint: (1, 1)
         pos_hint: {"x":0,"y":0}
 
         orientation: "vertical"
@@ -46,10 +49,10 @@
         BoxLayout:
             size_hint_y: 0.055
             Button:
+                id: _button_menu
+                text: "menu"
                 size_hint_x: None
-                width: root.width * 0.2
-                id: _button_about
-                text: "about"
+                width: root.width * 0.33
 
         BoxLayout:
             # Circulos del Metronomo
@@ -150,6 +153,16 @@
 
         ScrollView:
             # Scroll | Contenedor de Pistas
+
+            # Color de fondo
+            canvas.before:
+                Color:
+                    rgba: (0.1,0.1,0.1,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # Escalado
             size_hint_y: 0.5
 
             do_scroll_x: True
