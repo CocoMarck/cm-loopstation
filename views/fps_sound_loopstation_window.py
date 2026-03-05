@@ -159,7 +159,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def resize_menu_buttons(self):
         for button in self.menu_buttons.values():
-            button.height = self.height*0.055
+            button.height = self.height*0.1
 
     def on_menu(self, button):
         self.resize_menu_buttons()
@@ -194,6 +194,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def start_engine(self):
         self.engine.start()
+        self.set_widget_track_options()
 
     def on_start_engine(self, button):
         self.start_engine()
