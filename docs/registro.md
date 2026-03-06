@@ -24,3 +24,5 @@ Cuando se este en el ultimo beat, y el contador de beat en fps este en el penult
 - `2025-12-12`: La grabación siempre funciono bien. Se detenia en los frames indicados, ya sea con `is_first_beat`, o con `frame_before_the_bar`. Pero el before the bar serve mas por que se asume que el record no es al instante, pero si lo fuera seria mejor el `is_first_beat`
 
 - `2025-12-31`: `SoundManager`, `FPSMetronome`,`FPSSoundLoopstation`, `MicrophoneRecorder`, `AndroidMicrophoneRecorder`, `FPSSoundLoopstationRecorderController`. Son los componentes para hacer un **FPSLoopstation App**. El frame de mas para el recorder, no es bueno, solo funcionaba, porque kivy esta desfazado con el recorder, en un contador de fps correcto, el +1, añade una amplitud erronia, un poco mas grande. La logica del recorder estaba bien.
+
+- `2026-03-06` `FPSSoundLoopstationRecorderController`: Error por salto de frames. Detectado por tener el engine a `20` fps, y opciones en `90` bpm, `3` beats.
