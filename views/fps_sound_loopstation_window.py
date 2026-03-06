@@ -3,7 +3,7 @@ from core.text_util import ignore_text_filter, PREFIX_NUMBER
 
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
-from config.constants import VERSION, DEVELOPER, WEBSITE, NAME
+from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 
 # Kivy
 from kivy.uix.widget import Widget
@@ -478,14 +478,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def on_help(self, button):
         self.open_popup_information(
-            title="help", text_information=(
-                "Aplicación para reproducir grabaciones de audio en bucle.\n"
-                "- Numero `timer`: Espera para empezar agrabar.\n"
-                "- Numero `bars`: Cantidad de barras a grabar.\n"
-                "- Boton limit bars: Limita la cantidad de barras a grabar.\n"
-                "- Boton de grabación: Envia una señal, para empezar a grabar en primer beat de inicio de un compas.\n"
-                "- Control global de pistas: Iniciar, Parar, y Reiniciar"
-            )
+            title="help", text_information=HELP
         )
 
     def on_numeric_metronome(self, widget, active):
