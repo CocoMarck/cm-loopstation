@@ -140,21 +140,6 @@ class FPSSoundLoopstationWindow(Screen):
         self.button_menu.bind( on_press=self.on_menu )
         self.button_menu.bind( on_release=self.dropdown.open )
 
-        # Widgets | Botones con imagen.
-        self.buttons_with_image = [
-            self.record_button,
-            self.button_play,
-            self.button_stop,
-            self.button_restart,
-            self.menu_buttons["about"],
-            self.button_menu,
-        ]
-        for button in self.buttons_with_image:
-            button.text=""
-            #button.background_color = (0,0,0,0)
-            #button.background_color = (0, 0.5, 0.4, 1)
-            #button.background_color = (0,0.4,0.4,1)
-
         # Metronome view
         self.label_numeric_metronome = Label()
         self.numeric_metronome = numeric_metronome
@@ -524,6 +509,11 @@ class FPSSoundLoopstationWindow(Screen):
                 image=menu_image, widget=self.button_menu
             )
         }
+        for sticky_image in self.sticky_images.values():
+            sticky_image.widget.text = ""
+            #sticky_image.widget.background_color = (0,0,0,0)
+            #sticky_image.widget.background_color = (0, 0.5, 0.4, 1)
+            #sticky_image.widget.background_color = (0,0.4,0.4,1)
 
         # widgets
         self.set_metronome_view()
