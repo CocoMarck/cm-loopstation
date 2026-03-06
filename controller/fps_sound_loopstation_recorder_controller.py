@@ -88,6 +88,7 @@ class FPSSoundLoopstationRecorderController():
                 # Determinar limite, y si llego o paso el limite, parar grabación
                 if count_fps >= self.fps_metronome.get_bars_to_fps(self.record_bars):
                     self.record = False
+                    metronome_signals['frame_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
 
             is_count_fps = self.record
             stop_record = (not self.record) and (metronome_signals['frame_before_the_bar'])
