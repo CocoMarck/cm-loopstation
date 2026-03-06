@@ -46,8 +46,8 @@ Builder.load_string(kv)
 # Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
 from views.pykivy.widgets.loopstation_circle import LoopstationCircle
-from views.pykivy.widgets.popup_box_layout import PopupBoxLayout
 from views.pykivy.widgets.popup_information import PopupInformation
+from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 
 # Constantes | Colores
 RGB_OFF_TEMPO = [1,1,1]
@@ -63,6 +63,7 @@ class FPSSoundLoopstationWindow(Screen):
     def __init__(
         self, engine: FPSSoundLoopstationEngine,
         vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
+        numeric_metronome=False,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -135,6 +136,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.menu_buttons["start"].bind( on_press=self.on_start_engine )
         self.menu_buttons["stop"].bind( on_press=self.on_stop_engine )
         self.menu_buttons["help"].bind( on_press=self.on_help )
+        self.menu_buttons["settings"].bind( on_press=self.on_settings )
         self.button_menu.bind( on_press=self.on_menu )
         self.button_menu.bind( on_release=self.dropdown.open )
 
@@ -152,6 +154,10 @@ class FPSSoundLoopstationWindow(Screen):
             #button.background_color = (0,0,0,0)
             #button.background_color = (0, 0.5, 0.4, 1)
             #button.background_color = (0,0.4,0.4,1)
+
+        # Metronome view
+        self.label_numeric_metronome = Label()
+        self.numeric_metronome = numeric_metronome
 
         # Padding
         self.last_orientation = None
@@ -208,10 +214,33 @@ class FPSSoundLoopstationWindow(Screen):
     def _update_padding_using_resolution(self, orientation ):
         self._update_padding( orientation, "resolution" )
 
+    # Construir vista de metronomo
+    def build_metronome_circles(self):
+        # Establecer circulos
+        self.circles.clear()
+        self.metronome_container.clear_widgets()
+        for x in range(0, self.metronome.beats_per_bar+1):
+            circle = LoopstationCircle()
+            self.circles.append( circle )
+            self.metronome_container.add_widget(circle)
 
+    def build_numeric_metronome(self):
+        self.metronome_container.clear_widgets()
+        self.label_numeric_metronome.text = "0"
+        self.label_numeric_metronome.color = RGB_OFF_TEMPO
+        self.metronome_container.add_widget( self.label_numeric_metronome )
+
+    # Establecer vista de metronomo
+    def set_metronome_view(self):
+        if self.numeric_metronome:
+            self.build_numeric_metronome()
+        else:
+            self.build_metronome_circles()
+
+    # Administración de motor
     def stop_engine(self):
         self.engine.stop()
-        self.update_metronome_circles()
+        self.set_metronome_view()
         self.set_widget_track_options()
 
     def start_engine(self):
@@ -234,7 +263,7 @@ class FPSSoundLoopstationWindow(Screen):
         print(f"Restore Window")
         self.start_engine()
 
-    # Pause en android
+    ## Para Android
     def on_pause(self):
         self.engine.stop()
         return True
@@ -243,23 +272,14 @@ class FPSSoundLoopstationWindow(Screen):
         self.engine.start()
         self.set_widget_track_options()
 
-
-    # Posicionar metronomo
-    def update_metronome_circles(self):
-        # Establecer circulos
-        self.circles.clear()
-        self.metronome_container.clear_widgets()
-        for x in range(0, self.metronome.beats_per_bar+1):
-            circle = LoopstationCircle()
-            self.circles.append( circle )
-            self.metronome_container.add_widget(circle)
-
+    # Contruir texto de opciones
     def build_bpm_text(self):
         return "bpm: " + str(self.metronome.bpm)
 
     def build_beats_text(self):
         return "beats: " + str(self.metronome.beats_per_bar+1)
 
+    # Establecer valores de opciones
     def set_slider_bpm(self):
         self.slider_bpm.value = self.metronome.bpm
         self.label_bpm.text = self.build_bpm_text()
@@ -292,6 +312,7 @@ class FPSSoundLoopstationWindow(Screen):
 
 
 
+    # Eventos de controles
     def on_play_beat(self, obj, value):
         self.metronome.play_beat = value == "down"
 
@@ -300,7 +321,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.label_beats.text = self.build_beats_text()
         self.metronome.reset_settings()
         self.loopstation.update_all_track_bars()
-        self.update_metronome_circles()
+        self.set_metronome_view()
         self.set_widget_track_options()
 
 
@@ -467,6 +488,22 @@ class FPSSoundLoopstationWindow(Screen):
             )
         )
 
+    def on_numeric_metronome(self, widget, active):
+        self.numeric_metronome = active
+        self.set_metronome_view()
+
+    def on_settings(self, button):
+        popup = PopupGridLayout(
+            title="settings",
+            cols=2, rows=1, row_default_height=self.height*0.1,
+            size_hint=(0.8, 0.8)
+        )
+        popup.second_container.add_widget( Label( text="numerical view") )
+        checkbox_metronome_numeircal_view = CheckBox( active=self.numeric_metronome )
+        checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
+        popup.second_container.add_widget( checkbox_metronome_numeircal_view )
+        popup.open()
+
 
     def build(self):
         # Loop
@@ -496,7 +533,7 @@ class FPSSoundLoopstationWindow(Screen):
         }
 
         # widgets
-        self.update_metronome_circles()
+        self.set_metronome_view()
 
         self.slider_beats.min = 1
         self.slider_beats.max = self.metronome.beats_limit_per_bar
@@ -630,6 +667,13 @@ class FPSSoundLoopstationWindow(Screen):
             elif loopstation_signals['emphasis_of_beat']['neutral']:
                 self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
 
+    def metronome_numerical_view(self, loopstation_signals, metronome_signals):
+        self.label_numeric_metronome.text = str( metronome_signals['current_beat']+1 )
+        if loopstation_signals['emphasis_of_beat']['emphasis']:
+            self.label_numeric_metronome.color = RGB_FIRST_TEMPO
+        elif loopstation_signals['emphasis_of_beat']['neutral']:
+            self.label_numeric_metronome.color = RGB_ANOTHER_TEMPO
+
 
     def timer_view(self, timer_current_fps):
         '''
@@ -651,9 +695,10 @@ class FPSSoundLoopstationWindow(Screen):
         orientation = self.get_screen_orientation()
 
         if orientation != self.last_orientation:
+            # Optimización para Celus
             self.guide_sliders( orientation )
+            self._update_padding_using_resolution( orientation ) # Jala mejor fuera de aca.
             self.last_orientation = orientation
-        self._update_padding_using_resolution( orientation )
 
         # Señales
         signals = self.engine.get_last_signals()
@@ -671,7 +716,10 @@ class FPSSoundLoopstationWindow(Screen):
             update = self.update_track_options(dt)
         timer_in_fps = self.record_with_timer( timer_signals )
         if self.engine.state.value == "running":
-            self.metronome_view( loopstation_signals, metronome_signals )
+            if not self.numeric_metronome:
+                self.metronome_view( loopstation_signals, metronome_signals )
+            else:
+                self.metronome_numerical_view( loopstation_signals, metronome_signals )
         if self.engine.state.value == "stopped":
             self.turn_off_metronome_view()
         self.timer_view( timer_in_fps )
