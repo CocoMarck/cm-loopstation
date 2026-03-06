@@ -13,7 +13,7 @@ from views.fps_sound_loopstation_window import FPSSoundLoopstationWindow
 
 # Constantes necesarias
 VOLUME = float(1)
-FPS_ENGINE = float(20)
+FPS_ENGINE = int(20)
 FPS_GUI = float(60)
 
 ## Colores
