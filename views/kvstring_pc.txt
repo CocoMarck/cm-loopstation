@@ -47,13 +47,11 @@
         orientation: "vertical"
 
         BoxLayout:
-
-            size_hint_y: 0.055
+            size_hint: (0.33, 0.055)
+            pos_hint: {"x":0.67, "y":0}
             Button:
                 id: _button_menu
                 text: "menu"
-                size_hint_x: None
-                width: root.width * 0.33
 
         BoxLayout:
             # Circulos del Metronomo

@@ -3,7 +3,7 @@ from core.text_util import ignore_text_filter, PREFIX_NUMBER
 
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
-from config.constants import VERSION, DEVELOPER, WEBSITE, NAME
+from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 
 # Kivy
 from kivy.uix.widget import Widget
@@ -43,9 +43,11 @@ from kivy.lang import Builder
 from views.kvstring import kv
 Builder.load_string(kv)
 
-# Function
+# Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
 from views.pykivy.widgets.loopstation_circle import LoopstationCircle
+from views.pykivy.widgets.popup_information import PopupInformation
+from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 
 # Constantes | Colores
 RGB_OFF_TEMPO = [1,1,1]
@@ -61,6 +63,7 @@ class FPSSoundLoopstationWindow(Screen):
     def __init__(
         self, engine: FPSSoundLoopstationEngine,
         vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
+        numeric_metronome=False,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -121,6 +124,8 @@ class FPSSoundLoopstationWindow(Screen):
         self.menu_buttons = {
             "start": None,
             "stop": None,
+            "settings": None,
+            "help": None,
             "about": None
         }
         for key in self.menu_buttons.keys():
@@ -130,23 +135,14 @@ class FPSSoundLoopstationWindow(Screen):
         self.menu_buttons["about"].bind( on_press=self.on_about )
         self.menu_buttons["start"].bind( on_press=self.on_start_engine )
         self.menu_buttons["stop"].bind( on_press=self.on_stop_engine )
+        self.menu_buttons["help"].bind( on_press=self.on_help )
+        self.menu_buttons["settings"].bind( on_press=self.on_settings )
         self.button_menu.bind( on_press=self.on_menu )
         self.button_menu.bind( on_release=self.dropdown.open )
 
-        # Widgets | Botones con imagen.
-        self.buttons_with_image = [
-            self.record_button,
-            self.button_play,
-            self.button_stop,
-            self.button_restart,
-            self.menu_buttons["about"],
-            self.button_menu,
-        ]
-        for button in self.buttons_with_image:
-            button.text=""
-            #button.background_color = (0,0,0,0)
-            #button.background_color = (0, 0.5, 0.4, 1)
-            #button.background_color = (0,0.4,0.4,1)
+        # Metronome view
+        self.label_numeric_metronome = Label()
+        self.numeric_metronome = numeric_metronome
 
         # Padding
         self.last_orientation = None
@@ -169,27 +165,67 @@ class FPSSoundLoopstationWindow(Screen):
         Determinar orientación de ventana, segun tamaño xy de ventana.
         '''
         if self.height > self.width:
-            return  "vertical"
+            return "vertical"
         return "horizontal"
 
-    def _update_padding(self, orientation):
-        # Usa DP
-        padding_using_dp = []
+    def build_padding_offsets(self, orientation, using):
         if orientation == "vertical":
-            for x in self.vertical_padding_offsets:
-                padding_using_dp.append( dp(x) )
+            number = self.height
+            padding_offsets = self.vertical_padding_offsets
         else:
-            for x in self.horizontal_padding_offsets:
-                padding_using_dp.append( dp(x) )
-        if (
-            len(padding_using_dp) == 4 #and
-            #padding_using_dp != self.main_layout.padding
-        ):
-            self.main_layout.padding = padding_using_dp
+            number = self.width
+            padding_offsets = self.horizontal_padding_offsets
+        padding = []
+        if using == "dpi":
+            for x in padding_offsets:
+                padding.append( dp(x) )
+        elif using == "resolution":
+            for x in padding_offsets:
+                padding.append( number*x )
+        return padding
 
+    def _update_padding(self, orientation, using ):
+        # Usa DP
+        padding = self.build_padding_offsets( orientation, using )
+        if (
+            len(padding) == 4 #and
+            #padding != self.main_layout.padding
+        ):
+            self.main_layout.padding = padding
+
+    def _update_padding_using_dpi(self, orientation ):
+        self._update_padding( orientation, "dpi" )
+
+    def _update_padding_using_resolution(self, orientation ):
+        self._update_padding( orientation, "resolution" )
+
+    # Construir vista de metronomo
+    def build_metronome_circles(self):
+        # Establecer circulos
+        self.circles.clear()
+        self.metronome_container.clear_widgets()
+        for x in range(0, self.metronome.beats_per_bar+1):
+            circle = LoopstationCircle()
+            self.circles.append( circle )
+            self.metronome_container.add_widget(circle)
+
+    def build_numeric_metronome(self):
+        self.metronome_container.clear_widgets()
+        self.label_numeric_metronome.text = "0"
+        self.label_numeric_metronome.color = RGB_OFF_TEMPO
+        self.metronome_container.add_widget( self.label_numeric_metronome )
+
+    # Establecer vista de metronomo
+    def set_metronome_view(self):
+        if self.numeric_metronome:
+            self.build_numeric_metronome()
+        else:
+            self.build_metronome_circles()
+
+    # Administración de motor
     def stop_engine(self):
         self.engine.stop()
-        self.update_metronome_circles()
+        self.set_metronome_view()
         self.set_widget_track_options()
 
     def start_engine(self):
@@ -212,7 +248,7 @@ class FPSSoundLoopstationWindow(Screen):
         print(f"Restore Window")
         self.start_engine()
 
-    # Pause en android
+    ## Para Android
     def on_pause(self):
         self.engine.stop()
         return True
@@ -221,23 +257,14 @@ class FPSSoundLoopstationWindow(Screen):
         self.engine.start()
         self.set_widget_track_options()
 
-
-    # Posicionar metronomo
-    def update_metronome_circles(self):
-        # Establecer circulos
-        self.circles.clear()
-        self.metronome_container.clear_widgets()
-        for x in range(0, self.metronome.beats_per_bar+1):
-            circle = LoopstationCircle()
-            self.circles.append( circle )
-            self.metronome_container.add_widget(circle)
-
+    # Contruir texto de opciones
     def build_bpm_text(self):
         return "bpm: " + str(self.metronome.bpm)
 
     def build_beats_text(self):
         return "beats: " + str(self.metronome.beats_per_bar+1)
 
+    # Establecer valores de opciones
     def set_slider_bpm(self):
         self.slider_bpm.value = self.metronome.bpm
         self.label_bpm.text = self.build_bpm_text()
@@ -270,6 +297,7 @@ class FPSSoundLoopstationWindow(Screen):
 
 
 
+    # Eventos de controles
     def on_play_beat(self, obj, value):
         self.metronome.play_beat = value == "down"
 
@@ -278,7 +306,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.label_beats.text = self.build_beats_text()
         self.metronome.reset_settings()
         self.loopstation.update_all_track_bars()
-        self.update_metronome_circles()
+        self.set_metronome_view()
         self.set_widget_track_options()
 
 
@@ -416,41 +444,42 @@ class FPSSoundLoopstationWindow(Screen):
         self.set_widget_track_options()
 
 
-    def on_about(self, button):
-        layout = BoxLayout( orientation="vertical" )
+    def open_popup_information(self, title, text_information):
+        popup = PopupInformation(
+            title=title, size_hint=(0.8, 0.8),
+            text_information=text_information,
+            text_ok="ok"
+        )
+        popup.open()
 
-        label = Label(
-            text=(
+    def on_about(self, button):
+        self.open_popup_information(
+            title="about", text_information=(
                 f"[b]{NAME}[/b]: version {VERSION}\n\n"
                 f"- developer: [b]{DEVELOPER}[/b]\n"
                 f"- website: [b]{WEBSITE}[/b]"
-            ),
-            #size_hint_y=None,
-            markup=True,
-            halign="left",
-            valign="top"
+            )
         )
-        layout.add_widget(label)
 
-        # Salto de linea automatico, para que se vea bien | Ajuste de texto
-        label.bind(
-            width=lambda instance, value: setattr(instance, 'text_size', (value, None))
+    def on_help(self, button):
+        self.open_popup_information(
+            title="help", text_information=HELP
         )
-        # Evita exceso de texto, haciendolo mas pequeño. No se necesita, esto ya lo ahce mi `file.kv`
-        #label.bind(
-        #    texture_size=lambda instance, value: setattr(instance, 'height', value[1])
-        #)
 
-        button = Button(text="ok", size_hint_y=None)
-        layout.add_widget(button)
+    def on_numeric_metronome(self, widget, active):
+        self.numeric_metronome = active
+        self.set_metronome_view()
 
-        # Momento popup, message molon
-        popup = Popup(
-            title="about",
-            content=layout,
+    def on_settings(self, button):
+        popup = PopupGridLayout(
+            title="settings",
+            cols=2, rows=1, row_default_height=self.height*0.1,
             size_hint=(0.8, 0.8)
         )
-        button.bind(on_press=popup.dismiss)
+        popup.second_container.add_widget( Label( text="numerical view") )
+        checkbox_metronome_numeircal_view = CheckBox( active=self.numeric_metronome )
+        checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
+        popup.second_container.add_widget( checkbox_metronome_numeircal_view )
         popup.open()
 
 
@@ -480,9 +509,14 @@ class FPSSoundLoopstationWindow(Screen):
                 image=menu_image, widget=self.button_menu
             )
         }
+        for sticky_image in self.sticky_images.values():
+            sticky_image.widget.text = ""
+            #sticky_image.widget.background_color = (0,0,0,0)
+            #sticky_image.widget.background_color = (0, 0.5, 0.4, 1)
+            #sticky_image.widget.background_color = (0,0.4,0.4,1)
 
         # widgets
-        self.update_metronome_circles()
+        self.set_metronome_view()
 
         self.slider_beats.min = 1
         self.slider_beats.max = self.metronome.beats_limit_per_bar
@@ -616,6 +650,13 @@ class FPSSoundLoopstationWindow(Screen):
             elif loopstation_signals['emphasis_of_beat']['neutral']:
                 self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
 
+    def metronome_numerical_view(self, loopstation_signals, metronome_signals):
+        self.label_numeric_metronome.text = str( metronome_signals['current_beat']+1 )
+        if loopstation_signals['emphasis_of_beat']['emphasis']:
+            self.label_numeric_metronome.color = RGB_FIRST_TEMPO
+        elif loopstation_signals['emphasis_of_beat']['neutral']:
+            self.label_numeric_metronome.color = RGB_ANOTHER_TEMPO
+
 
     def timer_view(self, timer_current_fps):
         '''
@@ -637,8 +678,9 @@ class FPSSoundLoopstationWindow(Screen):
         orientation = self.get_screen_orientation()
 
         if orientation != self.last_orientation:
+            # Optimización para Celus
             self.guide_sliders( orientation )
-            self._update_padding( orientation )
+            self._update_padding_using_resolution( orientation ) # Jala mejor fuera de aca.
             self.last_orientation = orientation
 
         # Señales
@@ -657,7 +699,10 @@ class FPSSoundLoopstationWindow(Screen):
             update = self.update_track_options(dt)
         timer_in_fps = self.record_with_timer( timer_signals )
         if self.engine.state.value == "running":
-            self.metronome_view( loopstation_signals, metronome_signals )
+            if not self.numeric_metronome:
+                self.metronome_view( loopstation_signals, metronome_signals )
+            else:
+                self.metronome_numerical_view( loopstation_signals, metronome_signals )
         if self.engine.state.value == "stopped":
             self.turn_off_metronome_view()
         self.timer_view( timer_in_fps )

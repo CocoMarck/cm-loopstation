@@ -75,8 +75,9 @@ class FPSSoundLoopstationApp(App):
         horizontal_padding_offsets = [0,0,0,0]
         if api_version > 35:
             # Android 15 (API 35) y 16 son los que fuerzan el Edge-to-Edge
-            vertical_padding_offsets = [0, 30, 0, 50]
-            horizontal_padding_offsets = [40, 10, 40, 20]
+            # Standard de celus: `16:9`, `20:9`, `19:9`.
+            vertical_padding_offsets=[0,0.05, 0,0.08]
+            horizontal_padding_offsets=[0,0.05, 0.08,0]
 
         window = FPSSoundLoopstationWindow(
             engine, vertical_padding_offsets, horizontal_padding_offsets
