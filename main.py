@@ -1,6 +1,6 @@
 from core.microphone_recorder import MicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
-from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+from controllers.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
@@ -11,9 +11,18 @@ from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
 from views.fps_sound_loopstation_window import FPSSoundLoopstationWindow
 
 
+# Config
+from controllers.fps_sound_loopstation.config_engine_controller import ConfigEngineController
+from entities.fps_sound_loopstation.config_engine import ConfigEngine
+config_engine = ConfigEngine()
+config_engine_controller = ConfigEngineController(
+    config_engine, "./config/fps_sound_loopstation/engine.toml"
+)
+
+
 # Constantes necesarias
-VOLUME = float(1)
-FPS_ENGINE = int(20)
+VOLUME = config_engine.volume
+FPS_ENGINE = config_engine.fps
 FPS_GUI = float(60)
 
 ## Colores
@@ -23,8 +32,9 @@ RGB_ANOTHER_TEMPO = [1,0,0]
 
 # FPSLoopstation Engine
 loopstation = FPSSoundLoopstation(
-    fps=FPS_ENGINE, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
-    beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
+    fps=FPS_ENGINE, volume=config_engine.volume, play_beat=config_engine.play_beat, beat_play_mode='emphasis_on_first',
+    beats_per_bar=config_engine.beats, beats_limit_per_bar=config_engine.beats_limit,
+    bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 metronome = loopstation.fps_metronome
 microphone_recorder = MicrophoneRecorder()
@@ -32,9 +42,9 @@ recorder_controller = FPSSoundLoopstationRecorderController(
     fps_sound_loopstation=loopstation, recorder=microphone_recorder,
     recorder_path=TEMP_DIR, fileformat="wav"
 )
-recorder_controller.limit_record = True
-recorder_controller.record_bars = 1
-timer = FPSTimer( fps=FPS_ENGINE, seconds=10, activate=False )
+recorder_controller.limit_record = config_engine.limit_record
+recorder_controller.record_bars = config_engine.record_bars
+timer = FPSTimer( fps=FPS_ENGINE, seconds=config_engine.seconds, activate=False )
 engine = FPSSoundLoopstationEngine(
     sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
 )
@@ -68,7 +78,7 @@ class FPSSoundLoopstationApp(App):
         window = FPSSoundLoopstationWindow(
             engine,
             vertical_padding_offsets=[0,0.05, 0,0.08],
-            horizontal_padding_offsets=[0,0.05, 0.08,0]
+            horizontal_padding_offsets=[0,0.05, 0.08,0],
         )
         window.build()
 
@@ -87,3 +97,13 @@ class FPSSoundLoopstationApp(App):
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
+
+# A guardar al cerrar
+config_engine_controller.update_beats( metronome.beats_per_bar )
+config_engine_controller.update_bpm( metronome.bpm )
+config_engine_controller.update_play_beat( metronome.play_beat )
+
+config_engine_controller.update_limit_record( recorder_controller.limit_record )
+config_engine_controller.update_record_bars( recorder_controller.record_bars )
+
+config_engine_controller.update_seconds( timer.seconds )

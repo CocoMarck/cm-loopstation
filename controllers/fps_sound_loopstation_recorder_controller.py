@@ -1,5 +1,5 @@
 from config.paths import TEMP_DIR
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 from core.fps_sound_loopstation import FPSSoundLoopstation
 
 

@@ -280,7 +280,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
 
     def set_togglebutton_play_beat(self):
-        state = "up"
+        state = "normal"
         if self.metronome.play_beat:
             state = "down"
         self.togglebutton_play_beat.state = state

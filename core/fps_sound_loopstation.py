@@ -1,4 +1,4 @@
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 
 # Uso de para loopstation
 from .fps_metronome import (FPSMetronome, BPM_IN_SECONDS)

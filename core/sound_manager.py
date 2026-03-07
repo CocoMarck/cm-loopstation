@@ -1,4 +1,4 @@
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 from kivy.core.audio import SoundLoader # Para sound
 
 
