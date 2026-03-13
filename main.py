@@ -73,7 +73,8 @@ from kivy.graphics import Color, Rectangle
 
 # Color
 from utils.colors import (
-    get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba
+    get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
+    is_the_rgba_color_bright
 )
 
 '''
@@ -81,55 +82,25 @@ Constructor de aplicación
 '''
 # Standard de celus: `16:9`, `20:9`, `19:9`.
 #Window.size = (20*50, 9*50)
-Window.size = (9*50, 20*50)
+#Window.size = (9*50, 20*50)
 #Window.size = (16*50, 9*50)
 #Window.size = (512, 512)
 #Window.resizable = True
 class FPSSoundLoopstationApp(App):
     def build(self):
-        #x_color = get_rgba(31, 63, 15, 255)
+        #x_color = get_rgba(31, 63, 15, 255) # green
+        #x_color = get_rgba(47, 47, 47, 255) # grey
+        #x_color = get_rgba(200, 47, 63, 255) # strawberry
+        #x_color = get_rgba(216, 193, 23, 255) # mustard
+        #x_color = get_rgba(39, 203, 214, 255) # skyblue
         x_color = random_rgba()
-        x_color_less = scale_rgba( x_color, 0.75 )
-        invert_x_color = invert_rgba( x_color )
-        invert_x_color_more = scale_rgba( invert_x_color, 1.2 )
-
-        # Fondos
-        Label.color = rgba_to_normalized( invert_x_color )
-        TextInput.background_color = rgba_to_normalized( invert_x_color )
-        TextInput.foreground_color = rgba_to_normalized( x_color )
-        # Evitar modificar widgets que usan images. Como: Button, Slider, etc.
-        Button.color = [1,1,1,1] # Esto lo tengo que poner, porque label remplaza esto.
 
         # Ventana
         window = FPSSoundLoopstationWindow(
             engine,
-            vertical_padding_offsets=[0,0.05, 0,0.08],
-            horizontal_padding_offsets=[0,0.05, 0.08,0],
-        )
-
-        # Fondo
-        window.rgb_off_tempo = rgba_to_normalized( x_color_less )
-        window.rgb_first_tempo = rgba_to_normalized( invert_x_color )
-        window.rgb_another_tempo = rgba_to_normalized( invert_x_color_more )
-
-        with window.canvas.before:
-            Color(
-                *rgba_to_normalized( x_color )
-            )
-            rect_window = Rectangle(pos=window.pos, size=window.size)
-        window.bind(
-            pos=lambda inst, val: setattr(rect_window, 'pos', inst.pos),
-            size=lambda inst, val: setattr(rect_window, 'size', inst.size)
-        )
-
-        with window.scroll_widget.canvas.before:
-            Color(
-                *rgba_to_normalized( x_color_less )
-            )
-            rect = Rectangle(pos=window.scroll_widget.pos, size=window.scroll_widget.size)
-        window.bind(
-            pos=lambda inst, val: setattr(rect, 'pos', inst.pos),
-            size=lambda inst, val: setattr(rect, 'size', inst.size)
+            #vertical_padding_offsets=[0,0.05, 0,0.08], # Margen pa celu
+            #horizontal_padding_offsets=[0,0.05, 0.08,0], # Margen pa celu
+            base_rgba_color=x_color
         )
 
         # Construir

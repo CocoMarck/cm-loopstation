@@ -47,7 +47,10 @@ def invert_rgba( rgba ):
     return [ ir, ig, ib, a ]
 
 def normalize_rgb_value( value ):
-    return float(value / RGB_MAX_VALUE)
+    if value > 0:
+        return float(value / RGB_MAX_VALUE)
+    else:
+        return float(0)
 
 def rgb_to_normalized( rgb ):
     r, g, b = rgb
@@ -80,3 +83,19 @@ def random_rgb():
 def random_rgba():
     rr, rg, rb = random_rgb()
     return [rr, rg, rb, RGB_MAX_VALUE]
+
+
+def is_the_rgb_color_bright( rgb ):
+    bright_values = []
+    for value in rgb:
+        bright_values.append( value >= RGB_MAX_VALUE//2 )
+    count_bright_values = 0
+    for value in bright_values:
+        if value:
+            count_bright_values += 1
+    return count_bright_values >= 2
+
+
+def is_the_rgba_color_bright( rgba ):
+    r, g, b, a = rgba
+    return is_the_rgb_color_bright( [r,g,b] )

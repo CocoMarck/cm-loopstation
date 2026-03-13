@@ -5,6 +5,6 @@ bpm_limit = 200
 volume = 1.0
 play_beat = false
 fps = 20
-limit_record = true
+limit_record = false
 record_bars = 1
 seconds = 0

@@ -9,6 +9,7 @@ from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -25,6 +26,15 @@ from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
 from kivy.metrics import dp
 
+# Funciones para estilizar
+from kivy.graphics import Color, Rectangle
+
+# Colors
+from utils.colors import (
+    get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
+    is_the_rgba_color_bright
+)
+
 # Images
 from config.paths import (
     ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE
@@ -35,7 +45,6 @@ stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
 menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
-
 
 
 # Estilo molon
@@ -57,7 +66,7 @@ class FPSSoundLoopstationWindow(Screen):
     def __init__(
         self, engine: FPSSoundLoopstationEngine,
         vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
-        numeric_metronome=False,
+        numeric_metronome=False, base_rgba_color=None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -94,9 +103,12 @@ class FPSSoundLoopstationWindow(Screen):
 
         # Circulo data
         self.circles = []
+
+        # Colors
         self.rgb_off_tempo = [1,1,1]
         self.rgb_first_tempo = [0,1,0]
         self.rgb_another_tempo = [1,0,0]
+        self._INIT_BASE_COLOR = base_rgba_color
 
         # LoopstationEngine
         self.engine = engine
@@ -150,6 +162,85 @@ class FPSSoundLoopstationWindow(Screen):
         # Eventos de PC (desktop, pero creo que lo usa android tambien)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
+
+
+    def get_colors(self, rgba):
+        scale_more = 1.25
+        scale_less = 0.75
+        base_color = rgba
+        base_color_less = scale_rgba( base_color, scale_less )
+        base_color_more = scale_rgba( base_color, scale_more )
+        inverted_base_color = invert_rgba( base_color )
+        inverted_base_color_more = scale_rgba( inverted_base_color, scale_more )
+        inverted_base_color_less = scale_rgba( inverted_base_color, scale_less )
+
+        colors = {
+            "base": base_color,
+            "base_less": base_color_less,
+            "base_more": base_color_more,
+            "inverted_base": inverted_base_color,
+            "inverted_base_less": inverted_base_color_less,
+            "inverted_base_more": inverted_base_color_more,
+            "label": inverted_base_color_more,
+            "text_input": base_color_less,
+            "off_tempo": base_color_less,
+            "first_tempo": inverted_base_color_more,
+            "another_tempo": inverted_base_color
+        }
+        if is_the_rgba_color_bright(base_color):
+            colors['label'] = inverted_base_color_less
+            colors['text_input'] = base_color_more
+            colors['first_tempo'] = inverted_base_color
+            colors['another_tempo'] = inverted_base_color_less
+
+        for key in colors.keys():
+            colors[key] = rgba_to_normalized( colors[key] )
+
+        return colors
+
+    def set_colors(self, rgba):
+        colors = self.get_colors( rgba )
+
+        for widget in self.walk():
+            if isinstance(widget, Button):
+                continue # Ignorar botones
+            if isinstance(widget, Label):
+                widget.color = colors['label']
+            elif isinstance(widget, TextInput):
+                widget.background_color = colors['inverted_base']
+                widget.foreground_color = colors['text_input']
+
+        self.rgb_off_tempo = colors['off_tempo']
+        self.rgb_first_tempo = colors['first_tempo']
+        self.rgb_another_tempo = colors['another_tempo']
+
+        # Fondos
+        if not hasattr(self, "rect_window"):
+            with self.canvas.before:
+                self.color_window = Color( *colors['base'] )
+                self.rect_window = Rectangle(pos=self.pos, size=self.size)
+            self.bind(
+                pos=lambda inst, val: setattr(self.rect_window, 'pos', inst.pos),
+                size=lambda inst, val: setattr(self.rect_window, 'size', inst.size)
+            )
+        else:
+            self.color_window.rgba = colors['base']
+            self.rect_window.pos=self.pos
+            self.rect_window.size=self.size
+
+        if not hasattr(self, "rect_scroll"):
+            with self.scroll_widget.canvas.before:
+                self.color_scroll = Color( *colors['base_less'] )
+                self.rect_scroll = Rectangle(pos=self.scroll_widget.pos, size=self.scroll_widget.size)
+            self.bind(
+                pos=lambda inst, val: setattr(self.rect_scroll, 'pos', inst.pos),
+                size=lambda inst, val: setattr(self.rect_scroll, 'size', inst.size)
+            )
+        else:
+            self.color_scroll.rgba = colors['base_less']
+            self.rect_scroll.pos = self.scroll_widget.pos
+            self.rect_scroll.size = self.scroll_widget.size
+
 
     def resize_menu_buttons(self):
         for button in self.menu_buttons.values():
@@ -482,6 +573,10 @@ class FPSSoundLoopstationWindow(Screen):
 
 
     def build(self):
+        # Color
+        if self._INIT_BASE_COLOR != None:
+            self.set_colors( self._INIT_BASE_COLOR )
+
         # Loop
         self.engine.start()
         self.icon = ICON
