@@ -49,12 +49,6 @@ from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 from views.pykivy.widgets.popup_information import PopupInformation
 from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 
-# Constantes | Colores
-RGB_OFF_TEMPO = [1,1,1]
-RGB_FIRST_TEMPO = [0,1,0]
-RGB_ANOTHER_TEMPO = [1,0,0]
-
-
 # Ventana, el loop del porgrama
 class FPSSoundLoopstationWindow(Screen):
     '''
@@ -98,9 +92,13 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         #print( self.ids.keys() )
 
-        # LoopstationEngine
+        # Circulo data
         self.circles = []
+        self.rgb_off_tempo = [1,1,1]
+        self.rgb_first_tempo = [0,1,0]
+        self.rgb_another_tempo = [1,0,0]
 
+        # LoopstationEngine
         self.engine = engine
         self.loopstation = self.engine.sound_loopstation
         self.metronome = self.engine.metronome
@@ -212,7 +210,7 @@ class FPSSoundLoopstationWindow(Screen):
     def build_numeric_metronome(self):
         self.metronome_container.clear_widgets()
         self.label_numeric_metronome.text = "0"
-        self.label_numeric_metronome.color = RGB_OFF_TEMPO
+        self.label_numeric_metronome.color = self.rgb_off_tempo
         self.metronome_container.add_widget( self.label_numeric_metronome )
 
     # Establecer vista de metronomo
@@ -632,8 +630,8 @@ class FPSSoundLoopstationWindow(Screen):
 
     def turn_off_metronome_view(self):
         for i in range( 0, len(self.circles) ):
-            if self.circles[i].color.rgb != RGB_OFF_TEMPO:
-                self.circles[i].color.rgb = RGB_OFF_TEMPO
+            if self.circles[i].color.rgb != self.rgb_off_tempo:
+                self.circles[i].color.rgb = self.rgb_off_tempo
 
     def metronome_view(self, loopstation_signals, metronome_signals):
         '''
@@ -641,21 +639,21 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         for i in range( 0, len(self.circles) ):
             if not metronome_signals['current_beat'] == i:
-                self.circles[i].color.rgb = RGB_OFF_TEMPO
+                self.circles[i].color.rgb = self.rgb_off_tempo
 
         if ( metronome_signals['current_beat'] in range(0, len(self.circles) ) ):
             # Solo beats existentes en circles.
             if loopstation_signals['emphasis_of_beat']['emphasis']:
-                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = self.rgb_first_tempo
             elif loopstation_signals['emphasis_of_beat']['neutral']:
-                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = self.rgb_another_tempo
 
     def metronome_numerical_view(self, loopstation_signals, metronome_signals):
         self.label_numeric_metronome.text = str( metronome_signals['current_beat']+1 )
         if loopstation_signals['emphasis_of_beat']['emphasis']:
-            self.label_numeric_metronome.color = RGB_FIRST_TEMPO
+            self.label_numeric_metronome.color = self.rgb_first_tempo
         elif loopstation_signals['emphasis_of_beat']['neutral']:
-            self.label_numeric_metronome.color = RGB_ANOTHER_TEMPO
+            self.label_numeric_metronome.color = self.rgb_another_tempo
 
 
     def timer_view(self, timer_current_fps):
