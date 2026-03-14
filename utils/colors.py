@@ -88,7 +88,7 @@ def random_rgba():
 def is_the_rgb_color_bright( rgb ):
     bright_values = []
     for value in rgb:
-        bright_values.append( value >= RGB_MAX_VALUE//2 )
+        bright_values.append( value > RGB_MAX_VALUE//2 )
     count_bright_values = 0
     for value in bright_values:
         if value:

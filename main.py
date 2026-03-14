@@ -5,18 +5,28 @@ from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
-from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
+from config.paths import SAMPLE_FILES, TEMP_DIR, ICON, CONFIG_ENGINE_FILE, CONFIG_GUI_FILE, THEMES_FILE
 
 # Window
 from views.fps_sound_loopstation_window import FPSSoundLoopstationWindow
 
 
 # Config
+from controllers.fps_sound_loopstation.config_gui_controller import ConfigGUIController
 from controllers.fps_sound_loopstation.config_engine_controller import ConfigEngineController
 from entities.fps_sound_loopstation.config_engine import ConfigEngine
+from entities.fps_sound_loopstation.config_gui import ConfigGUI
 config_engine = ConfigEngine()
 config_engine_controller = ConfigEngineController(
-    config_engine, "./config/fps_sound_loopstation/engine.toml"
+    config_engine, CONFIG_ENGINE_FILE
+)
+config_gui = ConfigGUI()
+config_gui_controller = ConfigGUIController(
+    config_gui, CONFIG_GUI_FILE, THEMES_FILE
+)
+print(
+    config_gui_controller.get_theme_names(), config_gui.theme,
+    config_gui_controller.get_current_rgba_theme()
 )
 
 
@@ -63,14 +73,6 @@ from kivy.metrics import dp
 from kivy.app import App
 from kivy.clock import Clock
 
-# Widgets a estilizar
-from kivy.uix.textinput import TextInput
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-
-# Funciones para estilizar
-from kivy.graphics import Color, Rectangle
-
 # Color
 from utils.colors import (
     get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
@@ -88,19 +90,14 @@ Constructor de aplicación
 #Window.resizable = True
 class FPSSoundLoopstationApp(App):
     def build(self):
-        #x_color = get_rgba(31, 63, 15, 255) # green
-        #x_color = get_rgba(47, 47, 47, 255) # grey
-        #x_color = get_rgba(200, 47, 63, 255) # strawberry
-        #x_color = get_rgba(216, 193, 23, 255) # mustard
-        #x_color = get_rgba(39, 203, 214, 255) # skyblue
-        x_color = random_rgba()
+        #x_color = random_rgba()
 
         # Ventana
         window = FPSSoundLoopstationWindow(
             engine,
             #vertical_padding_offsets=[0,0.05, 0,0.08], # Margen pa celu
             #horizontal_padding_offsets=[0,0.05, 0.08,0], # Margen pa celu
-            base_rgba_color=x_color
+            config_controller=config_gui_controller
         )
 
         # Construir

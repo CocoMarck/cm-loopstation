@@ -66,7 +66,7 @@ class FPSSoundLoopstationWindow(Screen):
     def __init__(
         self, engine: FPSSoundLoopstationEngine,
         vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
-        numeric_metronome=False, base_rgba_color=None,
+        config_controller=None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -103,12 +103,13 @@ class FPSSoundLoopstationWindow(Screen):
 
         # Circulo data
         self.circles = []
+        self.config_controller = config_controller
+        self.config = self.config_controller.config
 
         # Colors
         self.rgb_off_tempo = [1,1,1]
         self.rgb_first_tempo = [0,1,0]
         self.rgb_another_tempo = [1,0,0]
-        self._INIT_BASE_COLOR = base_rgba_color
 
         # LoopstationEngine
         self.engine = engine
@@ -152,7 +153,6 @@ class FPSSoundLoopstationWindow(Screen):
 
         # Metronome view
         self.label_numeric_metronome = Label()
-        self.numeric_metronome = numeric_metronome
 
         # Padding
         self.last_orientation = None
@@ -306,7 +306,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     # Establecer vista de metronomo
     def set_metronome_view(self):
-        if self.numeric_metronome:
+        if self.config.numerical_view:
             self.build_numeric_metronome()
         else:
             self.build_metronome_circles()
@@ -556,7 +556,7 @@ class FPSSoundLoopstationWindow(Screen):
         )
 
     def on_numeric_metronome(self, widget, active):
-        self.numeric_metronome = active
+        self.config_controller.update_numerical_view( active )
         self.set_metronome_view()
 
     def on_settings(self, button):
@@ -566,7 +566,7 @@ class FPSSoundLoopstationWindow(Screen):
             size_hint=(0.8, 0.8)
         )
         popup.second_container.add_widget( Label( text="numerical view") )
-        checkbox_metronome_numeircal_view = CheckBox( active=self.numeric_metronome )
+        checkbox_metronome_numeircal_view = CheckBox( active=self.config.numerical_view )
         checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
         popup.second_container.add_widget( checkbox_metronome_numeircal_view )
         popup.open()
@@ -574,8 +574,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def build(self):
         # Color
-        if self._INIT_BASE_COLOR != None:
-            self.set_colors( self._INIT_BASE_COLOR )
+        self.set_colors( self.config_controller.get_current_rgba_theme() )
 
         # Loop
         self.engine.start()
@@ -792,7 +791,7 @@ class FPSSoundLoopstationWindow(Screen):
             update = self.update_track_options(dt)
         timer_in_fps = self.record_with_timer( timer_signals )
         if self.engine.state.value == "running":
-            if not self.numeric_metronome:
+            if not self.config.numerical_view:
                 self.metronome_view( loopstation_signals, metronome_signals )
             else:
                 self.metronome_numerical_view( loopstation_signals, metronome_signals )
