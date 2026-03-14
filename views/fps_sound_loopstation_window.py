@@ -20,6 +20,7 @@ from kivy.uix.dropdown import DropDown
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
+from kivy.uix.spinner import Spinner
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
@@ -562,14 +563,28 @@ class FPSSoundLoopstationWindow(Screen):
     def on_settings(self, button):
         popup = PopupGridLayout(
             title="settings",
-            cols=2, rows=1, row_default_height=self.height*0.1,
+            cols=2, rows=2, row_default_height=self.height*0.1,
             size_hint=(0.8, 0.8)
         )
         popup.second_container.add_widget( Label( text="numerical view") )
         checkbox_metronome_numeircal_view = CheckBox( active=self.config.numerical_view )
         checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
         popup.second_container.add_widget( checkbox_metronome_numeircal_view )
+
+        popup.second_container.add_widget( Label( text="theme") )
+        spinner = Spinner(
+            text=self.config.theme,
+            values=self.config_controller.get_theme_names(),
+        )
+        spinner.bind(text=lambda inst, val: self.on_theme_selected(val))
+        popup.second_container.add_widget( spinner )
+
         popup.open()
+
+    def on_theme_selected(self, name):
+        if self.config_controller.update_theme(name):
+            rgba = self.config_controller.get_rgba_theme( name )
+            self.set_colors(rgba)
 
 
     def build(self):
