@@ -59,6 +59,9 @@ from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 from views.pykivy.widgets.popup_information import PopupInformation
 from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 
+# Text
+from utils.translation_util import get_text
+
 # Ventana, el loop del porgrama
 class FPSSoundLoopstationWindow(Screen):
     '''
@@ -163,6 +166,18 @@ class FPSSoundLoopstationWindow(Screen):
         # Eventos de PC (desktop, pero creo que lo usa android tambien)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
+
+    def refresh_text(self):
+        self.label_timer.text = get_text( 'timer' )
+        self.label_tracks.text = get_text( 'tracks' )
+        self.label_record_bars.text = get_text('bars')
+        self.togglebutton_limit_record.text = get_text('limit-record')
+        self.togglebutton_play_beat.text = get_text('play-beat')
+        self.menu_buttons['stop'].text = get_text('stop')
+        for key in self.menu_buttons.keys():
+            if key in self.sticky_images.keys():
+                continue
+            self.menu_buttons[key].text = get_text(key)
 
 
     def get_colors(self, rgba):
@@ -349,10 +364,10 @@ class FPSSoundLoopstationWindow(Screen):
 
     # Contruir texto de opciones
     def build_bpm_text(self):
-        return "bpm: " + str(self.metronome.bpm)
+        return f"BPM: " + str(self.metronome.bpm)
 
     def build_beats_text(self):
-        return "beats: " + str(self.metronome.beats_per_bar+1)
+        return f"{get_text('beats')}: " + str(self.metronome.beats_per_bar+1)
 
     # Establecer valores de opciones
     def set_slider_bpm(self):
@@ -537,23 +552,22 @@ class FPSSoundLoopstationWindow(Screen):
     def open_popup_information(self, title, text_information):
         popup = PopupInformation(
             title=title, size_hint=(0.8, 0.8),
-            text_information=text_information,
-            text_ok="ok"
+            text_information=text_information, text_ok=get_text('ok')
         )
         popup.open()
 
     def on_about(self, button):
         self.open_popup_information(
-            title="about", text_information=(
-                f"[b]{NAME}[/b]: version {VERSION}\n\n"
-                f"- developer: [b]{DEVELOPER}[/b]\n"
-                f"- website: [b]{WEBSITE}[/b]"
+            title=get_text("about"), text_information=(
+                f"[b]{NAME}[/b]: {get_text('version')} {VERSION}\n\n"
+                f"- {get_text('developer')}: [b]{DEVELOPER}[/b]\n"
+                f"- {get_text('website')}: [b]{WEBSITE}[/b]"
             )
         )
 
     def on_help(self, button):
         self.open_popup_information(
-            title="help", text_information=HELP
+            title=get_text("help"), text_information=HELP
         )
 
     def on_numeric_metronome(self, widget, active):
@@ -562,16 +576,16 @@ class FPSSoundLoopstationWindow(Screen):
 
     def on_settings(self, button):
         popup = PopupGridLayout(
-            title="settings",
+            title=get_text("settings"),
             cols=2, rows=2, row_default_height=self.height*0.1,
-            size_hint=(0.8, 0.8)
+            size_hint=(0.8, 0.8), text_ok=get_text('ok')
         )
-        popup.second_container.add_widget( Label( text="numerical view") )
+        popup.second_container.add_widget( Label( text=get_text("numerical-view") ) )
         checkbox_metronome_numeircal_view = CheckBox( active=self.config.numerical_view )
         checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
         popup.second_container.add_widget( checkbox_metronome_numeircal_view )
 
-        popup.second_container.add_widget( Label( text="theme") )
+        popup.second_container.add_widget( Label( text=get_text("theme") ) )
         spinner = Spinner(
             text=self.config.theme,
             values=self.config_controller.get_theme_names(),
@@ -621,6 +635,9 @@ class FPSSoundLoopstationWindow(Screen):
             #sticky_image.widget.background_color = (0,0,0,0)
             #sticky_image.widget.background_color = (0, 0.5, 0.4, 1)
             #sticky_image.widget.background_color = (0,0.4,0.4,1)
+
+        # Text
+        self.refresh_text()
 
         # widgets
         self.set_metronome_view()

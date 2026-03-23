@@ -6,5 +6,5 @@ volume = 1.0
 play_beat = false
 fps = 20
 limit_record = true
-record_bars = 1
-seconds = 0
+record_bars = 2
+seconds = 10
