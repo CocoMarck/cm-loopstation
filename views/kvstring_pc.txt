@@ -1,7 +1,7 @@
 #:import Window kivy.core.window.Window
 
 <Label, TextInput, ToggleButton, height>:
-    font_size: ( min(Window.width, Window.height)*0.05 )
+    font_size: ( min(Window.width, Window.height)*0.035 )
 
 #<TextInput>:
 #    background_color: (0, 0.3, 0.5, 0.5)

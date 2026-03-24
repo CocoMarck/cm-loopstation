@@ -38,7 +38,7 @@ from utils.colors import (
 
 # Images
 from config.paths import (
-    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE
+    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE, TIMER_IMAGE
 )
 record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
 play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
@@ -46,6 +46,7 @@ stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
 menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
+timer_image = Image( source=str(TIMER_IMAGE), allow_stretch=True )
 
 
 # Estilo molon
@@ -168,7 +169,7 @@ class FPSSoundLoopstationWindow(Screen):
         Window.bind(on_restore=self._on_restore)
 
     def refresh_text(self):
-        self.label_timer.text = get_text( 'timer' )
+        #self.label_timer.text = get_text( 'timer' )
         self.label_tracks.text = get_text( 'tracks' )
         self.label_record_bars.text = get_text('bars')
         self.togglebutton_limit_record.text = get_text('limit-record')
@@ -497,14 +498,14 @@ class FPSSoundLoopstationWindow(Screen):
             label_name = Label( text=str(track_id) )
             self.grid_tracks.add_widget(label_name)
 
-            label_bars = Label( text=f"bars: {round(track['bars'])}" )
+            label_bars = Label( text=f"{get_text('bars')}: {round(track['bars'])}" )
             self.grid_tracks.add_widget( label_bars )
 
             if track['loop']:
                 state = "down"
             else:
                 state = "normal"
-            togglebutton_loop = ToggleButton( text="loop", state=state )
+            togglebutton_loop = ToggleButton( text=get_text("loop"), state=state )
             togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
             self.grid_tracks.add_widget( togglebutton_loop )
 
@@ -512,7 +513,7 @@ class FPSSoundLoopstationWindow(Screen):
                 state = "down"
             else:
                 state = "normal"
-            togglebutton_mute = ToggleButton( text="mute", state=state )
+            togglebutton_mute = ToggleButton( text=get_text("mute"), state=state )
             togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
             self.grid_tracks.add_widget( togglebutton_mute )
 
@@ -567,7 +568,7 @@ class FPSSoundLoopstationWindow(Screen):
 
     def on_help(self, button):
         self.open_popup_information(
-            title=get_text("help"), text_information=HELP
+            title=get_text("help"), text_information=get_text('fps-sound-loopstation-help')
         )
 
     def on_numeric_metronome(self, widget, active):
@@ -628,6 +629,9 @@ class FPSSoundLoopstationWindow(Screen):
             ),
             "menu": StickyImage(
                 image=menu_image, widget=self.button_menu
+            ),
+            "timer": StickyImage(
+                image=timer_image, widget=self.label_timer
             )
         }
         for sticky_image in self.sticky_images.values():

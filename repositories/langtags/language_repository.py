@@ -1,8 +1,14 @@
 from .base_repository import BaseRepository
+from .format_text import format_language_code
 
 class LanguageRepository(BaseRepository):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, column_id="language_id", column_value="code", kebab_case=True, **kwargs)
+        super().__init__(*args, column_id="language_id", column_value="code", format_text=True, **kwargs)
+
+    def format_text(self, text:str):
+        if text:
+            return format_language_code(text)
+        return None
 
     def update_code(self, language_id:int, code:str):
         return self.update_value( language_id, code )

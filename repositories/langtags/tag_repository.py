@@ -1,8 +1,14 @@
 from .base_repository import BaseRepository
+from .format_text import format_tag_name
 
 class TagRepository(BaseRepository):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, column_id="tag_id", column_value="name", kebab_case=True, **kwargs)
+        super().__init__(*args, column_id="tag_id", column_value="name", format_text=True, **kwargs)
+
+    def format_text(self, text:str):
+        if text:
+            return format_tag_name(text)
+        return None
 
     def update_name(self, tag_id:int, name:str):
         return self.update_value( tag_id, name )

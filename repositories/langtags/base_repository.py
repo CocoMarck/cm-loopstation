@@ -1,20 +1,22 @@
 from core.sqlite.standard_table import StandardTable
 from core.sqlite.standard_database import StandardDatabase
 from utils.datetime_util import get_datetime_now, set_datetime_formatted
-from utils.text_util import in_kebab_format
 
 class BaseRepository:
     def __init__(
-        self, table: StandardTable, column_id: str, column_value: str, kebab_case=False
+        self, table: StandardTable, column_id: str, column_value: str, format_text=False
     ):
         self.table = table
         self.database = self.table.database
         self._COLUMN_ID = column_id
         self._COLUMN_VALUE = column_value
-        self._KEBAB_CASE = kebab_case
+        self._FORMAT_TEXT = format_text
+
+    def format_text(self, text):
+        return text
 
     def update_value(self, value_id:int, value: str, is_deleted:bool):
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         try:
             cursor = self.database.execute(
                 statement=(
@@ -28,7 +30,7 @@ class BaseRepository:
             return False
 
     def insert_value(self, value:str, is_deleted:bool):
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         try:
             cursor = self.database.execute(
                 statement=(
@@ -78,7 +80,7 @@ class BaseRepository:
             return []
 
     def get_value_id(self, value:str) -> int | None:
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         try:
             cursor = self.database.execute(
                 statement=f"SELECT {self._COLUMN_ID} FROM {self.table.name} WHERE {self._COLUMN_VALUE}=? LIMIT 1;",
@@ -110,7 +112,7 @@ class BaseRepository:
         return updated or inserted
 
     def save_value(self, value:str, is_deleted:bool):
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         value_id = self.get_value_id(value)
         return self.save( value_id, value, is_deleted )
 
@@ -157,11 +159,11 @@ class BaseRepository:
         return False
 
     def toggle_value_state(self, value: str):
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         value_id = self.get_value_id(value)
         return self.toggle_row_state( value_id )
 
     def get_value_state(self, value: str) -> bool:
-        value = in_kebab_format( value ) if self._KEBAB_CASE else value
+        value = self.format_text( value ) if self._FORMAT_TEXT else value
         value_id = self.get_value_id(value)
         return not self.is_deleted( value_id )
