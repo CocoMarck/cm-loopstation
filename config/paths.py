@@ -56,13 +56,9 @@ for src, dst in [
 ]:
     if not dst.exists():
         shutil.copy(src, dst)
-        print(dst)
+        print('Not exists %s' % (dst,))
     else:
         print('Exists: %s' % (dst,) )
-with open(ANDROID_CONFIG_ENGINE_FILE) as f:
-    lines = f.readlines()
-    for x in lines:
-        print(x)
 
 ANDROID_DATA_DIR.mkdir(parents=True, exist_ok=True)
 for src, dst in [
@@ -70,6 +66,12 @@ for src, dst in [
 ]:
     if not dst.exists():
         shutil.copy(src, dst)
-        print(dst)
+        print('Not exists %s' % (dst,))
     else:
         print('Exists: %s' % (dst,))
+
+# Leyendo config (para ver si hay datos feos.
+with open(ANDROID_CONFIG_ENGINE_FILE) as f:
+    lines = f.readlines()
+    for x in lines:
+        print(x)
