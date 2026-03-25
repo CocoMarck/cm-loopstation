@@ -108,8 +108,6 @@ class FPSSoundLoopstationApp(App):
         )
         window.build()
 
-        self.window = window
-
         # Delta Time
         Clock.schedule_interval(window.update, 1.0/FPS_GUI)
 
