@@ -1,4 +1,4 @@
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 from config.paths import TEMPO_FILES
 from .sound_manager import SoundManager
 
