@@ -25,3 +25,8 @@ RESTART_IMAGE = resource_loader.get_icon('restart.png')
 RECORD_IMAGE = resource_loader.get_icon('record.png')
 ABOUT_IMAGE = resource_loader.get_icon('about.png')
 MENU_IMAGE = resource_loader.get_icon('menu.png')
+TIMER_IMAGE = resource_loader.get_icon('timer.png')
+
+CONFIG_ENGINE_FILE = resource_loader.get_config( 'fps_sound_loopstation/engine.toml' )
+CONFIG_GUI_FILE = resource_loader.get_config( 'fps_sound_loopstation/gui.toml' )
+THEMES_FILE = resource_loader.get_config( 'fps_sound_loopstation/themes.json' )
