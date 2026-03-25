@@ -46,8 +46,8 @@ ANDROID_THEMES_FILE = ANDROID_CONFIG_DIR.joinpath( 'themes.json' )
 
 # Android copiar todo
 import shutil
-ANDROID_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
+ANDROID_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 for src, dst in [
     (CONFIG_ENGINE_FILE, ANDROID_CONFIG_ENGINE_FILE),
     (CONFIG_GUI_FILE, ANDROID_CONFIG_GUI_FILE),
@@ -57,3 +57,8 @@ for src, dst in [
         shutil.copy(src, dst)
 
 ANDROID_DATA_DIR.mkdir(parents=True, exist_ok=True)
+for src, dst in [
+    (resource_loader.data_dir.joindir('langtags.sqlite'), ANDROID_DATA_DIR.joindir('langtags.sqlite'))
+]:
+    if not dst.exists():
+        shutil.copy(src, dst)
