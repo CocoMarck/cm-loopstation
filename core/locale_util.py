@@ -2,7 +2,7 @@ from core.system_util import get_system
 import locale
 import pycountry
 
-def system_language():
+def system_language_pc():
     '''
     Obtener el lenguaje default del os. O el lenguaje establecido por el usuario.
     
@@ -22,3 +22,13 @@ def system_language():
         language = object_country.alpha_2
     
     return language
+
+
+from jnius import autoclass
+def system_language(): # Android
+    # Obtener el Locale actual desde Java
+    Locale = autoclass('java.util.Locale')
+    lang = Locale.getDefault().getLanguage()   # ej. "es", "en", "fr"
+    country = Locale.getDefault().getCountry() # ej. "MX", "US"
+    return f"{lang}"
+
