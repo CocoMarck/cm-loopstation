@@ -6,15 +6,13 @@ from core.fps_loop import FPSLoop
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
 # Rutas
-from config.paths import SAMPLE_FILES, TEMP_DIR, ICON, CONFIG_ENGINE_FILE, CONFIG_GUI_FILE, THEMES_FILE
+from config.paths import SAMPLE_FILES, TEMP_DIR, ICON, ANDROID_CONFIG_ENGINE_FILE, ANDROID_CONFIG_GUI_FILE, ANDROID_THEMES_FILE, ANDROID_PATH
 
 # Window
 from views.fps_sound_loopstation_window import FPSSoundLoopstationWindow
 
 # Android
-import pathlib
-from android.storage import app_storage_path
-ANDROID_MUSIC_PATH = pathlib.Path(app_storage_path())
+ANDROID_MUSIC_PATH = ANDROID_PATH
 
 # Config
 from controllers.fps_sound_loopstation.config_gui_controller import ConfigGUIController
@@ -23,11 +21,11 @@ from entities.fps_sound_loopstation.config_engine import ConfigEngine
 from entities.fps_sound_loopstation.config_gui import ConfigGUI
 config_engine = ConfigEngine()
 config_engine_controller = ConfigEngineController(
-    config_engine, CONFIG_ENGINE_FILE
+    config_engine, ANDROID_CONFIG_ENGINE_FILE
 )
 config_gui = ConfigGUI()
 config_gui_controller = ConfigGUIController(
-    config_gui, CONFIG_GUI_FILE, THEMES_FILE
+    config_gui, ANDROID_CONFIG_GUI_FILE, ANDROID_THEMES_FILE
 )
 
 

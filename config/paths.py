@@ -27,6 +27,18 @@ ABOUT_IMAGE = resource_loader.get_icon('about.png')
 MENU_IMAGE = resource_loader.get_icon('menu.png')
 TIMER_IMAGE = resource_loader.get_icon('timer.png')
 
+# PC Configs
 CONFIG_ENGINE_FILE = resource_loader.get_config( 'fps_sound_loopstation/engine.toml' )
 CONFIG_GUI_FILE = resource_loader.get_config( 'fps_sound_loopstation/gui.toml' )
 THEMES_FILE = resource_loader.get_config( 'fps_sound_loopstation/themes.json' )
+
+# Android configs
+import pathlib
+from android.storage import app_storage_path
+ANDROID_PATH = pathlib.Path(app_storage_path())
+
+ANDROID_DATA_DIR = ANDROID_PATH.joinpath('data')
+ANDROID_CONFIG_DIR = ANDROID_PATH.joinpath('config')
+ANDROID_CONFIG_ENGINE_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/engine.toml' )
+ANDROID_CONFIG_GUI_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/gui.toml' )
+ANDROID_THEMES_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/themes.json' )
