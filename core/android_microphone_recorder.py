@@ -129,10 +129,15 @@ class AndroidMicrophoneRecorder:
         Logger.info("Deteniendo grabación")
         self._stop_event.set()
 
+        if self._audio_record:
+            try:
+                self._audio_record.stop()
+            except Exception as e:
+                Logger.warning(f"Error al forzar stopRecording: {e}")
+
         if self._thread:
             self._thread.join()
             self._thread = None
 
-        # Marcar estado.
         self.state = self._states[0]
         self._recording = False
