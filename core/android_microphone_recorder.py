@@ -83,13 +83,13 @@ class AndroidMicrophoneRecorder:
             while True:
                 read_frames = self._audio_record.read(pcm_buffer, 0, len(pcm_buffer))
 
-                if read_frames > 0:
+                has_audio = read_frames > 0
+                if has_audio:
                     bytes_read = read_frames * FRAME_SIZE
                     f.write(pcm_buffer[:bytes_read])
                     data_size += bytes_read
-                    has_audio = True
 
-                if self._stop_event.is_set() and has_audio:
+                if self._stop_event.is_set():
                     break
 
                 if self.record_seconds > 0:
@@ -102,7 +102,10 @@ class AndroidMicrophoneRecorder:
             self._audio_record.release()
             self._audio_record = None
 
-            self._write_wav_header(f, data_size)
+            if data_size > 0:
+                self._write_wav_header(f, data_size)
+            else:
+                Logger.warning("No se grabó audio, archivo vacío.")
 
         Logger.info(f"WAV guardado: {self.output_filename}")
 
