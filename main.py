@@ -108,6 +108,8 @@ class FPSSoundLoopstationApp(App):
         )
         window.build()
 
+        self.window = window
+
         # Delta Time
         Clock.schedule_interval(window.update, 1.0/FPS_GUI)
 
@@ -118,7 +120,7 @@ class FPSSoundLoopstationApp(App):
         return self.window.on_pause()
 
     def on_resume(self):
-        self.window.on_resume()
+        return self.window.on_resume()
 
     def on_stop(self):
         # A guardar al cerrar
