@@ -36,10 +36,24 @@ THEMES_FILE = resource_loader.get_config( 'fps_sound_loopstation/themes.json' )
 import pathlib
 from android.storage import app_storage_path
 ANDROID_PATH = pathlib.Path(app_storage_path())
-print(ANDROID_PATH)
+
 
 ANDROID_DATA_DIR = ANDROID_PATH.joinpath('data')
 ANDROID_CONFIG_DIR = ANDROID_PATH.joinpath('config')
-ANDROID_CONFIG_ENGINE_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/engine.toml' )
-ANDROID_CONFIG_GUI_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/gui.toml' )
-ANDROID_THEMES_FILE = ANDROID_CONFIG_DIR.joinpath( 'fps_sound_loopstation/themes.json' )
+ANDROID_CONFIG_ENGINE_FILE = ANDROID_CONFIG_DIR.joinpath( 'engine.toml' )
+ANDROID_CONFIG_GUI_FILE = ANDROID_CONFIG_DIR.joinpath( 'gui.toml' )
+ANDROID_THEMES_FILE = ANDROID_CONFIG_DIR.joinpath( 'themes.json' )
+
+# Android copiar todo
+import shutil
+ANDROID_CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+for src, dst in [
+    (CONFIG_ENGINE_FILE, ANDROID_CONFIG_ENGINE_FILE),
+    (CONFIG_GUI_FILE, ANDROID_CONFIG_GUI_FILE),
+    (THEMES_FILE, ANDROID_THEMES_FILE),
+]:
+    if not dst.exists():
+        shutil.copy(src, dst)
+
+ANDROID_DATA_DIR.mkdir(parents=True, exist_ok=True)
