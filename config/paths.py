@@ -58,7 +58,7 @@ for src, dst in [
 
 ANDROID_DATA_DIR.mkdir(parents=True, exist_ok=True)
 for src, dst in [
-    (resource_loader.data_dir.joindir('langtags.sqlite'), ANDROID_DATA_DIR.joindir('langtags.sqlite'))
+    (resource_loader.data_dir.joinpath('langtags.sqlite'), ANDROID_DATA_DIR.joinpath('langtags.sqlite'))
 ]:
     if not dst.exists():
         shutil.copy(src, dst)
