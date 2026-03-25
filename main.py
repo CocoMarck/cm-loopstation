@@ -1,6 +1,6 @@
 from core.android_microphone_recorder import AndroidMicrophoneRecorder
 from core.fps_sound_loopstation import FPSSoundLoopstation
-from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+from controllers.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
@@ -117,6 +117,14 @@ class FPSSoundLoopstationApp(App):
 
     # Pause y resume an android
     def on_pause(self):
+        config_engine_controller.update_beats( metronome.beats_per_bar )
+        config_engine_controller.update_bpm( metronome.bpm )
+        config_engine_controller.update_play_beat( metronome.play_beat )
+
+        config_engine_controller.update_limit_record( recorder_controller.limit_record )
+        config_engine_controller.update_record_bars( recorder_controller.record_bars )
+
+        config_engine_controller.update_seconds( timer.seconds )
         return self.window.on_pause()
 
     def on_resume(self):
