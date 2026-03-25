@@ -36,6 +36,7 @@ THEMES_FILE = resource_loader.get_config( 'fps_sound_loopstation/themes.json' )
 import pathlib
 from android.storage import app_storage_path
 ANDROID_PATH = pathlib.Path(app_storage_path())
+print(ANDROID_PATH)
 
 ANDROID_DATA_DIR = ANDROID_PATH.joinpath('data')
 ANDROID_CONFIG_DIR = ANDROID_PATH.joinpath('config')
