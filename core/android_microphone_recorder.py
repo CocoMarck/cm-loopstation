@@ -106,24 +106,24 @@ class AndroidMicrophoneRecorder:
 
         Logger.info(f"WAV guardado: {self.output_filename}")
 
-        self.state = "stop"
+        self.state = self._states[0]
         self._recording = False
 
     def record(self):
         self._stop_event.clear()
-        if self.state == "record":
+        if self.state == self._states[1]:
             Logger.warning("Ya está grabando")
             return
 
         Logger.info(f"Grabando WAV: {self.output_filename}")
         self._recording = True
-        self.state = "record"
+        self.state = self._states[1]
 
         self._thread = threading.Thread(target=self._record_loop, daemon=True)
         self._thread.start()
 
     def stop(self):
-        if self.state == "stop":
+        if self.state == self._states[0]:
             return
 
         Logger.info("Deteniendo grabación")
@@ -131,5 +131,8 @@ class AndroidMicrophoneRecorder:
 
         if self._thread:
             self._thread.join()
+            self._thread = None
 
-        self.state = "stop"
+        # Marcar estado.
+        self.state = self._states[0]
+        self._recording = False
