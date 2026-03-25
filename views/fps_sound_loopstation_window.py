@@ -9,6 +9,7 @@ from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.textinput import TextInput
 from kivy.uix.checkbox import CheckBox
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
@@ -19,15 +20,25 @@ from kivy.uix.dropdown import DropDown
 from kivy.properties import (
     ListProperty, NumericProperty, ReferenceListProperty, ObjectProperty
 )
+from kivy.uix.spinner import Spinner
 from kivy.graphics import Color, Ellipse
 from kivy.core.window import Window
 from kivy.uix.screenmanager import Screen
 from kivy.uix.image import Image
 from kivy.metrics import dp
 
+# Funciones para estilizar
+from kivy.graphics import Color, Rectangle
+
+# Colors
+from utils.colors import (
+    get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
+    is_the_rgba_color_bright
+)
+
 # Images
 from config.paths import (
-    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE
+    ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE, TIMER_IMAGE
 )
 record_image = Image( source=str(RECORD_IMAGE), allow_stretch=True )
 play_image = Image( source=str(PLAY_IMAGE), allow_stretch=True )
@@ -35,7 +46,7 @@ stop_image = Image( source=str(STOP_IMAGE), allow_stretch=True )
 restart_image = Image( source=str(RESTART_IMAGE), allow_stretch=True )
 about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
 menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
-
+timer_image = Image( source=str(TIMER_IMAGE), allow_stretch=True )
 
 
 # Estilo molon
@@ -49,11 +60,8 @@ from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 from views.pykivy.widgets.popup_information import PopupInformation
 from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 
-# Constantes | Colores
-RGB_OFF_TEMPO = [1,1,1]
-RGB_FIRST_TEMPO = [0,1,0]
-RGB_ANOTHER_TEMPO = [1,0,0]
-
+# Text
+from utils.translation_util import get_text
 
 # Ventana, el loop del porgrama
 class FPSSoundLoopstationWindow(Screen):
@@ -63,7 +71,7 @@ class FPSSoundLoopstationWindow(Screen):
     def __init__(
         self, engine: FPSSoundLoopstationEngine,
         vertical_padding_offsets=[0,0,0,0], horizontal_padding_offsets=[0,0,0,0],
-        numeric_metronome=False,
+        config_controller=None,
         **kwargs
     ):
         super().__init__(**kwargs)
@@ -98,9 +106,17 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         #print( self.ids.keys() )
 
-        # LoopstationEngine
+        # Circulo data
         self.circles = []
+        self.config_controller = config_controller
+        self.config = self.config_controller.config
 
+        # Colors
+        self.rgb_off_tempo = [1,1,1]
+        self.rgb_first_tempo = [0,1,0]
+        self.rgb_another_tempo = [1,0,0]
+
+        # LoopstationEngine
         self.engine = engine
         self.loopstation = self.engine.sound_loopstation
         self.metronome = self.engine.metronome
@@ -142,7 +158,6 @@ class FPSSoundLoopstationWindow(Screen):
 
         # Metronome view
         self.label_numeric_metronome = Label()
-        self.numeric_metronome = numeric_metronome
 
         # Padding
         self.last_orientation = None
@@ -152,6 +167,97 @@ class FPSSoundLoopstationWindow(Screen):
         # Eventos de PC (desktop, pero creo que lo usa android tambien)
         Window.bind(on_minimize=self._on_minimize)
         Window.bind(on_restore=self._on_restore)
+
+    def refresh_text(self):
+        #self.label_timer.text = get_text( 'timer' )
+        self.label_tracks.text = get_text( 'tracks' )
+        self.label_record_bars.text = get_text('bars')
+        self.togglebutton_limit_record.text = get_text('limit-record')
+        self.togglebutton_play_beat.text = get_text('play-beat')
+        self.menu_buttons['stop'].text = get_text('stop')
+        for key in self.menu_buttons.keys():
+            if key in self.sticky_images.keys():
+                continue
+            self.menu_buttons[key].text = get_text(key)
+
+
+    def get_colors(self, rgba):
+        scale_more = 1.25
+        scale_less = 0.75
+        base_color = rgba
+        base_color_less = scale_rgba( base_color, scale_less )
+        base_color_more = scale_rgba( base_color, scale_more )
+        inverted_base_color = invert_rgba( base_color )
+        inverted_base_color_more = scale_rgba( inverted_base_color, scale_more )
+        inverted_base_color_less = scale_rgba( inverted_base_color, scale_less )
+
+        colors = {
+            "base": base_color,
+            "base_less": base_color_less,
+            "base_more": base_color_more,
+            "inverted_base": inverted_base_color,
+            "inverted_base_less": inverted_base_color_less,
+            "inverted_base_more": inverted_base_color_more,
+            "label": inverted_base_color_more,
+            "text_input": base_color_less,
+            "off_tempo": base_color_less,
+            "first_tempo": inverted_base_color_more,
+            "another_tempo": inverted_base_color
+        }
+        if is_the_rgba_color_bright(base_color):
+            colors['label'] = inverted_base_color_less
+            colors['text_input'] = base_color_more
+            colors['first_tempo'] = inverted_base_color
+            colors['another_tempo'] = inverted_base_color_less
+
+        for key in colors.keys():
+            colors[key] = rgba_to_normalized( colors[key] )
+
+        return colors
+
+    def set_colors(self, rgba):
+        colors = self.get_colors( rgba )
+
+        for widget in self.walk():
+            if isinstance(widget, Button):
+                continue # Ignorar botones
+            if isinstance(widget, Label):
+                widget.color = colors['label']
+            elif isinstance(widget, TextInput):
+                widget.background_color = colors['inverted_base']
+                widget.foreground_color = colors['text_input']
+
+        self.rgb_off_tempo = colors['off_tempo']
+        self.rgb_first_tempo = colors['first_tempo']
+        self.rgb_another_tempo = colors['another_tempo']
+
+        # Fondos
+        if not hasattr(self, "rect_window"):
+            with self.canvas.before:
+                self.color_window = Color( *colors['base'] )
+                self.rect_window = Rectangle(pos=self.pos, size=self.size)
+            self.bind(
+                pos=lambda inst, val: setattr(self.rect_window, 'pos', inst.pos),
+                size=lambda inst, val: setattr(self.rect_window, 'size', inst.size)
+            )
+        else:
+            self.color_window.rgba = colors['base']
+            self.rect_window.pos=self.pos
+            self.rect_window.size=self.size
+
+        if not hasattr(self, "rect_scroll"):
+            with self.scroll_widget.canvas.before:
+                self.color_scroll = Color( *colors['base_less'] )
+                self.rect_scroll = Rectangle(pos=self.scroll_widget.pos, size=self.scroll_widget.size)
+            self.bind(
+                pos=lambda inst, val: setattr(self.rect_scroll, 'pos', inst.pos),
+                size=lambda inst, val: setattr(self.rect_scroll, 'size', inst.size)
+            )
+        else:
+            self.color_scroll.rgba = colors['base_less']
+            self.rect_scroll.pos = self.scroll_widget.pos
+            self.rect_scroll.size = self.scroll_widget.size
+
 
     def resize_menu_buttons(self):
         for button in self.menu_buttons.values():
@@ -212,12 +318,12 @@ class FPSSoundLoopstationWindow(Screen):
     def build_numeric_metronome(self):
         self.metronome_container.clear_widgets()
         self.label_numeric_metronome.text = "0"
-        self.label_numeric_metronome.color = RGB_OFF_TEMPO
+        self.label_numeric_metronome.color = self.rgb_off_tempo
         self.metronome_container.add_widget( self.label_numeric_metronome )
 
     # Establecer vista de metronomo
     def set_metronome_view(self):
-        if self.numeric_metronome:
+        if self.config.numerical_view:
             self.build_numeric_metronome()
         else:
             self.build_metronome_circles()
@@ -259,10 +365,10 @@ class FPSSoundLoopstationWindow(Screen):
 
     # Contruir texto de opciones
     def build_bpm_text(self):
-        return "bpm: " + str(self.metronome.bpm)
+        return f"BPM: " + str(self.metronome.bpm)
 
     def build_beats_text(self):
-        return "beats: " + str(self.metronome.beats_per_bar+1)
+        return f"{get_text('beats')}: " + str(self.metronome.beats_per_bar+1)
 
     # Establecer valores de opciones
     def set_slider_bpm(self):
@@ -280,7 +386,7 @@ class FPSSoundLoopstationWindow(Screen):
         self.textinput_record_bars.text = str(self.recorder_controller.record_bars)
 
     def set_togglebutton_play_beat(self):
-        state = "up"
+        state = "normal"
         if self.metronome.play_beat:
             state = "down"
         self.togglebutton_play_beat.state = state
@@ -392,14 +498,14 @@ class FPSSoundLoopstationWindow(Screen):
             label_name = Label( text=str(track_id) )
             self.grid_tracks.add_widget(label_name)
 
-            label_bars = Label( text=f"bars: {round(track['bars'])}" )
+            label_bars = Label( text=f"{get_text('bars')}: {round(track['bars'])}" )
             self.grid_tracks.add_widget( label_bars )
 
             if track['loop']:
                 state = "down"
             else:
                 state = "normal"
-            togglebutton_loop = ToggleButton( text="loop", state=state )
+            togglebutton_loop = ToggleButton( text=get_text("loop"), state=state )
             togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
             self.grid_tracks.add_widget( togglebutton_loop )
 
@@ -407,7 +513,7 @@ class FPSSoundLoopstationWindow(Screen):
                 state = "down"
             else:
                 state = "normal"
-            togglebutton_mute = ToggleButton( text="mute", state=state )
+            togglebutton_mute = ToggleButton( text=get_text("mute"), state=state )
             togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
             self.grid_tracks.add_widget( togglebutton_mute )
 
@@ -447,43 +553,59 @@ class FPSSoundLoopstationWindow(Screen):
     def open_popup_information(self, title, text_information):
         popup = PopupInformation(
             title=title, size_hint=(0.8, 0.8),
-            text_information=text_information,
-            text_ok="ok"
+            text_information=text_information, text_ok=get_text('ok')
         )
         popup.open()
 
     def on_about(self, button):
         self.open_popup_information(
-            title="about", text_information=(
-                f"[b]{NAME}[/b]: version {VERSION}\n\n"
-                f"- developer: [b]{DEVELOPER}[/b]\n"
-                f"- website: [b]{WEBSITE}[/b]"
+            title=get_text("about"), text_information=(
+                f"[b]{NAME}[/b]: {get_text('version')} {VERSION}\n\n"
+                f"- {get_text('developer')}: [b]{DEVELOPER}[/b]\n"
+                f"- {get_text('website')}: [b]{WEBSITE}[/b]"
             )
         )
 
     def on_help(self, button):
         self.open_popup_information(
-            title="help", text_information=HELP
+            title=get_text("help"), text_information=get_text('fps-sound-loopstation-help')
         )
 
     def on_numeric_metronome(self, widget, active):
-        self.numeric_metronome = active
+        self.config_controller.update_numerical_view( active )
         self.set_metronome_view()
 
     def on_settings(self, button):
         popup = PopupGridLayout(
-            title="settings",
-            cols=2, rows=1, row_default_height=self.height*0.1,
-            size_hint=(0.8, 0.8)
+            title=get_text("settings"),
+            cols=2, rows=2, row_default_height=self.height*0.1,
+            size_hint=(0.8, 0.8), text_ok=get_text('ok')
         )
-        popup.second_container.add_widget( Label( text="numerical view") )
-        checkbox_metronome_numeircal_view = CheckBox( active=self.numeric_metronome )
+        popup.second_container.add_widget( Label( text=get_text("numerical-view") ) )
+        checkbox_metronome_numeircal_view = CheckBox( active=self.config.numerical_view )
         checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
         popup.second_container.add_widget( checkbox_metronome_numeircal_view )
+
+        popup.second_container.add_widget( Label( text=get_text("theme") ) )
+        spinner = Spinner(
+            text=self.config.theme,
+            values=self.config_controller.get_theme_names(),
+        )
+        spinner.bind(text=lambda inst, val: self.on_theme_selected(val))
+        popup.second_container.add_widget( spinner )
+
         popup.open()
+
+    def on_theme_selected(self, name):
+        if self.config_controller.update_theme(name):
+            rgba = self.config_controller.get_rgba_theme( name )
+            self.set_colors(rgba)
 
 
     def build(self):
+        # Color
+        self.set_colors( self.config_controller.get_current_rgba_theme() )
+
         # Loop
         self.engine.start()
         self.icon = ICON
@@ -507,6 +629,9 @@ class FPSSoundLoopstationWindow(Screen):
             ),
             "menu": StickyImage(
                 image=menu_image, widget=self.button_menu
+            ),
+            "timer": StickyImage(
+                image=timer_image, widget=self.label_timer
             )
         }
         for sticky_image in self.sticky_images.values():
@@ -514,6 +639,9 @@ class FPSSoundLoopstationWindow(Screen):
             #sticky_image.widget.background_color = (0,0,0,0)
             #sticky_image.widget.background_color = (0, 0.5, 0.4, 1)
             #sticky_image.widget.background_color = (0,0.4,0.4,1)
+
+        # Text
+        self.refresh_text()
 
         # widgets
         self.set_metronome_view()
@@ -632,8 +760,8 @@ class FPSSoundLoopstationWindow(Screen):
 
     def turn_off_metronome_view(self):
         for i in range( 0, len(self.circles) ):
-            if self.circles[i].color.rgb != RGB_OFF_TEMPO:
-                self.circles[i].color.rgb = RGB_OFF_TEMPO
+            if self.circles[i].color.rgb != self.rgb_off_tempo:
+                self.circles[i].color.rgb = self.rgb_off_tempo
 
     def metronome_view(self, loopstation_signals, metronome_signals):
         '''
@@ -641,21 +769,21 @@ class FPSSoundLoopstationWindow(Screen):
         '''
         for i in range( 0, len(self.circles) ):
             if not metronome_signals['current_beat'] == i:
-                self.circles[i].color.rgb = RGB_OFF_TEMPO
+                self.circles[i].color.rgb = self.rgb_off_tempo
 
         if ( metronome_signals['current_beat'] in range(0, len(self.circles) ) ):
             # Solo beats existentes en circles.
             if loopstation_signals['emphasis_of_beat']['emphasis']:
-                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_FIRST_TEMPO
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = self.rgb_first_tempo
             elif loopstation_signals['emphasis_of_beat']['neutral']:
-                self.circles[ metronome_signals['current_beat'] ].color.rgb = RGB_ANOTHER_TEMPO
+                self.circles[ metronome_signals['current_beat'] ].color.rgb = self.rgb_another_tempo
 
     def metronome_numerical_view(self, loopstation_signals, metronome_signals):
         self.label_numeric_metronome.text = str( metronome_signals['current_beat']+1 )
         if loopstation_signals['emphasis_of_beat']['emphasis']:
-            self.label_numeric_metronome.color = RGB_FIRST_TEMPO
+            self.label_numeric_metronome.color = self.rgb_first_tempo
         elif loopstation_signals['emphasis_of_beat']['neutral']:
-            self.label_numeric_metronome.color = RGB_ANOTHER_TEMPO
+            self.label_numeric_metronome.color = self.rgb_another_tempo
 
 
     def timer_view(self, timer_current_fps):
@@ -699,7 +827,7 @@ class FPSSoundLoopstationWindow(Screen):
             update = self.update_track_options(dt)
         timer_in_fps = self.record_with_timer( timer_signals )
         if self.engine.state.value == "running":
-            if not self.numeric_metronome:
+            if not self.config.numerical_view:
                 self.metronome_view( loopstation_signals, metronome_signals )
             else:
                 self.metronome_numerical_view( loopstation_signals, metronome_signals )
