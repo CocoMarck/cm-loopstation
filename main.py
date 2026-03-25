@@ -124,6 +124,8 @@ class FPSSoundLoopstationApp(App):
 
     def on_stop(self):
         # A guardar al cerrar
+        print( metronome.beats_per_bar )
+        '''
         config_engine_controller.update_beats( metronome.beats_per_bar )
         config_engine_controller.update_bpm( metronome.bpm )
         config_engine_controller.update_play_beat( metronome.play_beat )
@@ -132,6 +134,7 @@ class FPSSoundLoopstationApp(App):
         config_engine_controller.update_record_bars( recorder_controller.record_bars )
 
         config_engine_controller.update_seconds( timer.seconds )
+        '''
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()

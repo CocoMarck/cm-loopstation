@@ -61,6 +61,7 @@ for src, dst in [
         print('Exists: %s', (dst,))
 with open(ANDROID_CONFIG_ENGINE_FILE) as f:
     lines = f.readlines()
+    print(x) for x in lines
 
 ANDROID_DATA_DIR.mkdir(parents=True, exist_ok=True)
 for src, dst in [
