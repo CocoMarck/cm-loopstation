@@ -1,5 +1,5 @@
 NAME = "FPSLoopstation"
-VERSION = "0.3.8-alpha"
+VERSION = "0.4.0-alpha"
 DEVELOPER = "Jean Abraham Chacón Candanosa"
 WEBSITE = "github.com/CocoMarck"
 HELP = (

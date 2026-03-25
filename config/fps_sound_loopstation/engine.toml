@@ -1,10 +1,10 @@
-beats = 3
+beats = 2
 beats_limit = 9
-bpm = 120
+bpm = 90
 bpm_limit = 200
 volume = 1.0
-play_beat = true
+play_beat = false
 fps = 20
 limit_record = true
-record_bars = 1
-seconds = 10
+record_bars = 2
+seconds = 0

@@ -1,5 +1,7 @@
 python3-kivy
 python3-pyaudio
-pathlib
 python3-playsound3
-python3-tomli-w
+pathlib
+tomli-w
+pycountry
+pysqlite3

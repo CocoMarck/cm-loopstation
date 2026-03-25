@@ -533,6 +533,7 @@ class FPSSoundLoopstationWindow(Screen):
                 checkbox.active = track['focus']
                 checkbox.bind( active=partial(self.on_track_focus, track_id) )
                 self.grid_tracks.add_widget(checkbox)
+        self.set_colors( self.config_controller.get_current_rgba_theme() )
 
 
 
