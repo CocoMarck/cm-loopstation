@@ -5,7 +5,8 @@ from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 from core.fps_sound_loopstation_engine import FPSSoundLoopstationEngine
 
-from config.paths import SAMPLE_FILES, ICON
+# Rutas
+from config.paths import SAMPLE_FILES, TEMP_DIR, ICON, CONFIG_ENGINE_FILE, CONFIG_GUI_FILE, THEMES_FILE
 
 # Window
 from views.fps_sound_loopstation_window import FPSSoundLoopstationWindow
@@ -15,11 +16,27 @@ import pathlib
 from android.storage import app_storage_path
 ANDROID_MUSIC_PATH = pathlib.Path(app_storage_path())
 
+# Config
+from controllers.fps_sound_loopstation.config_gui_controller import ConfigGUIController
+from controllers.fps_sound_loopstation.config_engine_controller import ConfigEngineController
+from entities.fps_sound_loopstation.config_engine import ConfigEngine
+from entities.fps_sound_loopstation.config_gui import ConfigGUI
+config_engine = ConfigEngine()
+config_engine_controller = ConfigEngineController(
+    config_engine, CONFIG_ENGINE_FILE
+)
+config_gui = ConfigGUI()
+config_gui_controller = ConfigGUIController(
+    config_gui, CONFIG_GUI_FILE, THEMES_FILE
+)
+
+
 
 # Constantes necesarias
-VOLUME = float(1)
-FPS_ENGINE = float(20)
+VOLUME = config_engine.volume
+FPS_ENGINE = config_engine.fps
 FPS_GUI = float(60)
+
 
 ## Colores
 RGB_OFF_TEMPO = [1,1,1]
@@ -28,8 +45,9 @@ RGB_ANOTHER_TEMPO = [1,0,0]
 
 # FPSLoopstation Engine
 loopstation = FPSSoundLoopstation(
-    fps=FPS_ENGINE, volume=VOLUME, play_beat=True, beat_play_mode='emphasis_on_first',
-    beats_per_bar=3, beats_limit_per_bar=9, bpm_limit=200
+    fps=FPS_ENGINE, volume=config_engine.volume, play_beat=config_engine.play_beat, beat_play_mode='emphasis_on_first',
+    beats_per_bar=config_engine.beats, beats_limit_per_bar=config_engine.beats_limit,
+    bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 metronome = loopstation.fps_metronome
 microphone_recorder = AndroidMicrophoneRecorder()
@@ -37,9 +55,9 @@ recorder_controller = FPSSoundLoopstationRecorderController(
     fps_sound_loopstation=loopstation, recorder=microphone_recorder,
     recorder_path=ANDROID_MUSIC_PATH, fileformat="wav"
 )
-recorder_controller.limit_record = True
-recorder_controller.record_bars = 1
-timer = FPSTimer( fps=FPS_ENGINE, seconds=10, activate=False )
+recorder_controller.limit_record = config_engine.limit_record
+recorder_controller.record_bars = config_engine.record_bars
+timer = FPSTimer( fps=FPS_ENGINE, seconds=config_engine.seconds, activate=False )
 engine = FPSSoundLoopstationEngine(
     sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
 )
@@ -56,6 +74,13 @@ from android import api_version
 from kivy.metrics import dp
 from kivy.app import App
 from kivy.clock import Clock
+
+# Color
+from utils.colors import (
+    get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
+    is_the_rgba_color_bright
+)
+
 
 '''
 Constructor de aplicación
@@ -80,7 +105,8 @@ class FPSSoundLoopstationApp(App):
             horizontal_padding_offsets=[0,0.05, 0.08,0]
 
         window = FPSSoundLoopstationWindow(
-            engine, vertical_padding_offsets, horizontal_padding_offsets
+            engine, vertical_padding_offsets, horizontal_padding_offsets,
+            config_controller=config_gui_controller
         )
         window.build()
 
@@ -98,3 +124,13 @@ class FPSSoundLoopstationApp(App):
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
+
+# A guardar al cerrar
+config_engine_controller.update_beats( metronome.beats_per_bar )
+config_engine_controller.update_bpm( metronome.bpm )
+config_engine_controller.update_play_beat( metronome.play_beat )
+
+config_engine_controller.update_limit_record( recorder_controller.limit_record )
+config_engine_controller.update_record_bars( recorder_controller.record_bars )
+
+config_engine_controller.update_seconds( timer.seconds )
