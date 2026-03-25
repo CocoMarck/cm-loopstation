@@ -126,10 +126,12 @@ class FPSSoundLoopstationApp(App):
         config_engine_controller.update_record_bars( recorder_controller.record_bars )
 
         config_engine_controller.update_seconds( timer.seconds )
-        return self.window.on_pause()
+        #return self.window.on_pause()
+        return True
 
     def on_resume(self):
-        return self.window.on_resume()
+        #return #self.window.on_resume()
+        return True
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
