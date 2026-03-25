@@ -102,10 +102,11 @@ class AndroidMicrophoneRecorder:
             self._audio_record.release()
             self._audio_record = None
 
-            if data_size > 0:
-                self._write_wav_header(f, data_size)
-            else:
-                Logger.warning("No se grabó audio, archivo vacío.")
+            self._write_wav_header(f, data_size)
+            #if data_size > 0:
+            #    self._write_wav_header(f, data_size)
+            #else:
+            #    Logger.warning("No se grabó audio, archivo vacío.")
 
         Logger.info(f"WAV guardado: {self.output_filename}")
 
