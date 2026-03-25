@@ -29,7 +29,7 @@ from config.langtags.paths import SCHEMAS_LANGTAGS_FILES, DATA_DIR, LANGTAGS_FIL
 from config.paths import ANDROID_DATA_DIR
 
 # Creación de db si no exite.
-db = StandardDatabase( directory=DATA_DIR, name=LANGTAGS_FILENAME )
+db = StandardDatabase( directory=ANDROID_DATA_DIR, name=LANGTAGS_FILENAME )
 if not db.exists():
     print('Creando base de datos y aplicando schemas...')
     db.execute( 'PRAGMA foreign_keys = ON;', commit=True )
