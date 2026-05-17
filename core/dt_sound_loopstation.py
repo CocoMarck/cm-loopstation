@@ -205,7 +205,7 @@ class DTSoundLoopstation():
                     self.sound_manager.play_sound( track['sound'] )
 
                 real_count_dt = track['count_dt']
-                stopping = real_count_dt >= track['length']
+                stopping = real_count_dt >= track['length']-dt
                 if stopping:
                     self.sound_manager.stop_sound( track['sound'] )
 

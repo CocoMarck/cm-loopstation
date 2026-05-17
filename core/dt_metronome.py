@@ -1,7 +1,9 @@
+from controllers.logging_controller import LoggingController
 
 class DTMetronome():
     def __init__(
-        self, bpm=120, beats_per_bar=4, bpm_limit=200, beats_limit_per_bar=16
+        self, bpm=120, beats_per_bar=4, bpm_limit=200, beats_limit_per_bar=16,
+        save_log=False, log_level="debug", verbose=True
     ):
         # Valores default
         self._INITIAL_BPM = bpm
@@ -21,6 +23,12 @@ class DTMetronome():
 
         # Configurar
         self.set_settings(self._INITIAL_BPM, self._INITIAL_BEATS_PER_BAR)
+
+        # Debug
+        self.logging = LoggingController(
+            name="DTMetronome", filename="dt_metronome", verbose=verbose,
+            log_level=log_level, save_log=save_log, only_the_value=True,
+        )
 
     def get_bpm(self):
         return self._bpm
@@ -122,7 +130,7 @@ class DTMetronome():
         # Paso antes de la barra
         step_before_the_bar = (
             (self._current_beat == self._beats_per_bar) and
-            (real_count_dt_of_beat >= self.get_beat_interval())
+            (real_count_dt_of_beat >= self.get_beat_interval()-dt)
         )
 
         # Sumar dt
@@ -140,12 +148,33 @@ class DTMetronome():
             "count_dt": real_count_dt_of_beat
         }
 
+    def debug_current_beat(self, signals:dict):
+        text_current_beat = None
+        if signals['is_first_beat']:
+            text_current_beat = f"first-beat     {signals['current_beat']}/{self._beats_per_bar}"
+        elif signals['is_last_beat']:
+            text_current_beat = f"last-beat      {signals['current_beat']}/{self._beats_per_bar}"
+        elif signals['is_another_beat']:
+            text_current_beat = f"another-beat   {signals['current_beat']}/{self._beats_per_bar}"
+
+        if signals['reset_bar']:
+            self.logging.log(
+                message=f"reset-bar | seconds {self.get_beats_per_bar_interval()}", log_type="debug"
+            )
+        if signals['step_before_the_bar']:
+            self.logging.log(
+                message=f"step before the bar | count dt {signals['count_dt']}", log_type="debug"
+            )
+        if text_current_beat != None:
+            self.logging.log( message=text_current_beat, log_type="info" )
+
 
     def update(self, dt):
         '''
         Chamba principal
         '''
         signals = self.determine_current_beat(dt)
+        self.debug_current_beat(signals)
 
         return signals
 

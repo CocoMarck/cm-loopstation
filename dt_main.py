@@ -33,7 +33,7 @@ print(
 
 
 # Constantes necesarias
-VOLUME = config_engine.volume
+VOLUME = 0.1#config_engine.volume
 FPS_ENGINE = config_engine.fps
 FPS_GUI = float(60)
 
@@ -50,7 +50,7 @@ metronome = DTMetronome(
     bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 loopstation = DTSoundLoopstation(
-    dt_metronome=metronome, sound_manager=sound_manager, volume=config_engine.volume
+    dt_metronome=metronome, sound_manager=sound_manager, volume=VOLUME
 
 )
 microphone_recorder = MicrophoneRecorder()
@@ -94,6 +94,7 @@ Constructor de aplicación
 #Window.resizable = True
 loopstation.save_track(path=SAMPLE_FILES[0], loop=True, sample=True)
 loopstation.save_track(path=SAMPLE_FILES[3], loop=True, sample=True)
+#recorder_controller.record = True
 class FPSSoundLoopstationApp(App):
     def build(self):
         #x_color = random_rgba()
@@ -126,13 +127,3 @@ class FPSSoundLoopstationApp(App):
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
-
-# A guardar al cerrar
-config_engine_controller.update_beats( metronome.beats_per_bar )
-config_engine_controller.update_bpm( metronome.bpm )
-config_engine_controller.update_play_beat( metronome.play_beat )
-
-config_engine_controller.update_limit_record( recorder_controller.limit_record )
-config_engine_controller.update_record_bars( recorder_controller.record_bars )
-
-config_engine_controller.update_seconds( timer.seconds )

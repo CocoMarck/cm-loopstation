@@ -86,7 +86,7 @@ class DTSoundLoopstationRecorderController():
             # Esta grabando
             if limit_record:
                 # Determinar limite, y si llego o paso el limite, parar grabación
-                if count_dt >= self.dt_metronome.get_beats_per_bar_interval(self.record_bars):
+                if count_dt >= self.dt_metronome.get_seconds_to_bars(self.record_bars):
                     self.record = False
                     metronome_signals['step_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
 

@@ -687,4 +687,3 @@ class DTSoundLoopstationWindow(Screen):
         '''
         # Señales
         signals = self.engine.update( dt )
-        print( self.metronome.get_current_beat() )
