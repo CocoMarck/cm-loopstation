@@ -1,0 +1,188 @@
+#:import Window kivy.core.window.Window
+
+<Label, TextInput, ToggleButton, height>:
+    font_size: ( min(Window.width, Window.height)*0.035 )
+
+#<TextInput>:
+#    background_color: (0, 0.3, 0.5, 0.5)
+#    foreground_color: (1, 1, 1, 1)
+
+
+<DTSoundLoopstationWindow>:
+    record_button: _record_button
+    label_timer: _label_timer
+    label_tracks: _label_tracks
+    label_tracks_number: _label_tracks_number
+    label_record_bars: _label_record_bars
+    label_center: _label_center
+    label_beats: _label_beats
+    label_bpm: _label_bpm
+
+    grid_tracks: _grid_tracks
+
+    button_play: _button_play
+    button_stop: _button_stop
+    button_restart: _button_restart
+    button_menu: _button_menu
+
+    togglebutton_limit_record: _togglebutton_limit_record
+    togglebutton_play_beat: _togglebutton_play_beat
+
+    textinput_record_bars: _textinput_record_bars
+    textinput_timer: _textinput_timer
+
+    slider_beats: _slider_beats
+    slider_bpm: _slider_bpm
+
+    metronome_container: _metronome_container
+
+    main_layout: _main_layout
+
+    scroll_widget: _scroll_widget
+
+    BoxLayout:
+        id:_main_layout
+
+        # Base
+        size_hint: (1, 1)
+        pos_hint: {"x":0,"y":0}
+
+        orientation: "vertical"
+
+        BoxLayout:
+            size_hint: (0.33, 0.055)
+            pos_hint: {"x":0.67, "y":0}
+            Button:
+                id: _button_menu
+                text: "menu"
+
+        BoxLayout:
+            # Circulos del Metronomo
+            size_hint_y: 0.125
+            id: _metronome_container
+            orientation: "horizontal"
+
+        BoxLayout:
+            # Sección | Control de Grabación y metronomo
+            size_hint_y: 0.08
+
+            ## Beats
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_beats
+                    text: "beats"
+                Slider:
+                    id: _slider_beats
+
+            ## BPM
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_bpm
+                    text: "bpm"
+                Slider:
+                    id: _slider_bpm
+
+        BoxLayout:
+            # Sección | Información de aplicación
+            orientation: "horizontal"
+            size_hint_y: 0.08
+
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_timer
+                    text: "timer"
+                TextInput:
+                    id: _textinput_timer
+
+            ## tracks
+            BoxLayout:
+                orientation: "horizontal"
+                Label:
+                    id: _label_tracks
+                    text: "tracks"
+                Label:
+                    id: _label_tracks_number
+                    text: "0"
+
+            BoxLayout:
+                orientation: "horizontal"
+
+                Label:
+                    id: _label_record_bars
+                    text: "bars"
+                TextInput:
+                    id: _textinput_record_bars
+
+        BoxLayout:
+            # Sección | Funciónes principales
+            orientation: "horizontal"
+            size_hint_y: 0.08
+
+            ToggleButton:
+                id: _togglebutton_play_beat
+                text: "play beat"
+                state: "down"
+
+            ## Grabar
+            ToggleButton:
+                id: _record_button
+                text: "record"
+
+            ## Opcion Parar grabación por numero de compass
+            ToggleButton:
+                id: _togglebutton_limit_record
+                text: "limit bars"
+
+        BoxLayout:
+            # Sección | Control global de pistas
+            size_hint_y: 0.08
+            orientation: "horizontal"
+
+            Button:
+                id: _button_play
+                text: 'play'
+
+            Button:
+                id: _button_stop
+                text: 'stop'
+
+            Button:
+                id: _button_restart
+                text: 'restart'
+
+        ScrollView:
+            # Scroll | Contenedor de Pistas
+            id: _scroll_widget
+
+            ## Color de fondo
+            canvas.before:
+                Color:
+                    rgba: (0.1,0.1,0.1,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            # Escalado
+            size_hint_y: 0.5
+
+            do_scroll_x: True
+            do_scroll_y: True
+
+            # CheckBox Tracks
+            GridLayout:
+                id: _grid_tracks
+                cols: 6
+
+                row_default_height: Window.height * 0.075
+                row_force_default: True
+
+    # Timer
+    FloatLayout:
+        Label:
+            id: _label_center
+            pos_hint: {"center_x":0.5,"center_y":0.8}
+            opacity: 1
+            color: "yellow"
