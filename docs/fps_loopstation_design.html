@@ -1,0 +1,608 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600&display=swap');
+
+  :root {
+    --bg0: #111214;
+    --bg1: #1a1c20;
+    --bg2: #22252b;
+    --bg3: #2c3038;
+    --accent: #00c2ff;
+    --accent2: #ff5e57;
+    --accent3: #2dff7a;
+    --text1: #e8eaf0;
+    --text2: #8a8f9e;
+    --text3: #555a66;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(0,194,255,0.25);
+    --font-main: 'Barlow', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+    --r: 6px;
+    --r2: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .ls-root {
+    background: var(--bg0);
+    font-family: var(--font-main);
+    color: var(--text1);
+    padding: 12px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .ls-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+  }
+  .ls-title {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .ls-indicators {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .ls-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--text3);
+  }
+  .ls-dot.active { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+  .ls-dot.rec { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+
+  .ls-transport {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .ls-param {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 120px;
+  }
+  .ls-param-label {
+    font-size: 10px;
+    color: var(--text2);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+  .ls-param-val {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--accent);
+  }
+  .ls-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  .ls-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    cursor: pointer;
+  }
+  .ls-slider.bpm::-webkit-slider-thumb { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); }
+
+  .ls-divider { width: 1px; height: 56px; background: var(--border); }
+
+  .ls-beat-grid {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 10px 12px;
+  }
+  .ls-beat-label {
+    font-size: 10px; color: var(--text2); letter-spacing: 1.5px;
+    text-transform: uppercase; font-family: var(--font-mono);
+    margin-bottom: 8px;
+  }
+  .ls-beats {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .ls-beat {
+    width: 26px; height: 26px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    cursor: pointer;
+    transition: background 0.1s, border-color 0.1s;
+    position: relative;
+  }
+  .ls-beat.on { background: var(--accent); border-color: var(--accent); }
+  .ls-beat.current {
+    border-color: var(--accent3);
+    box-shadow: 0 0 6px var(--accent3);
+  }
+  .ls-beat.on.current { background: var(--accent3); border-color: var(--accent3); }
+
+  .ls-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ls-track {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ls-track.armed { border-color: var(--accent2); }
+  .ls-track.playing { border-color: var(--accent); }
+
+  .ls-track-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ls-track-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text3);
+    min-width: 20px;
+  }
+  .ls-track-name {
+    font-size: 12px;
+    font-weight: 500;
+    flex: 1;
+    color: var(--text1);
+  }
+
+  .ls-waveform {
+    height: 28px;
+    background: var(--bg2);
+    border-radius: 4px;
+    overflow: hidden;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    gap: 1px;
+  }
+  .ls-bar {
+    flex: 1;
+    background: var(--bg3);
+    border-radius: 1px;
+    min-width: 2px;
+    transition: background 0.15s;
+  }
+  .ls-bar.lit { background: var(--accent); opacity: 0.6; }
+  .ls-bar.peak { background: var(--accent); opacity: 1; }
+
+  .ls-track-btns {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .ls-btn {
+    padding: 5px 10px;
+    border-radius: var(--r);
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-transform: uppercase;
+    min-height: 30px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .ls-btn:hover { background: rgba(0,194,255,0.1); }
+  .ls-btn.active { background: var(--accent); color: #000; font-weight: 600; }
+  .ls-btn.rec-btn { border-color: rgba(255,94,87,0.4); color: var(--accent2); }
+  .ls-btn.rec-btn:hover { background: rgba(255,94,87,0.1); }
+  .ls-btn.rec-btn.active { background: var(--accent2); color: #fff; }
+  .ls-btn.stop-btn { border-color: var(--border); color: var(--text2); }
+  .ls-btn.stop-btn:hover { background: var(--bg3); color: var(--text1); }
+  .ls-btn.mute-btn { border-color: var(--border); color: var(--text2); }
+  .ls-btn.mute-btn.active { background: var(--text3); color: var(--text1); border-color: var(--text2); }
+
+  .ls-vol-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ls-vol-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text3);
+    min-width: 24px;
+  }
+  .ls-vol-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 2px;
+    background: var(--bg3);
+    border-radius: 1px;
+    outline: none;
+    cursor: pointer;
+  }
+  .ls-vol-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--text2);
+    cursor: pointer;
+  }
+
+  .ls-bottom {
+    background: var(--bg1);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ls-global-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ls-big-btn {
+    padding: 8px 20px;
+    border-radius: var(--r);
+    border: none;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    min-height: 40px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .ls-big-btn:active { transform: scale(0.97); }
+  .ls-play-btn { background: var(--accent3); color: #0a1a0e; }
+  .ls-stop-btn { background: var(--bg3); color: var(--text1); }
+  .ls-clear-btn { background: transparent; color: var(--accent2); border: 1px solid rgba(255,94,87,0.35); }
+
+  .ls-bars-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ls-bars-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .ls-bars-val {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--text1);
+    min-width: 28px;
+    text-align: center;
+  }
+  .ls-stepper { display: flex; flex-direction: column; gap: 2px; }
+  .ls-step-btn {
+    width: 22px; height: 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text2);
+    font-size: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.1s;
+  }
+  .ls-step-btn:hover { background: var(--bg3); color: var(--text1); }
+
+  .ls-counter {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text3);
+    letter-spacing: 1px;
+    margin-left: auto;
+  }
+  .ls-counter span { color: var(--accent); }
+
+  @media (min-width: 600px) {
+    .ls-tracks { flex-direction: row; flex-wrap: wrap; }
+    .ls-track { flex: 1 1 45%; min-width: 220px; }
+    .ls-beat { width: 30px; height: 30px; }
+  }
+</style>
+
+<div class="ls-root">
+  <h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden">FPS Sound Loopstation — Interfaz de grabación y reproducción de bucles de audio</h2>
+
+  <div class="ls-header">
+    <span class="ls-title">FPS Loopstation</span>
+    <div class="ls-indicators">
+      <div class="ls-dot active" id="dot-play" title="Reproduciendo"></div>
+      <div class="ls-dot rec" id="dot-rec" style="background:var(--text3);box-shadow:none" title="Grabando"></div>
+      <div class="ls-dot" title="Sync"></div>
+    </div>
+  </div>
+
+  <div class="ls-transport">
+    <div class="ls-param">
+      <span class="ls-param-label">Pulsos</span>
+      <span class="ls-param-val" id="pulse-val">4</span>
+      <input type="range" class="ls-slider" min="1" max="8" value="4" step="1" id="pulse-slider"
+        oninput="document.getElementById('pulse-val').textContent=this.value; rebuildBeats(parseInt(this.value))">
+    </div>
+    <div class="ls-divider"></div>
+    <div class="ls-param">
+      <span class="ls-param-label">BPM</span>
+      <span class="ls-param-val" id="bpm-val">120</span>
+      <input type="range" class="ls-slider bpm" min="40" max="240" value="120" step="1" id="bpm-slider"
+        oninput="document.getElementById('bpm-val').textContent=this.value; updateBpm(parseInt(this.value))">
+    </div>
+    <div class="ls-divider"></div>
+    <div class="ls-param">
+      <span class="ls-param-label">Barras</span>
+      <div class="ls-bars-row" style="margin-top:2px">
+        <div class="ls-stepper">
+          <button class="ls-step-btn" onclick="changeBars(1)">▲</button>
+          <button class="ls-step-btn" onclick="changeBars(-1)">▼</button>
+        </div>
+        <span class="ls-bars-val" id="bars-val">4</span>
+      </div>
+    </div>
+    <div class="ls-divider"></div>
+    <div class="ls-counter">Beat <span id="beat-counter">1</span></div>
+  </div>
+
+  <div class="ls-beat-grid">
+    <div class="ls-beat-label">Secuenciador de pulsos</div>
+    <div class="ls-beats" id="beat-grid"></div>
+  </div>
+
+  <div class="ls-tracks" id="tracks-container"></div>
+
+  <div class="ls-bottom">
+    <div class="ls-global-btns">
+      <button class="ls-big-btn ls-play-btn" id="master-play" onclick="toggleMaster()">▶ Play</button>
+      <button class="ls-big-btn ls-stop-btn" onclick="stopAll()">■ Stop</button>
+      <button class="ls-big-btn ls-clear-btn" onclick="clearAll()">✕ Limpiar</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:1px">Pistas</span>
+      <button class="ls-btn" onclick="addTrack()" style="font-size:16px;padding:4px 10px">+</button>
+      <button class="ls-btn stop-btn" onclick="removeTrack()" style="font-size:16px;padding:4px 10px">−</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let bpm = 120, bars = 4, pulses = 4;
+let isPlaying = false, isRecording = false;
+let currentBeat = 0;
+let beatInterval = null;
+let trackCount = 0;
+let beatPattern = [];
+
+function msPerBeat() { return (60000 / bpm) / 1; }
+
+function rebuildBeats(p) {
+  pulses = p;
+  beatPattern = beatPattern.slice(0, p);
+  while (beatPattern.length < p) beatPattern.push(false);
+  renderBeats();
+}
+
+function renderBeats() {
+  const g = document.getElementById('beat-grid');
+  g.innerHTML = '';
+  for (let i = 0; i < pulses; i++) {
+    const b = document.createElement('div');
+    b.className = 'ls-beat' + (beatPattern[i] ? ' on' : '') + (currentBeat % pulses === i && isPlaying ? ' current' : '');
+    b.dataset.i = i;
+    b.onclick = () => { beatPattern[i] = !beatPattern[i]; renderBeats(); };
+    g.appendChild(b);
+  }
+}
+
+function updateBpm(v) {
+  bpm = v;
+  if (isPlaying) { clearInterval(beatInterval); startBeatClock(); }
+}
+
+function changeBars(d) {
+  bars = Math.max(1, Math.min(16, bars + d));
+  document.getElementById('bars-val').textContent = bars;
+}
+
+function startBeatClock() {
+  beatInterval = setInterval(() => {
+    currentBeat++;
+    document.getElementById('beat-counter').textContent = (currentBeat % pulses) + 1;
+    renderBeats();
+    animateTracks();
+  }, msPerBeat());
+}
+
+function toggleMaster() {
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('master-play');
+  const dot = document.getElementById('dot-play');
+  if (isPlaying) {
+    btn.textContent = '⏸ Pause';
+    dot.style.background = 'var(--accent3)';
+    dot.style.boxShadow = '0 0 6px var(--accent3)';
+    startBeatClock();
+  } else {
+    btn.textContent = '▶ Play';
+    dot.style.background = 'var(--text3)';
+    dot.style.boxShadow = 'none';
+    clearInterval(beatInterval);
+  }
+}
+
+function stopAll() {
+  isPlaying = false;
+  clearInterval(beatInterval);
+  currentBeat = 0;
+  document.getElementById('master-play').textContent = '▶ Play';
+  document.getElementById('dot-play').style.background = 'var(--text3)';
+  document.getElementById('dot-play').style.boxShadow = 'none';
+  document.getElementById('dot-rec').style.background = 'var(--text3)';
+  document.getElementById('dot-rec').style.boxShadow = 'none';
+  document.getElementById('beat-counter').textContent = '1';
+  document.querySelectorAll('.ls-track').forEach(t => {
+    t.classList.remove('playing', 'armed');
+    t.querySelector('.ls-btn.active')?.classList.remove('active');
+  });
+  renderBeats();
+}
+
+function clearAll() {
+  stopAll();
+  beatPattern = new Array(pulses).fill(false);
+  renderBeats();
+}
+
+function animateTracks() {
+  document.querySelectorAll('.ls-waveform').forEach(wf => {
+    const bars = wf.querySelectorAll('.ls-bar');
+    bars.forEach(b => {
+      b.classList.remove('lit', 'peak');
+      const r = Math.random();
+      if (r > 0.65) b.classList.add(r > 0.88 ? 'peak' : 'lit');
+    });
+  });
+}
+
+function makeWaveform() {
+  const wf = document.createElement('div');
+  wf.className = 'ls-waveform';
+  for (let i = 0; i < 32; i++) {
+    const b = document.createElement('div');
+    b.className = 'ls-bar';
+    const h = 20 + Math.round(Math.sin(i * 0.6) * 10 + Math.random() * 20);
+    b.style.height = h + '%';
+    wf.appendChild(b);
+  }
+  return wf;
+}
+
+function addTrack() {
+  trackCount++;
+  const id = trackCount;
+  const names = ['Voz', 'Guitarra', 'Bajo', 'Teclado', 'Percusión', 'Pad', 'FX'];
+  const name = names[(id - 1) % names.length] + ' ' + id;
+
+  const t = document.createElement('div');
+  t.className = 'ls-track';
+  t.id = 'track-' + id;
+
+  const top = document.createElement('div');
+  top.className = 'ls-track-top';
+  top.innerHTML = '<span class="ls-track-num">' + String(id).padStart(2,'0') + '</span>';
+
+  const nm = document.createElement('span');
+  nm.className = 'ls-track-name';
+  nm.textContent = name;
+  nm.contentEditable = true;
+  nm.style.outline = 'none';
+  top.appendChild(nm);
+
+  const wf = makeWaveform();
+  top.appendChild(wf);
+  t.appendChild(top);
+
+  const btns = document.createElement('div');
+  btns.className = 'ls-track-btns';
+  btns.innerHTML = `
+    <button class="ls-btn rec-btn" onclick="toggleArm(${id})"><i class="ti ti-microphone" aria-hidden="true"></i> Rec</button>
+    <button class="ls-btn" onclick="togglePlay(${id})"><i class="ti ti-player-play" aria-hidden="true"></i> Play</button>
+    <button class="ls-btn mute-btn" onclick="toggleMute(${id})"><i class="ti ti-volume-off" aria-hidden="true"></i> Mute</button>
+    <button class="ls-btn" onclick="toggleLoop(${id})"><i class="ti ti-repeat" aria-hidden="true"></i> Loop</button>
+  `;
+  t.appendChild(btns);
+
+  const vol = document.createElement('div');
+  vol.className = 'ls-vol-row';
+  vol.innerHTML = '<span class="ls-vol-label">VOL</span><input type="range" class="ls-vol-slider" min="0" max="100" value="80" step="1">';
+  t.appendChild(vol);
+
+  document.getElementById('tracks-container').appendChild(t);
+}
+
+function removeTrack() {
+  if (trackCount < 1) return;
+  const t = document.getElementById('track-' + trackCount);
+  if (t) t.remove();
+  trackCount--;
+}
+
+function toggleArm(id) {
+  const t = document.getElementById('track-' + id);
+  t.classList.toggle('armed');
+  const btn = t.querySelector('.ls-btn.rec-btn');
+  btn.classList.toggle('active');
+  const dot = document.getElementById('dot-rec');
+  const anyArmed = document.querySelector('.ls-track.armed');
+  if (anyArmed) { dot.style.background='var(--accent2)'; dot.style.boxShadow='0 0 6px var(--accent2)'; }
+  else { dot.style.background='var(--text3)'; dot.style.boxShadow='none'; }
+}
+
+function togglePlay(id) {
+  const t = document.getElementById('track-' + id);
+  t.classList.toggle('playing');
+  const btn = t.querySelectorAll('.ls-btn')[1];
+  btn.classList.toggle('active');
+}
+
+function toggleMute(id) {
+  const t = document.getElementById('track-' + id);
+  const btn = t.querySelector('.ls-btn.mute-btn');
+  btn.classList.toggle('active');
+}
+
+function toggleLoop(id) {
+  const t = document.getElementById('track-' + id);
+  const btn = t.querySelectorAll('.ls-btn')[3];
+  btn.classList.toggle('active');
+}
+
+rebuildBeats(4);
+addTrack(); addTrack(); addTrack();
+</script>
