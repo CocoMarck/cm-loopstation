@@ -19,8 +19,6 @@
     slider_bars_to_record: _slider_bars_to_record
     label_bars_to_record_value: _label_bars_to_record_value
 
-    togglebutton_limit_record: _togglebutton_limit_record
-
     grid_track_options: _grid_track_options
 
     togglebutton_record: _togglebutton_record
@@ -28,6 +26,11 @@
     button_play_all_tracks: _button_play_all_tracks
     button_stop_all_tracks: _button_stop_all_tracks
     button_restart_all_tracks: _button_restart_all_tracks
+
+    togglebutton_play_metronome_beat: _togglebutton_play_metronome_beat
+    togglebutton_record_limit: _togglebutton_record_limit
+
+    button_configuration: _button_configuration
 
     BoxLayout:
         orientation: "vertical"
@@ -49,6 +52,7 @@
             Button:
                 halign: "right"
                 size_hint: (0.33, 1)
+                id: _button_configuration
 
                 text: "Configuration"
 
@@ -139,6 +143,7 @@
 
                 #
                 ToggleButton:
+                    id: _togglebutton_play_metronome_beat
 
                     text: "Play beat"
 
@@ -148,7 +153,7 @@
                     text: "Record"
 
                 ToggleButton:
-                    id: _togglebutton_limit_record
+                    id: _togglebutton_record_limit
 
                     text: "Limit record"
 

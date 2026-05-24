@@ -7,6 +7,9 @@ from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
 from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
 from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 
+# Metronome
+from controllers.beat_controller import BeatController
+
 # PyKivy
 from kivy.uix.widget import Widget
 from kivy.uix.button import Button
@@ -74,7 +77,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
     El tempo de preferencia que sea un entero.
     '''
     def __init__(
-        self, engine: DTSoundLoopstationEngine, config_controller=None, *args, **kwargs
+        self, engine: DTSoundLoopstationEngine=None, config_controller=None, beat_controller: BeatController=None, play_metronome_beat=True, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
@@ -106,6 +109,28 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
 
         # Bind. Padding
         self.bind(size=self._on_size)
+
+        # Play beat
+        self.play_metronome_beat = play_metronome_beat
+
+        # Widget dropdown
+        self.dropdown = DropDown()
+        self.menu_buttons = {
+            "start": None,
+            "stop": None,
+            "settings": None,
+            "help": None,
+            "about": None
+        }
+        for key in self.menu_buttons.keys():
+            button = Button( text=get_text(key), size_hint_y=None )
+            self.menu_buttons[key] = button
+            self.dropdown.add_widget( button )
+        self.button_configuration.bind( on_press=self.on_configuration )
+        self.button_configuration.bind( on_release=self.dropdown.open )
+
+        # Beat controller
+        self.beat_controller = beat_controller
 
     # Build
     def build_metronome_circles(self):
@@ -194,7 +219,8 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
 
     # Bind
     def _on_size(self, *args):
-        return self.change_padding_using_resolution(self.main_vbox_layout)
+        self.change_padding_using_resolution(self.main_vbox_layout)
+        self.update_size_of_configuration_buttons()
 
     ## On widgets
     def on_play_loop_of_all_tracks(self, widget, state):
@@ -227,6 +253,12 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         track = self.loopstation.get_track(track_id)
         track['focus'] = active
 
+    def on_play_metronome_beat(self, widget):
+        self.play_metronome_beat = widget.state == "down"
+
+    def on_configuration(self, state):
+        self.update_size_of_configuration_buttons()
+
     # Init widgets
     def init_slider_bpm(self):
         self.slider_bpm.min = 30
@@ -242,6 +274,32 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_bars_to_record.min = 0
         self.slider_bars_to_record.max = 30
         self.slider_bars_to_record.step = 1
+
+
+    def init_widget_images(self):
+        # Images
+        self.sticky_images = {
+            "record": StickyImage(
+                image=record_image, widget=self.togglebutton_record
+            ),
+            "play": StickyImage(
+                image=play_image, widget=self.button_play_all_tracks
+            ),
+            "stop": StickyImage(
+                image=stop_image, widget=self.button_stop_all_tracks
+            ),
+            "restart": StickyImage(
+                image=restart_image, widget=self.button_restart_all_tracks
+            ),
+            "about": StickyImage(
+                image=about_image, widget=self.menu_buttons["about"]
+            ),
+            "configuration": StickyImage(
+                image=menu_image, widget=self.button_configuration
+            )
+        }
+        for sticky_image in self.sticky_images.values():
+            sticky_image.widget.text = ""
 
     # Widgets update
     # Establecer valores de opciones
@@ -318,7 +376,25 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
     def update_text(self):
         self.label_beats.text = get_text("beats")
         self.label_bars_to_record.text = get_text("bars")
-        self.togglebutton_limit_record.text = get_text("limit-record")
+        self.togglebutton_record_limit.text = get_text("limit-record")
+        self.togglebutton_play_metronome_beat.text = get_text("play-beat")
+
+    def update_play_metronome_beat(self):
+        if self.play_metronome_beat:
+            self.togglebutton_play_metronome_beat.state = "down"
+        else:
+            self.togglebutton_play_metronome_beat.state = "normal"
+
+    def update_record_limit(self):
+        if self.recorder_controller.record_limit:
+            self.button_record_limit.state = "down"
+        else:
+            self.button_record_limit.state = "normal"
+
+    def update_size_of_configuration_buttons(self):
+        for button in self.menu_buttons.values():
+            button.height = self.height*0.05
+
 
     # Builders
     def build(self):
@@ -331,18 +407,22 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.init_slider_bpm()
         self.init_slider_beats_per_bar()
         self.init_slider_bars_to_record()
-
-        self.button_play_all_tracks.bind( state=self.on_play_loop_of_all_tracks )
-        self.button_stop_all_tracks.bind( state=self.on_break_loop_of_all_tracks )
-        self.button_restart_all_tracks.bind( state=self.on_reset_loop_of_all_tracks )
+        self.init_widget_images()
 
         # Update widgets
         self.update_bpm_widgets()
         self.update_beats_per_bar_widgets()
         self.update_bars_to_record_widgets()
         self.update_track_options_widgets()
+        self.update_play_metronome_beat()
 
         self.update_text()
+
+        # Bind
+        self.togglebutton_play_metronome_beat.bind( on_press=self.on_play_metronome_beat )
+        self.button_play_all_tracks.bind( state=self.on_play_loop_of_all_tracks )
+        self.button_stop_all_tracks.bind( state=self.on_break_loop_of_all_tracks )
+        self.button_restart_all_tracks.bind( state=self.on_reset_loop_of_all_tracks )
 
     # Loopstation loop
     def update(self, dt):
@@ -352,10 +432,16 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         # Señales
         signals = self.engine.update( dt )
 
+        # Grabación
         self.recorder_controller.record = self.togglebutton_record.state == "down"
         if signals["recorder_controller"]["stop_record"]:
             self.update_track_options_widgets()
             self.togglebutton_record.state = "normal"
             self.recorder_controller.record = False
 
+        # Play metronome beat
+        if self.play_metronome_beat:
+            self.beat_controller.update( signals['metronome'] )
+
+        # Colorear metronomo
         self.coloring_metronome_circles( signals["metronome"] )

@@ -65,6 +65,10 @@ engine = DTSoundLoopstationEngine(
     sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
 )
 
+# Beat controller
+from controllers.beat_controller import BeatController
+beat_controller = BeatController( sound_manager )
+
 # App
 ## Forzar FPS
 from kivy.config import Config
@@ -104,7 +108,8 @@ class FPSSoundLoopstationApp(App):
             engine=engine,
             vertical_padding_offsets=[0,0.05, 0,0.08], # Margen pa celu
             horizontal_padding_offsets=[0,0.05, 0.08,0], # Margen pa celu
-            config_controller=config_gui_controller
+            config_controller=config_gui_controller, beat_controller=beat_controller,
+            play_metronome_beat=config_engine.play_beat
         )
 
         # Construir
