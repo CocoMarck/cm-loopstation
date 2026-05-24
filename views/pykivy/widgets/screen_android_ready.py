@@ -15,6 +15,7 @@ class ScreenAndroidReady(Screen):
         self._vertical_padding_offsets = vertical_padding_offsets
         self._horizontal_padding_offsets = horizontal_padding_offsets
         self._last_orientation = None
+        self._last_size = self.size
 
     # Orientacion
     def get_orientation(self):
@@ -63,12 +64,14 @@ class ScreenAndroidReady(Screen):
     # Change size only if change orientation
     def change_padding_using_dpi(self, layout):
         current = self.get_orientation()
-        if current != self._last_orientation:
+        if current != self._last_orientation or self.last_size != self.size:
             self.update_layout_padding_using_dpi(layout, current)
             self._last_orientation = current
+            self.last_size = self.size
 
     def change_padding_using_resolution(self, layout):
         current = self.get_orientation()
-        if current != self._last_orientation:
+        if current != self._last_orientation or self.last_size != self.size:
             self.update_layout_padding_using_resolution(layout, current)
             self._last_orientation = current
+            self.last_size = self.size

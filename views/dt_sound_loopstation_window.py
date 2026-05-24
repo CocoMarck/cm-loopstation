@@ -196,6 +196,37 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
     def _on_size(self, *args):
         return self.change_padding_using_resolution(self.main_vbox_layout)
 
+    ## On widgets
+    def on_play_loop_of_all_tracks(self, widget, state):
+        self.loopstation.play_loop_of_all_tracks()
+        self.update_track_options_widgets()
+
+    def on_break_loop_of_all_tracks(self, widget, state):
+        self.loopstation.break_loop_of_all_tracks()
+        self.update_track_options_widgets()
+
+    def on_reset_loop_of_all_tracks(self, widget, state):
+        self.loopstation.reset_loop_of_all_tracks()
+        self.update_track_options_widgets()
+
+    def on_track_loop(self, track_id, widget):
+        if widget.state == "down":
+            self.loopstation.play_track_loop( track_id=track_id )
+        else:
+            self.loopstation.break_track_loop( track_id=track_id )
+
+    def on_track_mute(self, track_id, widget):
+        track = self.loopstation.get_track(track_id)
+        track['mute'] = (widget.state == "down")
+
+    def on_track_volume(self, track_id, widget, value):
+        track = self.loopstation.get_track(track_id)
+        track['volume'] = value
+
+    def on_track_focus(self, track_id, widget, active):
+        track = self.loopstation.get_track(track_id)
+        track['focus'] = active
+
     # Init widgets
     def init_slider_bpm(self):
         self.slider_bpm.min = 30
@@ -232,6 +263,63 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_bars_to_record.value = bars_to_record_value
         self.label_bars_to_record_value.text = str(bars_to_record_value)
 
+    def update_track_options_widgets(self):
+        self.grid_track_options.clear_widgets()
+        for track_id in self.loopstation.get_track_ids():
+            track = self.loopstation.get_track( track_id )
+
+            label_track_id_value = Label( text=str(track_id), size_hint=(0.02, 1.0) )
+            self.grid_track_options.add_widget( label_track_id_value )
+
+            hbox = BoxLayout(orientation="vertical", size_hint=(0.45, 1.0))
+            label_bars = Label( text=get_text("bars") )
+            hbox.add_widget( label_bars )
+            label_bars_value = Label( text="{:.1f}".format(track["bars"]) )
+            hbox.add_widget( label_bars_value )
+            self.grid_track_options.add_widget( hbox )
+
+            togglebutton_loop = ToggleButton( text=get_text("loop"), size_hint=(0.45, 1.0) )
+            togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
+            if track['loop']:
+                togglebutton_loop.state = "down"
+            else:
+                togglebutton_loop.state = "normal"
+            self.grid_track_options.add_widget( togglebutton_loop )
+
+            togglebutton_mute = ToggleButton( text=get_text("mute"), size_hint=(0.45, 1.0) )
+            togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
+            if track['mute']:
+                togglebutton_mute.state = "down"
+            else:
+                togglebutton_mute.state = "normal"
+            self.grid_track_options.add_widget( togglebutton_mute )
+
+
+            hbox = BoxLayout(orientation="vertical")
+            label_volume = Label( text=get_text("volume") )
+            hbox.add_widget(label_volume)
+            slider_volume = Slider(
+                min=0, max=100, value=int( (track['volume']*100) )
+            )
+            slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
+            hbox.add_widget(slider_volume)
+            self.grid_track_options.add_widget( hbox )
+
+            if track['sample']:
+                label = Label( text=get_text("sample"), size_hint=(0.02, 1.0) )
+                self.grid_track_options.add_widget(label)
+            else:
+                checkbox = CheckBox( group="focus", size_hint=(0.02, 1.0) )
+                checkbox.active = track['focus']
+                checkbox.bind( active=partial(self.on_track_focus, track_id) )
+                self.grid_track_options.add_widget(checkbox)
+        self.update_colors_with_config()
+
+    def update_text(self):
+        self.label_beats.text = get_text("beats")
+        self.label_bars_to_record.text = get_text("bars")
+        self.togglebutton_limit_record.text = get_text("limit-record")
+
     # Builders
     def build(self):
         self.build_metronome_circles()
@@ -244,10 +332,17 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.init_slider_beats_per_bar()
         self.init_slider_bars_to_record()
 
+        self.button_play_all_tracks.bind( state=self.on_play_loop_of_all_tracks )
+        self.button_stop_all_tracks.bind( state=self.on_break_loop_of_all_tracks )
+        self.button_restart_all_tracks.bind( state=self.on_reset_loop_of_all_tracks )
+
         # Update widgets
         self.update_bpm_widgets()
         self.update_beats_per_bar_widgets()
         self.update_bars_to_record_widgets()
+        self.update_track_options_widgets()
+
+        self.update_text()
 
     # Loopstation loop
     def update(self, dt):
@@ -256,4 +351,11 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         '''
         # Señales
         signals = self.engine.update( dt )
+
+        self.recorder_controller.record = self.togglebutton_record.state == "down"
+        if signals["recorder_controller"]["stop_record"]:
+            self.update_track_options_widgets()
+            self.togglebutton_record.state = "normal"
+            self.recorder_controller.record = False
+
         self.coloring_metronome_circles( signals["metronome"] )

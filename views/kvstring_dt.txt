@@ -8,14 +8,26 @@
     main_vbox_layout: _main_vbox_layout
     hbox_metronome_circles: _hbox_metronome_circles
 
+    label_beats: _label_beats
     slider_beats_per_bar: _slide_beats_per_bar
     label_beats_per_bar_value: _label_beats_per_bar_value
 
     slider_bpm: _slider_bpm
     label_bpm_value: _label_bpm_value
 
+    label_bars_to_record: _label_bars_to_record
     slider_bars_to_record: _slider_bars_to_record
     label_bars_to_record_value: _label_bars_to_record_value
+
+    togglebutton_limit_record: _togglebutton_limit_record
+
+    grid_track_options: _grid_track_options
+
+    togglebutton_record: _togglebutton_record
+
+    button_play_all_tracks: _button_play_all_tracks
+    button_stop_all_tracks: _button_stop_all_tracks
+    button_restart_all_tracks: _button_restart_all_tracks
 
     BoxLayout:
         orientation: "vertical"
@@ -26,7 +38,7 @@
         # Seccion 1 | Name. Information. App Config
         BoxLayout:
             orientation: "horizontal"
-            size_hint: (1.0, 0.075)
+            size_hint: (1.0, 0.05)
             valign: "top"
 
             Label:
@@ -53,6 +65,7 @@
 
                 Label:
                     valign: "top"
+                    id: _label_beats
 
                     text: "Beats"
 
@@ -91,6 +104,7 @@
 
                 Label:
                     valign: "top"
+                    id: _label_bars_to_record
 
                     text: "Bars to record"
 
@@ -121,29 +135,50 @@
 
             GridLayout:
                 cols: 3
+                padding: [0, self.size[1]*0.04]
 
                 #
                 ToggleButton:
+
                     text: "Play beat"
 
                 ToggleButton:
+                    id: _togglebutton_record
+
                     text: "Record"
 
                 ToggleButton:
+                    id: _togglebutton_limit_record
+
                     text: "Limit record"
 
                 #
                 Button:
+                    id: _button_play_all_tracks
+
                     text: "Play tracks"
 
                 Button:
+                    id: _button_stop_all_tracks
+
                     text: "Stop tracks"
 
                 Button:
+                    id: _button_restart_all_tracks
+
                     text: "Restart tracks"
 
         # Seccion 4 | Tracks y sus opciones: Mute, loop.
-        BoxLayout:
-            orientation: "horizontal"
-            size_hint: (1.0, 0.475)
+        ScrollView:
+            size_hint: (1.0, 0.5)
             valign: "bottom"
+            do_scroll_x: True
+            do_scroll_y: True
+
+            # Scroll | Contenedor de Pistas
+            GridLayout:
+                cols: 6
+                padding: [self.size[0]*0.04, 0]
+                row_default_height: Window.height * 0.075
+                row_force_default: True
+                id: _grid_track_options

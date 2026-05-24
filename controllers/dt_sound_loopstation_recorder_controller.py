@@ -75,9 +75,12 @@ class DTSoundLoopstationRecorderController():
         )
         if start_record:
             # Empezo el primer beat, esta activado el record, y esta no esta parador el recorder.
-            self.recorder.output_filename = self.recorder_path.joinpath(
-                f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
-            )
+            if some_track_is_in_focus:
+                self.recorder.output_filename = self.dt_sound_loopstation.get_track(track_id)['source']
+            else:
+                self.recorder.output_filename = self.recorder_path.joinpath(
+                    f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
+                )
             self.recorder.record()
 
         count_dt = self.record_count_dt
@@ -86,7 +89,7 @@ class DTSoundLoopstationRecorderController():
             # Esta grabando
             if limit_record:
                 # Determinar limite, y si llego o paso el limite, parar grabación
-                if count_dt >= self.dt_metronome.get_seconds_to_bars(self.record_bars):
+                if count_dt >= self.dt_metronome.get_bars_to_seconds(self.record_bars):
                     self.record = False
                     metronome_signals['step_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
 
