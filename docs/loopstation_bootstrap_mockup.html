@@ -1,0 +1,132 @@
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>
+  .ls-wrap { background:#1e2027; border-radius:10px; padding:12px; font-family:'Segoe UI',sans-serif; color:#dde1ea; }
+  .ls-title { font-size:13px; color:#8a8f9e; text-align:center; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+  .param-label { font-size:10px; color:#8a8f9e; text-transform:uppercase; letter-spacing:1px; display:block; margin-bottom:2px; }
+  .param-val { font-size:20px; font-weight:600; color:#00c2ff; display:block; text-align:center; }
+  .param-val.timer-val { color:#2dff7a; }
+  .param-val.off { color:#555a66; }
+  .form-range::-webkit-slider-thumb { background:#00c2ff; }
+  .form-range.timer-range::-webkit-slider-thumb { background:#2dff7a; }
+  .form-range::-webkit-slider-runnable-track { background:#2c3038; height:3px; }
+  .beat-circle { width:48px; height:48px; border-radius:50%; background:#2c3038; border:2px solid #333; display:inline-block; }
+  .beat-circle.main { width:72px; height:72px; background:#3a3d45; border-color:#555; }
+  .ls-btn { background:#2c3038; border:1px solid #3a3d45; color:#dde1ea; font-size:12px; padding:6px 0; border-radius:5px; width:100%; transition:background .15s; }
+  .ls-btn:hover { background:#383c46; color:#fff; }
+  .ls-btn.active-blue { background:#00c2ff; border-color:#00c2ff; color:#000; font-weight:600; }
+  .ls-btn.active-red { background:#ff5e57; border-color:#ff5e57; color:#fff; font-weight:600; }
+  .track-row { background:#252830; border:1px solid #2c3038; border-radius:6px; padding:7px 10px; }
+  .track-idx { font-size:11px; color:#555; font-family:monospace; min-width:16px; }
+  .track-bars { font-size:11px; color:#8a8f9e; min-width:52px; }
+  .vol-slider { accent-color:#555a66; height:3px; }
+  .hamburger { background:#2c3038; border:1px solid #3a3d45; color:#8a8f9e; border-radius:5px; padding:4px 10px; font-size:14px; }
+  .sep { border-color:#2c3038; margin:8px 0; }
+</style>
+
+<div class="ls-wrap">
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <span class="ls-title flex-grow-1">FPS Loopstation</span>
+    <button class="hamburger">&#9776;</button>
+  </div>
+
+  <div class="row g-2 mb-2 align-items-end">
+    <div class="col-3 text-center">
+      <span class="param-label">Pulsos</span>
+      <span class="param-val" id="v-pulsos">4</span>
+      <input type="range" class="form-range" min="1" max="8" value="4" step="1"
+        oninput="document.getElementById('v-pulsos').textContent=this.value">
+    </div>
+    <div class="col-3 text-center">
+      <span class="param-label">BPM</span>
+      <span class="param-val" id="v-bpm">120</span>
+      <input type="range" class="form-range" min="40" max="240" value="120" step="1"
+        oninput="document.getElementById('v-bpm').textContent=this.value">
+    </div>
+    <div class="col-3 text-center">
+      <span class="param-label">Barras</span>
+      <span class="param-val" id="v-barras">4</span>
+      <input type="range" class="form-range" min="1" max="16" value="4" step="1"
+        oninput="document.getElementById('v-barras').textContent=this.value">
+    </div>
+    <div class="col-3 text-center">
+      <span class="param-label">Timer (s)</span>
+      <span class="param-val timer-val" id="v-timer" style="">0</span>
+      <input type="range" class="form-range timer-range" min="0" max="16" value="0" step="1" id="timer-slider"
+        oninput="updateTimer(this.value)">
+    </div>
+  </div>
+
+  <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
+    <div class="beat-circle"></div>
+    <div class="beat-circle main"></div>
+    <div class="beat-circle"></div>
+    <div class="beat-circle"></div>
+  </div>
+
+  <hr class="sep">
+
+  <div class="row g-1 mb-1">
+    <div class="col-4"><button class="ls-btn">Reproducir pulso</button></div>
+    <div class="col-4"><button class="ls-btn" id="btn-rec" onclick="toggleBtn(this,'active-red')">
+      <i class="ti ti-microphone" aria-hidden="true"></i> Record
+    </button></div>
+    <div class="col-4"><button class="ls-btn" id="btn-lim" onclick="toggleBtn(this,'active-blue')">Limitar grab.</button></div>
+  </div>
+  <div class="row g-1 mb-2">
+    <div class="col-4"><button class="ls-btn"><i class="ti ti-player-play" aria-hidden="true"></i></button></div>
+    <div class="col-4"><button class="ls-btn"><i class="ti ti-player-stop" aria-hidden="true"></i></button></div>
+    <div class="col-4"><button class="ls-btn"><i class="ti ti-refresh" aria-hidden="true"></i></button></div>
+  </div>
+
+  <div class="d-flex flex-column gap-1" id="tracks">
+    <div class="track-row d-flex align-items-center gap-2">
+      <span class="track-idx">0</span>
+      <span class="track-bars">Barras 1.0</span>
+      <button class="ls-btn active-blue" style="width:64px;font-size:11px" onclick="toggleBtn(this,'active-blue')">Bucle</button>
+      <button class="ls-btn" style="width:64px;font-size:11px" onclick="toggleBtn(this,'active-blue')">Silenciar</button>
+      <span style="font-size:10px;color:#555;margin-left:4px">vol</span>
+      <input type="range" class="vol-slider flex-grow-1 form-range" min="0" max="100" value="80" step="1">
+      <span style="font-size:10px;color:#555">sample</span>
+    </div>
+  </div>
+
+  <div class="d-flex gap-1 mt-2">
+    <button class="ls-btn" style="width:40px" onclick="addTrack()">+</button>
+    <button class="ls-btn" style="width:40px" onclick="removeTrack()">−</button>
+  </div>
+</div>
+
+<script>
+let trackCount = 1;
+function updateTimer(v) {
+  const el = document.getElementById('v-timer');
+  el.textContent = v;
+  el.className = parseInt(v) === 0 ? 'param-val timer-val off' : 'param-val timer-val';
+}
+function toggleBtn(btn, cls) {
+  btn.classList.toggle(cls);
+}
+function addTrack() {
+  const c = document.getElementById('tracks');
+  const div = document.createElement('div');
+  div.className = 'track-row d-flex align-items-center gap-2';
+  div.id = 'tr-' + trackCount;
+  div.innerHTML = `
+    <span class="track-idx">${trackCount}</span>
+    <span class="track-bars">Barras 1.0</span>
+    <button class="ls-btn" style="width:64px;font-size:11px" onclick="toggleBtn(this,'active-blue')">Bucle</button>
+    <button class="ls-btn" style="width:64px;font-size:11px" onclick="toggleBtn(this,'active-blue')">Silenciar</button>
+    <span style="font-size:10px;color:#555;margin-left:4px">vol</span>
+    <input type="range" class="vol-slider flex-grow-1 form-range" min="0" max="100" value="80" step="1">
+    <span style="font-size:10px;color:#555">sample</span>`;
+  c.appendChild(div);
+  trackCount++;
+}
+function removeTrack() {
+  if (trackCount <= 1) return;
+  trackCount--;
+  const el = document.getElementById('tr-' + trackCount);
+  if (el) el.remove();
+}
+</script>

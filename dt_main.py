@@ -92,12 +92,12 @@ Constructor de aplicación
 '''
 # Standard de celus: `16:9`, `20:9`, `19:9`.
 #Window.size = (20*50, 9*50)
-#Window.size = (9*50, 20*50)
+Window.size = (9*50, 20*50)
 #Window.size = (16*50, 9*50)
 #Window.size = (512, 512)
 #Window.resizable = True
-loopstation.save_track(path=SAMPLE_FILES[0], loop=True, sample=True)
-loopstation.save_track(path=SAMPLE_FILES[3], loop=True, sample=True)
+#loopstation.save_track(path=SAMPLE_FILES[0], loop=True, sample=True)
+#loopstation.save_track(path=SAMPLE_FILES[3], loop=True, sample=True)
 #recorder_controller.record = True
 class FPSSoundLoopstationApp(App):
     def build(self):

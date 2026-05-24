@@ -326,51 +326,66 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         for track_id in self.loopstation.get_track_ids():
             track = self.loopstation.get_track( track_id )
 
+            vbox = BoxLayout(orientation="vertical", size_hint=(1.0, 1.0), valign="top")
+
+            hbox_section_1 = BoxLayout(orientation="horizontal", size_hint=(1.0, 1.0))
+
             label_track_id_value = Label( text=str(track_id), size_hint=(0.02, 1.0) )
-            self.grid_track_options.add_widget( label_track_id_value )
+            hbox_section_1.add_widget( label_track_id_value )
 
-            hbox = BoxLayout(orientation="vertical", size_hint=(0.45, 1.0))
-            label_bars = Label( text=get_text("bars") )
-            hbox.add_widget( label_bars )
-            label_bars_value = Label( text="{:.1f}".format(track["bars"]) )
-            hbox.add_widget( label_bars_value )
-            self.grid_track_options.add_widget( hbox )
+            hbox_bars = BoxLayout( orientation="horizontal", size_hint=(0.05, 1.0) )
+            label_bars = Label( text=get_text("bars"), size_hint=(1.0, 1.0) )
+            hbox_bars.add_widget( label_bars )
 
-            togglebutton_loop = ToggleButton( text=get_text("loop"), size_hint=(0.45, 1.0) )
+            label_bars_value = Label( text="{:.1f}".format(track["bars"]), size_hint=(1.0, 1.0) )
+            hbox_bars.add_widget( label_bars_value )
+
+            hbox_section_1.add_widget( hbox_bars )
+
+            togglebutton_loop = ToggleButton( text=get_text("loop"), size_hint=(0.05, 1.0) )
             togglebutton_loop.bind( on_press=partial(self.on_track_loop, track_id) )
             if track['loop']:
                 togglebutton_loop.state = "down"
             else:
                 togglebutton_loop.state = "normal"
-            self.grid_track_options.add_widget( togglebutton_loop )
+            hbox_section_1.add_widget( togglebutton_loop )
 
-            togglebutton_mute = ToggleButton( text=get_text("mute"), size_hint=(0.45, 1.0) )
+            togglebutton_mute = ToggleButton( text=get_text("mute"), size_hint=(0.05, 1.0) )
             togglebutton_mute.bind( on_press=partial(self.on_track_mute, track_id) )
             if track['mute']:
                 togglebutton_mute.state = "down"
             else:
                 togglebutton_mute.state = "normal"
-            self.grid_track_options.add_widget( togglebutton_mute )
+            hbox_section_1.add_widget( togglebutton_mute )
 
+            checkbox = CheckBox( group="focus", size_hint=(0.02, 1.0) )
+            checkbox.active = track['focus']
+            hbox_section_1.add_widget( checkbox )
 
-            hbox = BoxLayout(orientation="vertical")
-            label_volume = Label( text=get_text("volume") )
+            vbox.add_widget(hbox_section_1)
+
+            #
+            hbox = BoxLayout(orientation="horizontal")
+            label_volume = Label( text=get_text("volume"), size_hint=(0.15, 1.0) )
             hbox.add_widget(label_volume)
             slider_volume = Slider(
                 min=0, max=100, value=int( (track['volume']*100) )
             )
             slider_volume.bind( value_normalized=partial(self.on_track_volume, track_id) )
             hbox.add_widget(slider_volume)
-            self.grid_track_options.add_widget( hbox )
 
             if track['sample']:
-                label = Label( text=get_text("sample"), size_hint=(0.02, 1.0) )
-                self.grid_track_options.add_widget(label)
+                label = Label( text=get_text("sample"), size_hint=(0.15, 1.0) )
+                hbox.add_widget(label)
             else:
-                checkbox = CheckBox( group="focus", size_hint=(0.02, 1.0) )
-                checkbox.active = track['focus']
+                label = Label( text=get_text("temp"), size_hint=(0.15, 1.0) )
+                hbox.add_widget(label)
+
                 checkbox.bind( active=partial(self.on_track_focus, track_id) )
-                self.grid_track_options.add_widget(checkbox)
+
+            vbox.add_widget( hbox )
+            self.grid_track_options.add_widget( vbox )
+
         self.update_colors_with_config()
 
     def update_text(self):

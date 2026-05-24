@@ -40,6 +40,7 @@
 
         # Seccion 1 | Name. Information. App Config
         BoxLayout:
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
             orientation: "horizontal"
             size_hint: (1.0, 0.05)
             valign: "top"
@@ -47,7 +48,7 @@
             Label:
                 halign: "left"
 
-                text: "FPS Loopstation"
+                text: "FPS LOOPSTATION"
 
             Button:
                 halign: "right"
@@ -59,75 +60,108 @@
 
         # Seccion 2 | Configurar Ritmo
         BoxLayout:
-            orientation: "horizontal"
-            size_hint: (1.0, 0.15)
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            orientation: "vertical"
+            size_hint: (1.0, 0.20)
             valign: "top"
 
             # Beats per bar
             BoxLayout:
-                orientation: "vertical"
+                orientation: "horizontal"
 
                 Label:
-                    valign: "top"
+                    halign: "right"
+                    size_hint: (0.2, 1.0)
                     id: _label_beats
 
                     text: "Beats"
 
+                Slider:
+                    halign: "center"
+                    orientation: "horizontal"
+                    id: _slide_beats_per_bar
+
                 Label:
-                    valign: "top"
+                    halign: "left"
+                    size_hint: (0.1, 1.0)
                     id: _label_beats_per_bar_value
 
                     text: "0"
 
-                Slider:
-                    valign: "bottom"
-                    id: _slide_beats_per_bar
-
             # BPM
             BoxLayout:
-                orientation: "vertical"
+                orientation: "horizontal"
 
                 Label:
-                    valign: "top"
+                    halign: "right"
+                    size_hint: (0.2, 1.0)
 
                     text: "BPM"
 
+                Slider:
+                    halign: "center"
+                    orientation: "horizontal"
+                    id: _slider_bpm
+
                 Label:
-                    valign: "top"
+                    halign: "left"
+                    size_hint: (0.1, 1.0)
                     id: _label_bpm_value
 
                     text: "0"
 
-                Slider:
-                    valign: "bottom"
-                    id: _slider_bpm
+
 
             # Bars to record
             BoxLayout:
-                orientation: "vertical"
+                orientation: "horizontal"
 
                 Label:
-                    valign: "top"
+                    halign: "right"
+                    size_hint: (0.2, 1.0)
                     id: _label_bars_to_record
 
                     text: "Bars to record"
 
+                Slider:
+                    halign: "center"
+                    orientation: "horizontal"
+                    id: _slider_bars_to_record
+
                 Label:
-                    valign: "top"
+                    halign: "left"
+                    size_hint: (0.1, 1.0)
                     id: _label_bars_to_record_value
 
                     text: "0"
 
+            # Timer
+            BoxLayout:
+                orientation: "horizontal"
+
+                Label:
+                    halign: "left"
+                    size_hint: (0.2, 1.0)
+
+                    text: "Timer"
+
                 Slider:
-                    valign: "bottom"
-                    id: _slider_bars_to_record
+                    halign: "center"
+                    orientation: "horizontal"
+
+                Label:
+                    halign: "right"
+                    size_hint: (0.1, 1.0)
+
+                    text: "0"
 
 
 
         # Seccion 3 | Metronomo
         BoxLayout:
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
             orientation: "horizontal"
-            size_hint: (1.0, 0.15)
+            size_hint: (1.0, 0.10)
             valign: "top"
             id: _hbox_metronome_circles
 
@@ -136,6 +170,7 @@
             orientation: "horizontal"
             size_hint: (1.0, 0.15)
             valign: "top"
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
 
             GridLayout:
                 cols: 3
@@ -179,11 +214,12 @@
             valign: "bottom"
             do_scroll_x: True
             do_scroll_y: True
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
 
             # Scroll | Contenedor de Pistas
             GridLayout:
-                cols: 6
+                cols: 1
                 padding: [self.size[0]*0.04, 0]
-                row_default_height: Window.height * 0.075
+                row_default_height: Window.height * 0.1
                 row_force_default: True
                 id: _grid_track_options
