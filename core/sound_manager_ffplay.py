@@ -1,7 +1,9 @@
 from entities.isound_manager import ISoundManager
 from core.ffplay_sound import FFPlaySound
 
-class SoundManagerFFplay(ISoundManger):
+class SoundManagerFFPlay(ISoundManager):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def get_sound(self, path: str):
         '''
