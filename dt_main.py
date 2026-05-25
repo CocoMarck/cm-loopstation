@@ -5,8 +5,14 @@ from controllers.dt_sound_loopstation_recorder_controller import DTSoundLoopstat
 from core.dt_timer import DTTimer
 from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
 from controllers.beat_controller import BeatController
-from core.sound_manager_kivy import SoundManagerKivy
 
+# Sound Manager
+from core.sound_manager_kivy import SoundManagerKivy
+from core.sound_manager_ffplay import SoundManagerFFPlay
+sound_manager_kivy = SoundManagerKivy()
+sound_manager_ffplay = SoundManagerFFPlay()
+
+# Paths
 from config.paths import SAMPLE_FILES, TEMP_DIR, ICON, CONFIG_ENGINE_FILE, CONFIG_GUI_FILE, THEMES_FILE
 
 # Window
@@ -42,15 +48,16 @@ RGB_OFF_TEMPO = [1,1,1]
 RGB_FIRST_TEMPO = [0,1,0]
 RGB_ANOTHER_TEMPO = [1,0,0]
 
+# Beat controller
+beat_controller = BeatController( sound_manager_kivy )
+
 # FPSLoopstation Engine
-sound_manager = SoundManagerKivy()
-beat_controller = BeatController( sound_manager )
 metronome = DTMetronome(
     beats_per_bar=config_engine.beats+1, beats_limit_per_bar=config_engine.beats_limit+1,
     bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 loopstation = DTSoundLoopstation(
-    dt_metronome=metronome, sound_manager=sound_manager, volume=VOLUME
+    dt_metronome=metronome, sound_manager=sound_manager_kivy, volume=VOLUME
 
 )
 microphone_recorder = MicrophoneRecorder()
@@ -64,10 +71,6 @@ timer = DTTimer( seconds=config_engine.seconds, activate=False )
 engine = DTSoundLoopstationEngine(
     sound_loopstation=loopstation, recorder_controller=recorder_controller, timer=timer
 )
-
-# Beat controller
-from controllers.beat_controller import BeatController
-beat_controller = BeatController( sound_manager )
 
 # App
 ## Forzar FPS
