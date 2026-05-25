@@ -8,3 +8,4 @@ bin/
 *.spec
 *.toml
 *.json
+*.swp
