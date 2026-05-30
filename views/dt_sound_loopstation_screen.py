@@ -1,14 +1,16 @@
-# Funciones
+# Python
 from functools import partial
+
+# Texto
 from core.text_util import ignore_text_filter, PREFIX_NUMBER
 
 # Engine
 from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
-from config.paths import SAMPLE_FILES, TEMP_DIR, ICON
 from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 
 # Metronome
 from controllers.beat_controller import BeatController
+
 
 # PyKivy
 from kivy.uix.widget import Widget
@@ -35,13 +37,18 @@ from kivy.metrics import dp
 # PyKivy Funciones para estilizar
 from kivy.graphics import Color, Rectangle
 
+# PyKivy Estilo molon
+from views.kvstring import kv
+from kivy.lang import Builder
+Builder.load_string( kv )
+
 # Colors
 from utils.colors import (
     get_rgba, invert_rgb, invert_rgba, rgba_to_normalized, scale_rgba, random_rgba,
     is_the_rgba_color_bright
 )
 
-# Images for custom widgets
+# Mis views functions. Images for custom widgets
 from config.paths import (
     ICON, PLAY_IMAGE, STOP_IMAGE, RESTART_IMAGE, RECORD_IMAGE, ABOUT_IMAGE, MENU_IMAGE, TIMER_IMAGE
 )
@@ -53,12 +60,6 @@ about_image = Image( source=str(ABOUT_IMAGE), allow_stretch=True )
 menu_image = Image( source=str(MENU_IMAGE), allow_stretch=True )
 timer_image = Image( source=str(TIMER_IMAGE), allow_stretch=True )
 
-
-# Estilo molon
-from views.kvstring import kv
-from kivy.lang import Builder
-Builder.load_string( kv )
-
 # Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
 from views.pykivy.widgets.loopstation_circle import LoopstationCircle
@@ -67,7 +68,7 @@ from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 from views.pykivy.widgets.screen_android_ready import ScreenAndroidReady
 from views.pykivy.widgets.metronome_circle import MetronomeCircle
 
-# Text
+# Traductor wrapper
 from utils.translation_util import get_text
 
 # Ventana, el loop del porgrama
