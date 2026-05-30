@@ -9,6 +9,9 @@ class DTTimer():
     def reset(self):
         self._count_dt = 0
 
+    def get_seconds(self):
+        return self._seconds
+
     def set_seconds(self, seconds):
         self._seconds = seconds
 
@@ -32,6 +35,6 @@ class DTTimer():
         signals = self.determinate_stop(dt)
 
         if not signals['timer_finished']:
-            self._count_dt += 1
+            self._count_dt += dt
 
         return signals

@@ -274,6 +274,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
 
         # Reset view
         self.build_metronome_circles()
+        self.update_track_options_widgets()
 
     def on_beats_per_bar(self, widget, value):
         self.metronome.set_beats_per_bar( value )
@@ -298,6 +299,10 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.recorder_controller.record_bars = value
         self.update_bars_to_record_widgets()
 
+    def on_timer(self, widget, value):
+        self.timer.set_seconds( value )
+        self.update_timer_widgets()
+
     # Init widgets
     def init_slider_bpm(self):
         self.slider_bpm.min = 30
@@ -313,6 +318,11 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_bars_to_record.min = 0
         self.slider_bars_to_record.max = 30
         self.slider_bars_to_record.step = 1
+
+    def init_slider_timer(self):
+        self.slider_timer.min = 0
+        self.slider_timer.max = 60
+        self.slider_timer.step = 1
 
     def init_limit_record(self):
         if self.recorder_controller.limit_record:
@@ -362,9 +372,9 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.label_beats_per_bar_value.text = str(beats_per_bar_value)
 
     def update_bars_to_record_widgets(self):
-        bars_to_record_value = self.recorder_controller.record_bars
+        bars_to_record_value = int(self.recorder_controller.record_bars)
         self.slider_bars_to_record.value = bars_to_record_value
-        self.label_bars_to_record_value.text = str(bars_to_record_value)
+        self.label_bars_to_record_value.text = str( bars_to_record_value )
 
     def update_track_options_widgets(self):
         self.grid_track_options.clear_widgets()
@@ -438,6 +448,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.label_bars_to_record.text = get_text("bars")
         self.togglebutton_limit_record.text = get_text("limit-record")
         self.togglebutton_play_metronome_beat.text = get_text("play-beat")
+        #self.label_timer_text.text = get_text("timer")
 
     def update_play_metronome_beat(self):
         if self.play_metronome_beat:
@@ -455,6 +466,11 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         for button in self.menu_buttons.values():
             button.height = self.height*0.05
 
+    def update_timer_widgets(self):
+        timer_seconds_value = int( self.timer.get_seconds() )
+        self.slider_timer.value = timer_seconds_value
+        self.label_timer_value.text = str( timer_seconds_value )
+
 
     # Builders
     def build(self):
@@ -466,6 +482,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         # Init widgets
         self.init_slider_bpm()
         self.init_slider_beats_per_bar()
+        self.init_slider_timer()
         self.init_slider_bars_to_record()
         self.init_widget_images()
         self.init_limit_record()
@@ -478,6 +495,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_bars_to_record.bind( value=self.on_bars_to_record )
         self.slider_beats_per_bar.bind( value=self.on_beats_per_bar )
         self.slider_bpm.bind( value=self.on_bpm )
+        self.slider_timer.bind( value=self.on_timer )
 
         # Update widgets
         self.update_bpm_widgets()
@@ -485,6 +503,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.update_bars_to_record_widgets()
         self.update_track_options_widgets()
         self.update_play_metronome_beat()
+        self.update_timer_widgets()
 
         self.update_text()
 
@@ -497,8 +516,27 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
             # Señales
             signals = self.engine.update( dt )
 
+            # Timer activeted
+            timer_working = self.timer.activate and (not self.recorder_controller.record)
+            timer_current_dt = 0
+            if self.togglebutton_record.state == "down":
+                # Grabar con timer
+                if not timer_working:
+                    self.timer.activate = True
+                if not timer_working:
+                    timer_working = self.timer.activate and (not self.recorder_controller.record)
+                if timer_working:
+                    timer_current_dt = signals['timer']['current_dt']
+                    self.recorder_controller.record = signals['timer']['timer_finished']
+                else:
+                    self.recorder_controller.record = True
+            else:
+                # Restablecer timer
+                self.recorder_controller.record = False
+                self.timer.activate = False
+                self.timer.reset()
+
             # Grabación
-            self.recorder_controller.record = self.togglebutton_record.state == "down"
             self.recorder_controller.limit_record = self.togglebutton_limit_record.state == "down"
             if signals["recorder_controller"]["stop_record"]:
                 self.update_track_options_widgets()
@@ -511,5 +549,11 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
 
             # Colorear metronomo
             self.coloring_metronome_circles( signals["metronome"] )
+
+            # Mostrar
+            if timer_working:
+                self.label_timer_count_value.text = str( round(signals['timer']['current_dt']) )
+            else:
+                self.label_timer_count_value.text = ""
         else:
             self.recorder_controller.record = False

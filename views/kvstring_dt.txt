@@ -32,6 +32,12 @@
 
     button_configuration: _button_configuration
 
+    label_timer_text: _label_timer_text
+    label_timer_value: _label_timer_value
+    slider_timer: _slider_timer
+
+    label_timer_count_value: _label_timer_count_value
+
     BoxLayout:
         orientation: "vertical"
         id: _main_vbox_layout
@@ -142,16 +148,19 @@
                 Label:
                     halign: "left"
                     size_hint: (0.2, 1.0)
+                    id: _label_timer_text
 
                     text: "Timer"
 
                 Slider:
                     halign: "center"
                     orientation: "horizontal"
+                    id: _slider_timer
 
                 Label:
                     halign: "right"
                     size_hint: (0.1, 1.0)
+                    id: _label_timer_value
 
                     text: "0"
 
@@ -223,3 +232,11 @@
                 row_default_height: Window.height * 0.1
                 row_force_default: True
                 id: _grid_track_options
+
+    # Timer
+    FloatLayout:
+        Label:
+            id: _label_timer_count_value
+            pos_hint: {"center_x":0.5,"center_y":0.5}
+            opacity: 1
+            color: "yellow"
