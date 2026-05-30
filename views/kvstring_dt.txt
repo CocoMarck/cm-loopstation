@@ -28,7 +28,7 @@
     button_restart_all_tracks: _button_restart_all_tracks
 
     togglebutton_play_metronome_beat: _togglebutton_play_metronome_beat
-    togglebutton_record_limit: _togglebutton_record_limit
+    togglebutton_limit_record: _togglebutton_limit_record
 
     button_configuration: _button_configuration
 
@@ -188,7 +188,7 @@
                     text: "Record"
 
                 ToggleButton:
-                    id: _togglebutton_record_limit
+                    id: _togglebutton_limit_record
 
                     text: "Limit record"
 

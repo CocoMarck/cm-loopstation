@@ -6,6 +6,4 @@ dist/
 build/
 bin/
 *.spec
-*.toml
-*.json
 *.swp
