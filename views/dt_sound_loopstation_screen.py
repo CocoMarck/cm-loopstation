@@ -55,10 +55,9 @@ timer_image = Image( source=str(TIMER_IMAGE), allow_stretch=True )
 
 
 # Estilo molon
-with open("./views/kvstring_dt.txt", 'r') as file:
-    content = file.read()
+from views.kvstring import kv
 from kivy.lang import Builder
-Builder.load_string( content )
+Builder.load_string( kv )
 
 # Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
@@ -72,7 +71,7 @@ from views.pykivy.widgets.metronome_circle import MetronomeCircle
 from utils.translation_util import get_text
 
 # Ventana, el loop del porgrama
-class DTSoundLoopstationWindow(ScreenAndroidReady):
+class DTSoundLoopstationScreen(ScreenAndroidReady):
     '''
     El tempo de preferencia que sea un entero.
     '''
@@ -126,16 +125,16 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
             button = Button( text=get_text(key), size_hint_y=None )
             self.menu_buttons[key] = button
             self.dropdown.add_widget( button )
-        self.button_configuration.bind( on_press=self.on_configuration )
-        self.button_configuration.bind( on_release=self.dropdown.open )
-        self.menu_buttons['start'].bind( on_press=self.on_start)
-        self.menu_buttons['stop'].bind( on_press=self.on_stop)
 
         # Beat controller
         self.beat_controller = beat_controller
 
         # Loop
         self.work = True
+
+        # Eventos de ventana
+        Window.bind(on_minimize=self._on_minimize)
+        Window.bind(on_restore=self._on_restore)
 
     # Build
     def build_metronome_circles(self):
@@ -222,10 +221,28 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
             self.main_vbox_layout.pos=self.pos
             self.main_vbox_layout.size=self.size
 
+    def stop_work(self):
+        self.work = False
+        self.loopstation.break_loop_of_all_tracks()
+        self.metronome.reset_counts()
+
+        # Reset view
+        self.build_metronome_circles()
+        self.update_track_options_widgets()
+
+    def start_work(self):
+        self.work = True
+
     # Bind
     def _on_size(self, *args):
         self.change_padding_using_resolution(self.main_vbox_layout)
         self.update_size_of_configuration_buttons()
+
+    def _on_minimize(self, *args):
+        self.stop_work()
+
+    def _on_restore(self, *args):
+        self.start_work()
 
     ## On widgets
     def on_play_loop_of_all_tracks(self, widget, state):
@@ -265,16 +282,10 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.update_size_of_configuration_buttons()
 
     def on_start(self, state):
-        self.work = True
+        self.start_work()
 
     def on_stop(self, state):
-        self.work = False
-        self.loopstation.break_loop_of_all_tracks()
-        self.metronome.reset_counts()
-
-        # Reset view
-        self.build_metronome_circles()
-        self.update_track_options_widgets()
+        self.stop_work()
 
     def on_beats_per_bar(self, widget, value):
         self.metronome.set_beats_per_bar( value )
@@ -303,6 +314,56 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.timer.set_seconds( value )
         self.update_timer_widgets()
 
+    def open_popup_information(self, title, text_information):
+        popup = PopupInformation(
+            title=title, size_hint=(0.8, 0.8),
+            text_information=text_information, text_ok=get_text('ok')
+        )
+        popup.open()
+
+    def on_help(self, button):
+        self.open_popup_information(
+            title=get_text("help"), text_information=get_text('fps-sound-loopstation-help')
+        )
+
+    def on_about(self, button):
+        self.open_popup_information(
+            title=get_text("about"), text_information=(
+                f"[b]{NAME}[/b]: {get_text('version')} {VERSION}\n\n"
+                f"- {get_text('developer')}: [b]{DEVELOPER}[/b]\n"
+                f"- {get_text('website')}: [b]{WEBSITE}[/b]"
+            )
+        )
+
+    def on_settings(self, button):
+        popup = PopupGridLayout(
+            title=get_text("settings"),
+            cols=2, rows=2, row_default_height=self.height*0.1,
+            size_hint=(0.8, 0.8), text_ok=get_text('ok')
+        )
+        popup.second_container.add_widget( Label( text=get_text("numerical-view") ) )
+        checkbox_metronome_numeircal_view = CheckBox( active=self.config.numerical_view )
+        checkbox_metronome_numeircal_view.bind( active=self.on_numeric_metronome )
+        popup.second_container.add_widget( checkbox_metronome_numeircal_view )
+
+        popup.second_container.add_widget( Label( text=get_text("theme") ) )
+        spinner = Spinner(
+            text=self.config.theme,
+            values=self.config_controller.get_theme_names(),
+        )
+        spinner.bind(text=lambda inst, val: self.on_theme_selected(val))
+        popup.second_container.add_widget( spinner )
+
+        popup.open()
+
+    def on_numeric_metronome(self, widget, active):
+        self.config_controller.update_numerical_view( active )
+
+    def on_theme_selected(self, name):
+        if self.config_controller.update_theme(name):
+            rgba = self.config_controller.get_rgba_theme( name )
+            self.set_colors(rgba)
+
     # Init widgets
     def init_slider_bpm(self):
         self.slider_bpm.min = 30
@@ -315,7 +376,7 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_beats_per_bar.step = 1
 
     def init_slider_bars_to_record(self):
-        self.slider_bars_to_record.min = 0
+        self.slider_bars_to_record.min = 2
         self.slider_bars_to_record.max = 30
         self.slider_bars_to_record.step = 1
 
@@ -496,6 +557,13 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.slider_beats_per_bar.bind( value=self.on_beats_per_bar )
         self.slider_bpm.bind( value=self.on_bpm )
         self.slider_timer.bind( value=self.on_timer )
+        self.button_configuration.bind( on_press=self.on_configuration )
+        self.button_configuration.bind( on_release=self.dropdown.open )
+        self.menu_buttons['start'].bind( on_press=self.on_start )
+        self.menu_buttons['stop'].bind( on_press=self.on_stop )
+        self.menu_buttons['about'].bind( on_press=self.on_about )
+        self.menu_buttons['help'].bind( on_press=self.on_help )
+        self.menu_buttons["settings"].bind( on_press=self.on_settings )
 
         # Update widgets
         self.update_bpm_widgets()
@@ -504,7 +572,6 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.update_track_options_widgets()
         self.update_play_metronome_beat()
         self.update_timer_widgets()
-
         self.update_text()
 
     # Loopstation loop
@@ -552,7 +619,9 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
 
             # Mostrar
             if timer_working:
-                self.label_timer_count_value.text = str( round(signals['timer']['current_dt']) )
+                self.label_timer_count_value.text = str(
+                    round( self.timer.get_seconds() -signals['timer']['current_dt'] )
+                )
             else:
                 self.label_timer_count_value.text = ""
         else:
