@@ -87,8 +87,8 @@ from utils.colors import (
 '''
 Constructor de aplicación
 '''
-#Window.size = (9*50, 20*50) # Res 9:20 Celular
-Window.size = (16*70, 9*70) # Res 16:9 PC
+Window.size = (9*50, 20*50) # Res 9:20 Celular
+#Window.size = (16*70, 9*70) # Res 16:9 PC
 #loopstation.save_track(path=SAMPLE_FILES[0], loop=True, sample=True)
 screen = DTSoundLoopstationScreen(
     engine=engine,

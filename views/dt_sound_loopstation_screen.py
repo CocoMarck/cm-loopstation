@@ -372,12 +372,12 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
         self.slider_bpm.step = 10
 
     def init_slider_beats_per_bar(self):
-        self.slider_beats_per_bar.min = 1
+        self.slider_beats_per_bar.min = 2
         self.slider_beats_per_bar.max = self.metronome.get_beats_limit_per_bar()
         self.slider_beats_per_bar.step = 1
 
     def init_slider_bars_to_record(self):
-        self.slider_bars_to_record.min = 2
+        self.slider_bars_to_record.min = 1
         self.slider_bars_to_record.max = 30
         self.slider_bars_to_record.step = 1
 

@@ -1,0 +1,179 @@
+
+<style>
+  .dframe { width:220px; background:#0d0f13; border-radius:28px; border:6px solid #1a1c22; overflow:hidden; margin:0 auto; font-family:'Segoe UI',sans-serif; color:#d4d8e8; font-size:12px; }
+  .dnotch { background:#0a0b0e; height:22px; display:flex; align-items:center; justify-content:center; }
+  .dnotch-pill { width:52px; height:5px; background:#1e2030; border-radius:3px; }
+  .dscreen { background:#10121a; overflow-y:auto; max-height:480px; }
+  .dscreen::-webkit-scrollbar { display:none; }
+  .dsec { padding:8px 10px; border-bottom:1px solid #191c28; }
+  .dsec:last-child { border-bottom:none; }
+  .dsec1 { background:#0e1018; display:flex; align-items:center; justify-content:space-between; padding:7px 10px; }
+  .dsec2 { background:#0c0e16; display:flex; justify-content:center; align-items:center; gap:10px; }
+  .dsec3 { background:#0f1119; }
+  .dsec4 { background:#0d0f17; }
+  .dsec5 { background:#0b0d15; }
+  .dlogo { font-size:11px; color:#5a6070; letter-spacing:2px; text-transform:uppercase; }
+  .dmenu { background:#191c28; border:1px solid #222535; color:#5a6070; border-radius:5px; padding:4px 8px; font-size:13px; }
+  .dbc { border-radius:50%; background:#161928; border:1.5px solid #1e2235; }
+  .dbc.s { width:30px; height:30px; }
+  .dbc.m { width:42px; height:42px; background:#1c2038; border-color:#262b45; }
+  .dbc.pulse { border-color:#00b4e8; }
+  .sec-lbl { font-size:9px; color:#2e3348; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:5px; }
+  .dslider-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; }
+  .dslbl { font-size:11px; color:#5a6070; min-width:46px; }
+  .dsval { font-size:12px; color:#00b4e8; font-family:monospace; min-width:26px; text-align:right; }
+  .dsval.g { color:#28e87a; }
+  .dsval.off { color:#252838; }
+  input[type=range] { flex:1; cursor:pointer; }
+  input[type=range].g { accent-color:#28e87a; }
+  .dbgrid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px; }
+  .dbtn { background:#161928; border:1px solid #1e2235; color:#7a8090; border-radius:5px; padding:8px 2px; font-size:10px; cursor:pointer; text-align:center; }
+  .dbtn.ob { background:#0a2a38; border-color:#00b4e8; color:#00b4e8; }
+  .dbtn.or { background:#2a1010; border-color:#c04040; color:#e06060; }
+  .dbtn.og { background:#0a2418; border-color:#28e87a; color:#28e87a; }
+  .dtrack { background:#131520; border:1px solid #1a1d2c; border-radius:6px; padding:6px 8px; margin-bottom:4px; }
+  .dtrack-top { display:flex; align-items:center; gap:5px; margin-bottom:4px; }
+  .dtidx { font-size:10px; color:#252838; font-family:monospace; min-width:14px; }
+  .dtname { font-size:11px; color:#7a8090; flex:1; }
+  .dtbtn { background:#161928; border:1px solid #1e2235; color:#5a6070; border-radius:4px; padding:4px 6px; font-size:10px; cursor:pointer; }
+  .dtbtn.on { background:#0a2a38; border-color:#00b4e8; color:#00b4e8; }
+  .dvol { display:flex; align-items:center; gap:4px; }
+  .dvlbl { font-size:9px; color:#252838; }
+  .dbottom { height:18px; background:#0a0b0e; display:flex; align-items:center; justify-content:center; }
+  .dbot-pill { width:40px; height:3px; background:#1e2030; border-radius:2px; }
+  .dtimer-ov { display:none; background:rgba(0,0,0,.85); border-radius:22px; position:absolute; top:0;left:0;right:0;bottom:0; align-items:center; justify-content:center; }
+  .dtimer-num { font-size:56px; font-weight:700; color:#ffe040; font-family:monospace; }
+</style>
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden">FPS Loopstation — mockup Android 9:20</h2>
+
+<div style="padding:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-lg);display:flex;justify-content:center">
+<div style="position:relative">
+<div class="dframe">
+  <div class="dnotch"><div class="dnotch-pill"></div></div>
+
+  <div class="dscreen">
+
+    <div class="dsec dsec1">
+      <span class="dlogo">FPS Loopstation</span>
+      <button class="dmenu"><i class="ti ti-menu-2" aria-hidden="true" style="font-size:13px"></i></button>
+    </div>
+
+    <div class="dsec dsec2" style="padding:8px 10px">
+      <div class="dbc s"></div>
+      <div class="dbc s"></div>
+      <div class="dbc m pulse"></div>
+      <div class="dbc s"></div>
+    </div>
+
+    <div class="dsec dsec3">
+      <div class="sec-lbl">Ritmo</div>
+      <div class="dslider-row">
+        <span class="dslbl">Beats</span>
+        <input type="range" min="1" max="8" value="4" step="1" oninput="document.getElementById('dv-b').textContent=this.value">
+        <span class="dsval" id="dv-b">4</span>
+      </div>
+      <div class="dslider-row">
+        <span class="dslbl">BPM</span>
+        <input type="range" min="40" max="240" value="120" step="1" oninput="document.getElementById('dv-bpm').textContent=this.value">
+        <span class="dsval" id="dv-bpm">120</span>
+      </div>
+      <div class="dslider-row">
+        <span class="dslbl">Barras</span>
+        <input type="range" min="1" max="16" value="4" step="1" oninput="document.getElementById('dv-bars').textContent=this.value">
+        <span class="dsval" id="dv-bars">4</span>
+      </div>
+      <div class="dslider-row">
+        <span class="dslbl" style="color:#28e87a;opacity:.7">Timer</span>
+        <input type="range" class="g" min="0" max="16" value="0" step="1" oninput="dTimer(this.value)">
+        <span class="dsval g off" id="dv-t">0s</span>
+      </div>
+    </div>
+
+    <div class="dsec dsec4">
+      <div class="sec-lbl">Controles</div>
+      <div class="dbgrid" style="margin-bottom:3px">
+        <div class="dbtn" onclick="this.classList.toggle('og')"><i class="ti ti-player-play" aria-hidden="true"></i> Beat</div>
+        <div class="dbtn" onclick="dToggleRec(this)"><i class="ti ti-microphone" aria-hidden="true"></i> Rec</div>
+        <div class="dbtn" onclick="this.classList.toggle('ob')"><i class="ti ti-clock" aria-hidden="true"></i> Lim</div>
+      </div>
+      <div class="dbgrid">
+        <div class="dbtn"><i class="ti ti-player-play" aria-hidden="true"></i> Play</div>
+        <div class="dbtn"><i class="ti ti-player-stop" aria-hidden="true"></i> Stop</div>
+        <div class="dbtn"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</div>
+      </div>
+    </div>
+
+    <div class="dsec dsec5">
+      <div class="sec-lbl" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Tracks</span>
+        <span style="display:flex;gap:3px">
+          <span class="dbtn" style="padding:2px 6px;cursor:pointer" onclick="dAddTrack()">+</span>
+          <span class="dbtn" style="padding:2px 6px;cursor:pointer" onclick="dRemTrack()">−</span>
+        </span>
+      </div>
+      <div id="d-track-list"></div>
+    </div>
+
+  </div>
+  <div class="dbottom"><div class="dbot-pill"></div></div>
+</div>
+
+<div id="d-timer-ov" class="dtimer-ov">
+  <span class="dtimer-num" id="d-tc">3</span>
+</div>
+</div>
+</div>
+
+<script>
+let dtc=0, dInt=null;
+function dTimer(v){
+  const el=document.getElementById('dv-t');
+  el.textContent=v+'s';
+  el.className=parseInt(v)===0?'dsval g off':'dsval g';
+}
+function dToggleRec(btn){
+  btn.classList.toggle('or');
+  if(btn.classList.contains('or')){
+    const tv=parseInt(document.getElementById('dv-t').textContent);
+    if(tv>0) dStartTimer(tv);
+  } else {
+    clearInterval(dInt);
+    document.getElementById('d-timer-ov').style.display='none';
+  }
+}
+function dStartTimer(sec){
+  let n=sec;
+  const ov=document.getElementById('d-timer-ov');
+  const ct=document.getElementById('d-tc');
+  ov.style.display='flex'; ct.textContent=n;
+  dInt=setInterval(()=>{
+    n--;
+    if(n<=0){clearInterval(dInt);ov.style.display='none';}
+    else ct.textContent=n;
+  },1000);
+}
+function dAddTrack(){
+  dtc++;
+  const list=document.getElementById('d-track-list');
+  const names=['Voz','Guitarra','Bajo','Pad','FX'];
+  const d=document.createElement('div'); d.className='dtrack'; d.id='dt'+dtc;
+  d.innerHTML=`<div class="dtrack-top">
+    <span class="dtidx">${String(dtc).padStart(2,'0')}</span>
+    <span class="dtname">${names[(dtc-1)%names.length]} ${dtc}</span>
+    <div class="dtbtn on" onclick="this.classList.toggle('on')">Bucle</div>
+    <div class="dtbtn" onclick="this.classList.toggle('on')">Mute</div>
+  </div>
+  <div class="dvol">
+    <span class="dvlbl">vol</span>
+    <input type="range" style="flex:1;accent-color:#333" min="0" max="100" value="80" step="1">
+    <span class="dvlbl">sample</span>
+  </div>`;
+  list.appendChild(d);
+}
+function dRemTrack(){
+  if(dtc<1)return;
+  const el=document.getElementById('dt'+dtc); if(el)el.remove(); dtc--;
+}
+dAddTrack(); dAddTrack();
+</script>

@@ -1,0 +1,231 @@
+
+<style>
+  .pc-frame { background:#13151a; border-radius:10px; overflow:hidden; font-family:'Segoe UI',sans-serif; color:#d8dce8; font-size:12px; }
+  .pc-titlebar { background:#0e1014; border-bottom:1px solid #1e2128; padding:6px 12px; display:flex; align-items:center; justify-content:space-between; }
+  .pc-winbtns { display:flex; gap:6px; }
+  .pc-winbtn { width:11px; height:11px; border-radius:50%; }
+  .pc-app-name { font-size:11px; color:#555a66; letter-spacing:1.5px; text-transform:uppercase; }
+  .pc-body { display:grid; grid-template-columns:220px 1fr; grid-template-rows:auto 1fr; height:420px; }
+  .pc-left { background:#161820; border-right:1px solid #1e2128; display:flex; flex-direction:column; grid-row:1/3; }
+  .pc-right-top { background:#12141a; border-bottom:1px solid #1e2128; padding:10px 14px; }
+  .pc-right-bottom { background:#0f1116; overflow-y:auto; padding:10px 14px; }
+  .pc-right-bottom::-webkit-scrollbar { width:3px; }
+  .pc-right-bottom::-webkit-scrollbar-thumb { background:#1e2128; border-radius:2px; }
+  .sec-hdr { font-size:10px; color:#3a4055; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:8px; font-weight:500; }
+  .slider-row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .s-lbl { font-size:11px; color:#6a6f80; min-width:54px; }
+  .s-val { font-size:12px; color:#00b4e8; font-family:monospace; min-width:30px; text-align:right; }
+  .s-val.grn { color:#28e87a; }
+  .s-val.dim { color:#2c3040; }
+  input[type=range] { flex:1; accent-color:#00b4e8; cursor:pointer; }
+  input[type=range].grn { accent-color:#28e87a; }
+  .beats-row { display:flex; gap:8px; align-items:center; justify-content:center; padding:12px 0; }
+  .bc { border-radius:50%; background:#1a1d26; border:1.5px solid #222530; }
+  .bc.sm { width:34px; height:34px; }
+  .bc.md { width:46px; height:46px; background:#1e2232; border-color:#2a2e42; }
+  .bc.pulse { border-color:#00b4e8; }
+  .btn-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px; }
+  .xbtn { background:#181b24; border:1px solid #222530; color:#9aa0b4; border-radius:5px; padding:7px 4px; font-size:11px; cursor:pointer; text-align:center; transition:background .12s; }
+  .xbtn:hover { background:#1e2230; color:#d8dce8; }
+  .xbtn.on-blue { background:#0d3d54; border-color:#00b4e8; color:#00b4e8; }
+  .xbtn.on-red { background:#3d1515; border-color:#c04040; color:#e86060; }
+  .xbtn.on-grn { background:#0d3020; border-color:#28e87a; color:#28e87a; }
+  .track-card { background:#161820; border:1px solid #1e2128; border-radius:6px; padding:8px 10px; margin-bottom:6px; }
+  .track-top { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .tidx { font-size:10px; color:#2c3040; font-family:monospace; min-width:18px; }
+  .tname { font-size:12px; color:#8a90a4; flex:1; }
+  .tbtn { background:#1a1d26; border:1px solid #222530; color:#6a6f80; border-radius:4px; padding:4px 8px; font-size:10px; cursor:pointer; }
+  .tbtn.on { background:#0d3d54; border-color:#00b4e8; color:#00b4e8; }
+  .vol-row { display:flex; align-items:center; gap:6px; }
+  .vlbl { font-size:10px; color:#2c3040; }
+  .wf { flex:1; height:16px; background:#1a1d26; border-radius:3px; overflow:hidden; display:flex; align-items:flex-end; gap:1px; padding:0 2px; }
+  .wb { flex:1; background:#222530; border-radius:1px; min-width:1px; }
+  .wb.lit { background:#00b4e8; opacity:.5; }
+  .wb.pk { background:#00b4e8; opacity:.9; }
+  .left-sec { padding:10px 12px; border-bottom:1px solid #1e2128; }
+  .left-sec:last-child { border-bottom:none; flex:1; }
+  .app-logo { padding:12px 14px 8px; border-bottom:1px solid #1e2128; }
+  .logo-txt { font-size:13px; font-weight:500; color:#d8dce8; letter-spacing:1px; }
+  .logo-sub { font-size:10px; color:#3a4055; letter-spacing:2px; text-transform:uppercase; }
+  .status-dot { width:7px; height:7px; border-radius:50%; display:inline-block; margin-right:5px; }
+  .sd-grn { background:#28e87a; }
+  .sd-red { background:#e86060; }
+  .sd-dim { background:#2c3040; }
+  .status-row { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #1e2128; }
+  .timer-overlay { display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.75); position:absolute; top:0;left:0;right:0;bottom:0; border-radius:10px; }
+  .timer-big { font-size:72px; font-weight:700; color:#ffe040; font-family:monospace; }
+</style>
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden">FPS Loopstation — mockup PC 16:9</h2>
+
+<div style="padding:8px; background:var(--color-background-secondary); border-radius:var(--border-radius-lg);">
+<div style="position:relative">
+<div class="pc-frame">
+
+  <div class="pc-titlebar">
+    <div class="pc-winbtns">
+      <div class="pc-winbtn" style="background:#c04040"></div>
+      <div class="pc-winbtn" style="background:#c07820"></div>
+      <div class="pc-winbtn" style="background:#28802a"></div>
+    </div>
+    <span class="pc-app-name">FPS Loopstation</span>
+    <div style="width:50px"></div>
+  </div>
+
+  <div class="pc-body">
+
+    <div class="pc-left">
+      <div class="app-logo">
+        <div class="logo-txt">FPS</div>
+        <div class="logo-sub">Loopstation</div>
+      </div>
+      <div class="status-row">
+        <span><span class="status-dot sd-grn"></span><span style="font-size:10px;color:#3a4055">Play</span></span>
+        <span><span class="status-dot sd-dim" id="pc-dot-rec"></span><span style="font-size:10px;color:#3a4055">Rec</span></span>
+        <span><span class="status-dot sd-dim"></span><span style="font-size:10px;color:#3a4055">Sync</span></span>
+      </div>
+
+      <div class="left-sec">
+        <div class="sec-hdr">Ritmo</div>
+        <div class="slider-row">
+          <span class="s-lbl">Beats</span>
+          <input type="range" min="1" max="8" value="4" step="1" oninput="document.getElementById('pc-vb').textContent=this.value">
+          <span class="s-val" id="pc-vb">4</span>
+        </div>
+        <div class="slider-row">
+          <span class="s-lbl">BPM</span>
+          <input type="range" min="40" max="240" value="120" step="1" oninput="document.getElementById('pc-bpm').textContent=this.value">
+          <span class="s-val" id="pc-bpm">120</span>
+        </div>
+        <div class="slider-row">
+          <span class="s-lbl">Barras</span>
+          <input type="range" min="1" max="16" value="4" step="1" oninput="document.getElementById('pc-bars').textContent=this.value">
+          <span class="s-val" id="pc-bars">4</span>
+        </div>
+        <div class="slider-row">
+          <span class="s-lbl" style="color:#28e87a;opacity:.8">Timer</span>
+          <input type="range" class="grn" min="0" max="16" value="0" step="1" oninput="pcTimer(this.value)">
+          <span class="s-val grn dim" id="pc-timer">0s</span>
+        </div>
+      </div>
+
+      <div class="left-sec">
+        <div class="sec-hdr">Global</div>
+        <div class="btn-grid" style="margin-bottom:4px">
+          <div class="xbtn" onclick="this.classList.toggle('on-grn')"><i class="ti ti-player-play" aria-hidden="true"></i> Beat</div>
+          <div class="xbtn" onclick="togglePcRec(this)"><i class="ti ti-microphone" aria-hidden="true"></i> Rec</div>
+          <div class="xbtn" onclick="this.classList.toggle('on-blue')"><i class="ti ti-clock" aria-hidden="true"></i> Lim</div>
+        </div>
+        <div class="btn-grid">
+          <div class="xbtn"><i class="ti ti-player-play" aria-hidden="true"></i> Play</div>
+          <div class="xbtn"><i class="ti ti-player-stop" aria-hidden="true"></i> Stop</div>
+          <div class="xbtn"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</div>
+        </div>
+      </div>
+
+      <div class="left-sec" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end">
+        <button class="xbtn" style="width:100%;margin-bottom:4px" onclick="this.classList.toggle('on-blue')">
+          <i class="ti ti-settings" aria-hidden="true"></i> Configuration
+        </button>
+      </div>
+    </div>
+
+    <div class="pc-right-top">
+      <div class="sec-hdr">Metrónomo</div>
+      <div class="beats-row">
+        <div class="bc sm" id="pc-b0"></div>
+        <div class="bc sm" id="pc-b1"></div>
+        <div class="bc md pulse" id="pc-b2"></div>
+        <div class="bc sm" id="pc-b3"></div>
+      </div>
+    </div>
+
+    <div class="pc-right-bottom" id="pc-tracks">
+      <div class="sec-hdr" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Tracks</span>
+        <span style="display:flex;gap:4px">
+          <span class="xbtn" style="padding:2px 8px;cursor:pointer" onclick="pcAddTrack()">+</span>
+          <span class="xbtn" style="padding:2px 8px;cursor:pointer" onclick="pcRemTrack()">−</span>
+        </span>
+      </div>
+      <div id="pc-track-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="pc-timer-overlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.78);border-radius:10px;align-items:center;justify-content:center">
+  <span class="timer-big" id="pc-timer-count">3</span>
+</div>
+</div>
+</div>
+
+<script>
+let pcTc=0, pcInterval=null;
+function pcTimer(v){
+  const el=document.getElementById('pc-timer');
+  el.textContent=v+'s';
+  el.className=parseInt(v)===0?'s-val grn dim':'s-val grn';
+}
+function togglePcRec(btn){
+  btn.classList.toggle('on-red');
+  const dot=document.getElementById('pc-dot-rec');
+  if(btn.classList.contains('on-red')){
+    dot.className='status-dot sd-red';
+    const tv=parseInt(document.getElementById('pc-timer').textContent);
+    if(tv>0) pcStartTimer(tv);
+  } else {
+    dot.className='status-dot sd-dim';
+    clearInterval(pcInterval);
+    document.getElementById('pc-timer-overlay').style.display='none';
+  }
+}
+function pcStartTimer(sec){
+  let n=sec;
+  const ov=document.getElementById('pc-timer-overlay');
+  const ct=document.getElementById('pc-timer-count');
+  ov.style.display='flex'; ct.textContent=n;
+  pcInterval=setInterval(()=>{
+    n--;
+    if(n<=0){clearInterval(pcInterval);ov.style.display='none';}
+    else ct.textContent=n;
+  },1000);
+}
+function pcMakeWf(){
+  const w=document.createElement('div'); w.className='wf';
+  for(let i=0;i<20;i++){
+    const b=document.createElement('div'); b.className='wb';
+    const h=15+Math.round(Math.sin(i*0.7)*40+Math.random()*40);
+    b.style.height=h+'%';
+    if(Math.random()>.7) b.classList.add(Math.random()>.85?'pk':'lit');
+    w.appendChild(b);
+  } return w;
+}
+function pcAddTrack(){
+  pcTc++;
+  const list=document.getElementById('pc-track-list');
+  const names=['Voz','Guitarra','Bajo','Teclado','Pad','FX','Perc'];
+  const d=document.createElement('div'); d.className='track-card'; d.id='pct'+pcTc;
+  const top=document.createElement('div'); top.className='track-top';
+  top.innerHTML=`<span class="tidx">${String(pcTc).padStart(2,'0')}</span>`;
+  const nm=document.createElement('span'); nm.className='tname';
+  nm.textContent=names[(pcTc-1)%names.length]+' '+pcTc;
+  nm.contentEditable=true; nm.style.outline='none';
+  top.appendChild(nm);
+  top.innerHTML+=`<div class="tbtn on" onclick="this.classList.toggle('on')">Bucle</div>
+  <div class="tbtn" onclick="this.classList.toggle('on')">Mute</div>`;
+  d.appendChild(top);
+  const vr=document.createElement('div'); vr.className='vol-row';
+  vr.innerHTML=`<span class="vlbl">vol</span>`;
+  vr.appendChild(pcMakeWf());
+  vr.innerHTML+=`<input type="range" style="width:70px;accent-color:#555" min="0" max="100" value="80" step="1">
+  <span class="vlbl">sample</span>`;
+  d.appendChild(vr);
+  list.appendChild(d);
+}
+function pcRemTrack(){
+  if(pcTc<1)return;
+  const el=document.getElementById('pct'+pcTc); if(el)el.remove(); pcTc--;
+}
+pcAddTrack(); pcAddTrack();
+</script>
