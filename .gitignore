@@ -7,3 +7,5 @@ build/
 bin/
 *.spec
 *.swp
+*.json
+*.toml

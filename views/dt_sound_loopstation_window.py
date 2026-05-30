@@ -271,7 +271,32 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.work = False
         self.loopstation.break_loop_of_all_tracks()
         self.metronome.reset_counts()
+
+        # Reset view
         self.build_metronome_circles()
+
+    def on_beats_per_bar(self, widget, value):
+        self.metronome.set_beats_per_bar( value )
+        self.metronome.reset_counts()
+        self.loopstation.update_all_track_bars()
+
+        # Reset view
+        self.update_beats_per_bar_widgets()
+        self.update_track_options_widgets()
+        self.build_metronome_circles()
+
+    def on_bpm(self, widget, value):
+        self.metronome.set_bpm( value )
+        self.metronome.reset_counts()
+        self.loopstation.update_all_track_bars()
+
+        # Reset view
+        self.update_bpm_widgets()
+        self.update_track_options_widgets()
+
+    def on_bars_to_record(self, widget, value):
+        self.recorder_controller.record_bars = value
+        self.update_bars_to_record_widgets()
 
     # Init widgets
     def init_slider_bpm(self):
@@ -445,11 +470,14 @@ class DTSoundLoopstationWindow(ScreenAndroidReady):
         self.init_widget_images()
         self.init_limit_record()
 
-        # Bind sin Init
+        # Bind
         self.togglebutton_play_metronome_beat.bind( on_press=self.on_play_metronome_beat )
         self.button_play_all_tracks.bind( state=self.on_play_loop_of_all_tracks )
         self.button_stop_all_tracks.bind( state=self.on_break_loop_of_all_tracks )
         self.button_restart_all_tracks.bind( state=self.on_reset_loop_of_all_tracks )
+        self.slider_bars_to_record.bind( value=self.on_bars_to_record )
+        self.slider_beats_per_bar.bind( value=self.on_beats_per_bar )
+        self.slider_bpm.bind( value=self.on_bpm )
 
         # Update widgets
         self.update_bpm_widgets()
