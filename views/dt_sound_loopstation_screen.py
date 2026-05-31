@@ -2,7 +2,7 @@
 from functools import partial
 
 # Texto
-from core.text_util import ignore_text_filter, PREFIX_NUMBER
+from utils.text_util import ignore_text_filter, PREFIX_NUMBER
 
 # Engine
 from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
