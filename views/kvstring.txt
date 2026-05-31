@@ -63,8 +63,15 @@
 
                 text: "Configuration"
 
+        # Seccion 2 | Metronomo
+        BoxLayout:
+            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            orientation: "horizontal"
+            size_hint: (1.0, 0.10)
+            valign: "top"
+            id: _hbox_metronome_circles
 
-        # Seccion 2 | Configurar Ritmo
+        # Seccion 3 | Configurar Ritmo
         BoxLayout:
             padding: (self.size[0]*0.025, self.size[1]*0.025)
             orientation: "vertical"
@@ -163,16 +170,6 @@
                     id: _label_timer_value
 
                     text: "0"
-
-
-
-        # Seccion 3 | Metronomo
-        BoxLayout:
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
-            orientation: "horizontal"
-            size_hint: (1.0, 0.10)
-            valign: "top"
-            id: _hbox_metronome_circles
 
         # Seccion 4 | Grabar | Opciones globales: reproducir, mute, y loop.
         BoxLayout:

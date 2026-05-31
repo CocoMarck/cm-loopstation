@@ -1,7 +1,7 @@
 import os
 import platform
 import subprocess
-from .text_util import (
+from utils.text_util import (
     read_text,
     ignore_comment,
     separe_text

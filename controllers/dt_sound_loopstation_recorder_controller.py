@@ -1,11 +1,11 @@
 from config.paths import TEMP_DIR
 from controllers.logging_controller import LoggingController
-from core.fps_sound_loopstation import FPSSoundLoopstation
+from core.dt_sound_loopstation import DTSoundLoopstation
 
 
-class FPSSoundLoopstationRecorderController():
+class DTSoundLoopstationRecorderController():
     def __init__(
-        self, fps_sound_loopstation, recorder, recorder_path=TEMP_DIR, fileformat="wav",
+        self, dt_sound_loopstation, recorder, recorder_path=TEMP_DIR, fileformat="wav",
         verbose=True, log_level="info", save_log=False
     ):
         '''
@@ -20,14 +20,14 @@ class FPSSoundLoopstationRecorderController():
             fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
         )
         recorder_controller = FPSSoundLoopstationRecorderController(
-            fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+            dt_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
         )
         ```
         '''
 
         self.recorder = recorder
-        self.fps_sound_loopstation = fps_sound_loopstation
-        self.fps_metronome = fps_sound_loopstation.fps_metronome
+        self.dt_sound_loopstation = dt_sound_loopstation
+        self.dt_metronome = dt_sound_loopstation.metronome
         self.track_name_prefix = "track"
         self.fileformat = fileformat
         self.recorder_path = recorder_path
@@ -36,16 +36,16 @@ class FPSSoundLoopstationRecorderController():
         self.record = False
         self.limit_record = False
         self.record_bars = 0
-        self.record_count_fps = 0
+        self.record_count_dt = 0
 
         # Debug
         self.logging = LoggingController(
-            name="FPSLoopstationRecorderController", filename="fps_loopstation_recorder_controller", verbose=verbose, log_level=log_level, save_log=save_log, only_the_value=True,
+            name="DTLoopstationRecorderController", filename="dt_loopstation_recorder_controller", verbose=verbose, log_level=log_level, save_log=save_log, only_the_value=True,
         )
 
 
 
-    def record_track(self, metronome_signals):
+    def record_track(self, dt, metronome_signals):
         '''
         Grabar solo en la detección del primer tempo.
         Obtener señales de metronomo, y los enphasis del beat del metronomo.
@@ -53,54 +53,57 @@ class FPSSoundLoopstationRecorderController():
         Este método, hace la chamba principal.
         '''
         track_id = None
-        some_track_is_in_focus = self.fps_sound_loopstation.some_temp_track_is_in_focus()
+        some_track_is_in_focus = self.dt_sound_loopstation.some_temp_track_is_in_focus()
         saved_sound_limit_reached = (
-            self.fps_sound_loopstation.temp_saved_sound_limit_reached() and
+            self.dt_sound_loopstation.temp_saved_sound_limit_reached() and
             self.recorder.state == "stop" and (not some_track_is_in_focus)
         )
-        number_of_track = self.fps_sound_loopstation.count_temp_sound
+        number_of_track = self.dt_sound_loopstation.count_temp_sound
         if saved_sound_limit_reached:
             # Limite de grabaciones alcanzado. Y no hay track temp en focus.
             # Obtener numero de pista en focus
             self.record = False
         if some_track_is_in_focus:
-            number_of_track = self.fps_sound_loopstation.get_focused_temp_track_id()
+            number_of_track = self.dt_sound_loopstation.get_focused_temp_track_id()
             track_id = number_of_track
 
 
         limit_record = self.limit_record and (self.record_bars > 0)
         start_record = (
-            metronome_signals['frame_before_the_bar'] and self.record and
+            metronome_signals['step_before_the_bar'] and self.record and
             self.recorder.state == "stop"
         )
         if start_record:
             # Empezo el primer beat, esta activado el record, y esta no esta parador el recorder.
-            self.recorder.output_filename = self.recorder_path.joinpath(
-                f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
-            )
+            if some_track_is_in_focus:
+                self.recorder.output_filename = self.dt_sound_loopstation.get_track(track_id)['source']
+            else:
+                self.recorder.output_filename = self.recorder_path.joinpath(
+                    f'{self.track_name_prefix}-{number_of_track}.{self.fileformat}'
+                )
             self.recorder.record()
 
-        count_fps = self.record_count_fps
-        is_count_fps, stop_record, save_record_as_track = False, False, False
+        count_dt = self.record_count_dt
+        is_count_dt, stop_record, save_record_as_track = False, False, False
         if self.recorder.state == "record":
             # Esta grabando
             if limit_record:
                 # Determinar limite, y si llego o paso el limite, parar grabación
-                if count_fps >= self.fps_metronome.get_bars_to_fps(self.record_bars):
+                if count_dt >= self.dt_metronome.get_bars_to_seconds(self.record_bars):
                     self.record = False
-                    metronome_signals['frame_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
+                    metronome_signals['step_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
 
-            is_count_fps = self.record
-            stop_record = (not self.record) and (metronome_signals['frame_before_the_bar'])
-            if is_count_fps:
+            is_count_dt = self.record
+            stop_record = (not self.record) and (metronome_signals['step_before_the_bar'])
+            if is_count_dt:
                 # Contar fps
-                self.record_count_fps += 1
+                self.record_count_dt += dt
             else:
-                self.record_count_fps = 0
+                self.record_count_dt = 0
             if stop_record:
                 # Forzar parar grabación y guardar
                 self.recorder.stop()
-                self.fps_sound_loopstation.save_track(
+                self.dt_sound_loopstation.save_track(
                     track_id=track_id,
                     path=self.recorder.output_filename, loop=True, sample=False
                 )
@@ -109,8 +112,8 @@ class FPSSoundLoopstationRecorderController():
         return {
             'start_record': start_record,
             'limit_record': limit_record,
-            'count_fps': count_fps,
-            'is_count_fps': is_count_fps,
+            'count_dt': count_dt,
+            'is_count_dt': is_count_dt,
             'stop_record': stop_record,
             'number_of_track': number_of_track,
             'some_track_is_in_focus': some_track_is_in_focus,
@@ -132,8 +135,8 @@ class FPSSoundLoopstationRecorderController():
             message = (
                 f"{state} | number of track {record_track_signals['number_of_track']}"
                 f" | limit record {record_track_signals['limit_record']}"
-                f" | is_count_fps {record_track_signals['is_count_fps']}"
-                f" | count fps {record_track_signals['count_fps']}"
+                f" | is count dt {record_track_signals['is_count_dt']}"
+                f" | count dt {record_track_signals['count_dt']}"
                 f" | focus {record_track_signals['some_track_is_in_focus']}"
             )
             self.logging.log( message=message, log_type="info" )
@@ -141,9 +144,9 @@ class FPSSoundLoopstationRecorderController():
 
 
 
-    def update(self, metronome_signals):
+    def update(self, dt, metronome_signals):
         # Chamba, lista.
-        signals = self.record_track( metronome_signals=metronome_signals )
+        signals = self.record_track( dt, metronome_signals=metronome_signals )
 
         self.debug_record_track( signals )
 

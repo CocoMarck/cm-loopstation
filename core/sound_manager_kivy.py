@@ -1,20 +1,12 @@
 from controllers.logging_controller import LoggingController
+from entities.isound_manager import ISoundManager
 from kivy.core.audio import SoundLoader # Para sound
 
 
-class SoundManager():
-    def __init__(
-            self, volume=float(1), verbose=True, log_level="debug", save_log=False
-        ):
-        self.__DEFAULT_VOLUME = float(1)
-        self.__MAX_VOLUME = float(1)
-        self.__MIN_VOLUME = float(0)
-        self.volume = volume
-
-        # Debug
-        self.logging = LoggingController(
-            name="SondLoader", filename="sound_loader", verbose=verbose,
-            log_level=log_level, save_log=save_log, only_the_value=True,
+class SoundManagerKivy(ISoundManager):
+    def __init__( self, *args, **kwargs ):
+        super().__init__(
+            *args, name="SoundManagerKivy", filename="sound_manager_kivy", **kwargs
         )
 
     def is_sound_playing(self, sound):
@@ -35,13 +27,6 @@ class SoundManager():
         '''
         sound.stop()
 
-    def validate_volume(self, volume):
-        if volume > self.__MAX_VOLUME:
-            volume = self.__MAX_VOLUME
-        elif volume < self.__MIN_VOLUME:
-            volume = self.__MIN_VOLUME
-        return volume
-
     def set_sound_volume(self, sound, volume=float(1) ):
         '''
         Establecer volumen a sonido
@@ -49,7 +34,7 @@ class SoundManager():
         sound.volume = self.validate_volume(volume)
 
     def set_sound_default_volume(self, sound):
-        self.set_sound_volume( sound, self.__DEFAULT_VOLUME)
+        self.set_sound_volume( sound, self._DEFAULT_VOLUME)
 
     def mute_sound(self, sound):
         '''
@@ -70,4 +55,5 @@ class SoundManager():
 
         return sound
 
-
+    def get_sound_length(self, sound) -> float:
+        return sound.length
