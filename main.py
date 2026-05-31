@@ -89,8 +89,8 @@ Constructor de aplicación
 from android import api_version
 
 ## Forzar FPS
-#Config.set('graphics', 'vsync', '0')
-#Config.set('graphics', 'maxfps', str(FPS_GUI))
+Config.set('graphics', 'vsync', '0')
+Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
 vertical_padding_offsets = [0,0,0,0]
@@ -125,14 +125,13 @@ class FPSSoundLoopstationApp(App):
         _screen.build()
 
         # Delta Time, GUI loop
-        Clock.schedule_interval(_screen.update, 0.0)
-        #Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
+        Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
 
-        return screen
+        return _screen
 
     # Pause y resume an android
     def on_pause(self):
-        # Guardar al cerrar
+        # Guardar al pausar
         try:
             config_engine_controller.update_beats( metronome.get_beats_per_bar() )
             config_engine_controller.update_bpm( metronome.get_bpm() )
