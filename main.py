@@ -67,7 +67,6 @@ engine = DTSoundLoopstationEngine(
 )
 
 # App
-## Forzar FPS
 from kivy.config import Config
 Config.set('kivy', 'window_icon', str(ICON))
 
@@ -90,9 +89,8 @@ Constructor de aplicación
 from android import api_version
 
 ## Forzar FPS
-from kivy.config import Config
-Config.set('graphics', 'vsync', '0')
-Config.set('graphics', 'maxfps', str(FPS_GUI))
+#Config.set('graphics', 'vsync', '0')
+#Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
 vertical_padding_offsets = [0,0,0,0]
@@ -127,29 +125,31 @@ class FPSSoundLoopstationApp(App):
         _screen.build()
 
         # Delta Time, GUI loop
-        Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
+        Clock.schedule_interval(_screen.update, 0.0)
+        #Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
 
         return screen
 
     # Pause y resume an android
     def on_pause(self):
-        return self._screen.stop_work()
+        # Guardar al cerrar
+        try:
+            config_engine_controller.update_beats( metronome.get_beats_per_bar() )
+            config_engine_controller.update_bpm( metronome.get_bpm() )
+            config_engine_controller.update_play_beat( screen.play_metronome_beat )
+
+            config_engine_controller.update_limit_record( recorder_controller.limit_record )
+            config_engine_controller.update_record_bars( recorder_controller.record_bars )
+
+            config_engine_controller.update_seconds( timer.get_seconds() )
+        except Exception as e:
+            print(f"ERROR: {e}.")
+        self._screen.stop_work()
+        return True
 
     def on_resume(self):
         self._screen.start_work()
+        return True
 
 if __name__ == '__main__':
     FPSSoundLoopstationApp().run()
-
-    # Guardar al cerrar
-    try:
-        config_engine_controller.update_beats( metronome.get_beats_per_bar() )
-        config_engine_controller.update_bpm( metronome.get_bpm() )
-        config_engine_controller.update_play_beat( screen.play_metronome_beat )
-
-        config_engine_controller.update_limit_record( recorder_controller.limit_record )
-        config_engine_controller.update_record_bars( recorder_controller.record_bars )
-
-        config_engine_controller.update_seconds( timer.get_seconds() )
-    except Exception as e:
-        print(f"ERROR: {e}.")
