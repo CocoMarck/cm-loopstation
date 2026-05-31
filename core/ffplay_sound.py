@@ -25,9 +25,10 @@ class FFPlaySound:
 
     def set_volume(self, volume):
         self.volume = volume
-        if self.is_playing():
-            self.stop()
-            self.play()
+        # Mata proceso, y pos no es la idea. Por ahora no hace nada.
+        #if self.is_playing():
+            #self.stop()
+            #self.play()
 
     def _probe_length(self) -> float:
         result = subprocess.run(
