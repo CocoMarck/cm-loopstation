@@ -87,21 +87,39 @@ from utils.colors import (
 '''
 Constructor de aplicación
 '''
+from android import api_version
+
 ## Forzar FPS
-from kivy.config import Config
-Config.set('graphics', 'vsync', '0')
-Config.set('graphics', 'maxfps', str(FPS_GUI))
+#from kivy.config import Config
+#Config.set('graphics', 'vsync', '0')
+#Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
+vertical_padding_offsets = [0,0,0,0]
+horizontal_padding_offsets = [0,0,0,0]
+if api_version > 35:
+    # Android 15 (API 35) y 16 son los que fuerzan el Edge-to-Edge
+    # Standard de celus: `16:9`, `20:9`, `19:9`.
+    vertical_padding_offsets=[0,0.05, 0,0.08]
+    horizontal_padding_offsets=[0,0.05, 0.08,0]
+
 screen = DTSoundLoopstationScreen(
     engine=engine,
-    vertical_padding_offsets=[0,0.05, 0,0.08], # Margen pa celu
-    horizontal_padding_offsets=[0,0.05, 0.08,0], # Margen pa celu
+    vertical_padding_offsets=vertical_padding_offsets,
+    horizontal_padding_offsets=horizontal_padding_offsets,
     config_controller=config_gui_controller, beat_controller=beat_controller,
     play_metronome_beat=config_engine.play_beat
 )
 class FPSSoundLoopstationApp(App):
     def build(self):
+        # Permisos
+        from android.permissions import request_permissions, Permission
+        request_permissions([
+            Permission.RECORD_AUDIO,
+            Permission.READ_EXTERNAL_STORAGE,
+            Permission.WRITE_EXTERNAL_STORAGE
+        ])
+
         # Inicializar
         _screen = screen
 
@@ -109,6 +127,7 @@ class FPSSoundLoopstationApp(App):
         _screen.build()
 
         # Delta Time, GUI loop
+        #Clock.schedule_interval(_screen.update, 1.0/FPS_GUI) # Forzar fps
         Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
 
         return screen
