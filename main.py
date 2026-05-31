@@ -90,9 +90,9 @@ Constructor de aplicación
 from android import api_version
 
 ## Forzar FPS
-#from kivy.config import Config
-#Config.set('graphics', 'vsync', '0')
-#Config.set('graphics', 'maxfps', str(FPS_GUI))
+from kivy.config import Config
+Config.set('graphics', 'vsync', '0')
+Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
 vertical_padding_offsets = [0,0,0,0]
@@ -127,7 +127,6 @@ class FPSSoundLoopstationApp(App):
         _screen.build()
 
         # Delta Time, GUI loop
-        #Clock.schedule_interval(_screen.update, 1.0/FPS_GUI) # Forzar fps
         Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
 
         return screen
