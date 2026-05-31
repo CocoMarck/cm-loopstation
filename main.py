@@ -1,5 +1,5 @@
 # Engine
-from core.microphone_recorder import MicrophoneRecorder
+from core.android_microphone_recorder import AndroidMicrophoneRecorder
 from core.dt_metronome import DTMetronome
 from core.dt_sound_loopstation import DTSoundLoopstation
 from controllers.dt_sound_loopstation_recorder_controller import DTSoundLoopstationRecorderController
@@ -54,10 +54,10 @@ loopstation = DTSoundLoopstation(
     dt_metronome=metronome, sound_manager=sound_manager_kivy, volume=config_engine.volume
 
 )
-microphone_recorder = MicrophoneRecorder()
+microphone_recorder = AndroidMicrophoneRecorder()
 recorder_controller = DTSoundLoopstationRecorderController(
     dt_sound_loopstation=loopstation, recorder=microphone_recorder,
-    recorder_path=TEMP_DIR, fileformat="wav"
+    recorder_path=ANDROID_PATH, fileformat="wav"
 )
 recorder_controller.limit_record = config_engine.limit_record
 recorder_controller.record_bars = config_engine.record_bars
