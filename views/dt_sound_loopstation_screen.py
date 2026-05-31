@@ -2,7 +2,7 @@
 from functools import partial
 
 # Texto
-from core.text_util import ignore_text_filter, PREFIX_NUMBER
+from utils.text_util import ignore_text_filter, PREFIX_NUMBER
 
 # Engine
 from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
@@ -62,7 +62,6 @@ timer_image = Image( source=str(TIMER_IMAGE), allow_stretch=True )
 
 # Custom Widgets
 from views.pykivy.widgets.sticky_image import StickyImage
-from views.pykivy.widgets.loopstation_circle import LoopstationCircle
 from views.pykivy.widgets.popup_information import PopupInformation
 from views.pykivy.widgets.popup_grid_layout import PopupGridLayout
 from views.pykivy.widgets.screen_android_ready import ScreenAndroidReady
