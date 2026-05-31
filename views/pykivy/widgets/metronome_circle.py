@@ -2,13 +2,13 @@ from kivy.uix.widget import Widget
 from kivy.graphics import Color, Ellipse
 
 # Objeto criculos del metronomo
-class LoopstationCircle(Widget):
-    def __init__(self, **kwargs):
+class MetronomeCircle(Widget):
+    def __init__(self, color=(1,1,1,1), **kwargs):
         super().__init__(**kwargs)
         self.size = (32,32)
 
         with self.canvas:
-            self.color = Color(1,1,1,1)
+            self.color = Color( color[0], color[1], color[2], color[3] )
             self.ellipse = Ellipse(pos=self.pos, size=self.size)
 
         # Cuando cambie la posición o tamaño del widget → mover el círculo
