@@ -55,4 +55,5 @@ class SoundManagerKivy(ISoundManager):
 
         return sound
 
-
+    def get_sound_length(self, sound) -> float:
+        return sound.length

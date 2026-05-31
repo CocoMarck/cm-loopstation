@@ -32,7 +32,7 @@ class ISoundManager():
     def get_sound(self, path):
         pass
 
-    def is_sound_playing(self, sound):
+    def is_sound_playing(self, sound) -> bool:
         pass
 
     def set_sound_volume(self, sound, volume):
@@ -42,4 +42,7 @@ class ISoundManager():
         pass
 
     def mute_sound(self, sound):
+        pass
+
+    def get_sound_length(self, sound) -> float:
         pass

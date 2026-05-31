@@ -126,20 +126,21 @@ class DTSoundLoopstation():
         # Guardando
         if limit_reached or update_track:
             sound = self.sound_manager.get_sound( path )
+            length = self.sound_manager.get_sound_length( sound )
             self.sound_manager.set_sound_volume( sound, self.volume )
             self.dict_track.update(
                 {
                     track_id: {
                         "sound": sound,
                         "source": path,
-                        "length": sound.length,
+                        "length": length,
                         "volume": self.volume,
                         "mute": 0,
 
                         "loop": loop,
                         "sample": sample,
                         "focus": False,
-                        "bars": self.metronome.get_seconds_to_bars( sound.length ),
+                        "bars": self.metronome.get_seconds_to_bars( length ),
                         "count_dt": 0
                     }
                 }

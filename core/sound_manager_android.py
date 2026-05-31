@@ -49,3 +49,8 @@ class SoundManagerAndroid(ISoundManager):
     def mute_sound(self, sound):
         return self.set_sound_volume( sound, 0.0 )
 
+    def get_sound_length(self, sound):
+        if sound:
+            return sound.getDuration() / 1000.0  # segundos
+        return 0.0
+

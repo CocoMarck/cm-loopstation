@@ -1,5 +1,6 @@
 from entities.isound_manager import ISoundManager
 from core.ffplay_sound import FFPlaySound
+import atexit
 
 class SoundManagerFFPlay(ISoundManager):
     def __init__(self, *args, **kwargs):
@@ -9,7 +10,9 @@ class SoundManagerFFPlay(ISoundManager):
         '''
         Debe aguantar path, y url directa.
         '''
-        return FFPlaySound(path, self._DEFAULT_VOLUME)
+        sound = FFPlaySound(path, self._DEFAULT_VOLUME)
+        atexit.register(sound.stop)
+        return sound
 
     def play_sound(self, sound):
         sound.play()
@@ -29,3 +32,5 @@ class SoundManagerFFPlay(ISoundManager):
     def mute_sound(self, sound):
         return self.set_sound_volume( sound, 0.0 )
 
+    def get_sound_length(self, sound) -> float:
+        return sound.get_length()
