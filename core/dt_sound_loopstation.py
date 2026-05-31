@@ -1,28 +1,23 @@
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 
 # Uso de para loopstation
-from .fps_metronome import (FPSMetronome, BPM_IN_SECONDS)
-from .sound_manager import SoundManager
+from .dt_metronome import DTMetronome
+from .sound_manager_kivy import SoundManagerKivy
 
 # Rutas en donde guardar los samples y temp audios
 from config.paths import TEMP_DIR, TEMPO_FILES
 
 
-class FPSSoundLoopstation():
+class DTSoundLoopstation():
     def __init__(
-        self, fps=20, bpm=120, beats_per_bar=3, beats_limit_per_bar=0, bpm_limit=0,
-        volume=1, play_beat=False, beat_play_mode='neutral', save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3
+        self, dt_metronome, sound_manager, volume=1, save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3
     ):
         '''
         Para reproducir sonidos en bucle, sonidos sincronizados con el metronomo.
         '''
-        self.fps_metronome = FPSMetronome(
-            fps=fps, bpm=bpm, beats_per_bar=beats_per_bar, bpm_limit=bpm_limit,
-            beats_limit_per_bar=beats_limit_per_bar, volume=volume, play_beat=play_beat, beat_play_mode=beat_play_mode, save_log=save_log, log_level=log_level, verbose=verbose
-        )
-        self.sound_manager = self.fps_metronome.sound_manager
+        self.metronome = dt_metronome
+        self.sound_manager = sound_manager
         self.volume = volume
-
 
 
         # Pistas
@@ -38,15 +33,13 @@ class FPSSoundLoopstation():
 
         # Debug
         self.logging = LoggingController(
-            name="FPSSoundLoopstation", filename="fps_sound_loopstation", verbose=True,
+            name="DTSoundLoopstation", filename="dt_sound_loopstation", verbose=True,
             log_level="debug", save_log=False, only_the_value=True,
         )
 
 
     def get_beats_per_bar(self):
-        return self.fps_metronome.beats_per_bar
-
-
+        return self.metronome.get_beats_per_bar()
 
 
     def sample_saved_sound_limit_reached(self):
@@ -133,22 +126,22 @@ class FPSSoundLoopstation():
         # Guardando
         if limit_reached or update_track:
             sound = self.sound_manager.get_sound( path )
+            length = self.sound_manager.get_sound_length( sound )
             self.sound_manager.set_sound_volume( sound, self.volume )
             self.dict_track.update(
                 {
                     track_id: {
                         "sound": sound,
                         "source": path,
-                        "length": sound.length,
+                        "length": length,
                         "volume": self.volume,
                         "mute": 0,
 
                         "loop": loop,
                         "sample": sample,
                         "focus": False,
-                        "bars": self.fps_metronome.get_seconds_to_bars( sound.length ),
-                        "length_in_fps": self.fps_metronome.get_seconds_to_fps( sound.length ),
-                        "count_fps": 0
+                        "bars": self.metronome.get_seconds_to_bars( length ),
+                        "count_dt": 0
                     }
                 }
             )
@@ -188,7 +181,7 @@ class FPSSoundLoopstation():
         self.logging.log( message=message, log_type=log_type )
 
 
-    def playback_track(self, metronome_signals):
+    def playback_track(self, dt, metronome_signals):
         '''
         Reproduce las pistas, de manera sincronizada, y con comases determinados, por la duración en segundos del sonido.
         Depende de `determine_current_beat`
@@ -212,22 +205,22 @@ class FPSSoundLoopstation():
                 if starting:
                     self.sound_manager.play_sound( track['sound'] )
 
-                real_count_fps = track['count_fps']
-                stopping = real_count_fps >= track['length_in_fps']-1
+                real_count_dt = track['count_dt']
+                stopping = real_count_dt >= track['length']-dt
                 if stopping:
                     self.sound_manager.stop_sound( track['sound'] )
 
                 playing = self.sound_manager.is_sound_playing( track['sound'] )
                 if playing:
-                    track['count_fps'] += 1
+                    track['count_dt'] += dt
                 else:
-                    track['count_fps'] = 0
+                    track['count_dt'] = 0
 
                 # Agregar ids de track iniciando o parando
                 if starting:
-                    ids_track_starting.append( [track_id, real_count_fps] )
+                    ids_track_starting.append( [track_id, real_count_dt] )
                 if stopping:
-                    ids_track_stopping.append( [track_id, real_count_fps] )
+                    ids_track_stopping.append( [track_id, real_count_dt] )
 
         return {
             'track_starting': ids_track_starting,
@@ -236,11 +229,11 @@ class FPSSoundLoopstation():
 
     def debug_playback_track(self, playback_track_signals={}):
         for signal in playback_track_signals.keys():
-            for track_id, count_fps in playback_track_signals[signal]:
+            for track_id, count_dt in playback_track_signals[signal]:
                 track = self.dict_track[track_id]
                 text = (
                  f"{signal}: {track_id} | sample {track['sample']} | `{track['source']}` | "
-                 f"length_in_fps: `{count_fps}`/`{track['length_in_fps']}`"
+                 f"length: `{count_dt}`/`{track['length']}`"
                 )
                 self.logging.log( message=text, log_type="debug" )
 
@@ -286,7 +279,7 @@ class FPSSoundLoopstation():
     def stop_track_sound(self, track_id):
         # Parar sonido de pista
         self.sound_manager.stop_sound( self.dict_track[track_id]['sound'] )
-        self.dict_track[track_id]["count_fps"] = 0
+        self.dict_track[track_id]["count_dt"] = 0
 
 
     def break_track_loop(self, track_id):
@@ -333,11 +326,10 @@ class FPSSoundLoopstation():
 
     def update_track_bars(self, track_id):
         '''
-        Actualizar barras de pista
+        Actualizar barras de pistas
         '''
         track = self.dict_track[track_id]
-        track["bars"] = self.fps_metronome.get_seconds_to_bars( track["length"] )
-        track["length_in_fps"] = self.fps_metronome.get_seconds_to_fps( track["length"] )
+        track["bars"] = self.metronome.get_seconds_to_bars( track["length"] )
 
 
     def set_track_volume(self, track_id, volume):
@@ -375,10 +367,7 @@ class FPSSoundLoopstation():
         '''
         Establece volumen en objetos
         '''
-        self.volume = self.sound_manager.validate_volume( self.volume )
-        self.fps_metronome.volume = self.volume
-        self.fps_metronome.set_beat_sound_volume()
-        self.sound_manager.volume = self.volume
+        pass
 
 
     def reset_and_calculate_new_settings(self):
@@ -386,21 +375,18 @@ class FPSSoundLoopstation():
         Restablecer
         '''
         self.set_volume_on_objects()
-        self.fps_metronome.reset_settings()
+        self.metronome.reset_counts()
         self.reset_all_tracks()
 
 
-    def update(self):
-        # Bucle
-        signals = self.fps_metronome.update()
-
+    def update(self, dt, metronome_signals):
         # Pistas
-        playback_track_signals = self.playback_track( signals['metronome'] )
+        playback_track_signals = self.playback_track(dt, metronome_signals)
 
         # Debug
         self.debug_playback_track( playback_track_signals )
 
-        signals.update( {'playback_track': playback_track_signals} )
+        metronome_signals.update( {'playback_track': playback_track_signals} )
 
-        return signals
+        return metronome_signals
 

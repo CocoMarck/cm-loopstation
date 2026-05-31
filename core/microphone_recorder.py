@@ -3,7 +3,7 @@ import wave
 import threading
 import time
 import os
-from controller.logging_controller import LoggingController
+from controllers.logging_controller import LoggingController
 
 class MicrophoneRecorder():
     def __init__(
