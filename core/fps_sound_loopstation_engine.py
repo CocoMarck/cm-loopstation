@@ -1,5 +1,5 @@
 from core.fps_sound_loopstation import FPSSoundLoopstation
-from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+from controllers.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
 from core.fps_timer import FPSTimer
 from core.fps_loop import FPSLoop
 
