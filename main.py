@@ -43,7 +43,7 @@ FPS_GUI = float(config_engine.fps)
 sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
 
 # Beat controller
-beat_controller = BeatController( sound_manager_dt )
+beat_controller = BeatController( sound_manager_kivy )
 
 # FPSLoopstation Engine
 metronome = DTMetronome(
