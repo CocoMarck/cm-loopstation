@@ -143,11 +143,9 @@ class FPSSoundLoopstationApp(App):
             config_engine_controller.update_seconds( timer.get_seconds() )
         except Exception as e:
             print(f"ERROR: {e}.")
-        self._screen.stop_work()
         return True
 
     def on_resume(self):
-        self._screen.start_work()
         return True
 
 if __name__ == '__main__':
