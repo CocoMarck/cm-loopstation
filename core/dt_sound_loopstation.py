@@ -6,7 +6,7 @@ from controllers.logging_controller import LoggingController
 
 # Uso de para loopstation
 from .dt_metronome import DTMetronome
-from .sound_manager_kivy import SoundManagerKivy
+from entities.isound_manager import ISoundManager
 
 # Rutas en donde guardar los samples y temp audios
 from config.paths import TEMP_DIR, TEMPO_FILES
@@ -14,7 +14,7 @@ from config.paths import TEMP_DIR, TEMPO_FILES
 
 class DTSoundLoopstation():
     def __init__(
-        self, dt_metronome, sound_manager, volume=1, save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3
+        self, dt_metronome, sound_manager:ISoundManager, volume=1, save_log=False, log_level="debug", verbose=True, temp_saved_sound_limit=3, sample_saved_sound_limit=3
     ):
         '''
         Para reproducir sonidos en bucle, sonidos sincronizados con el metronomo.
@@ -210,8 +210,9 @@ class DTSoundLoopstation():
 
                 # Obtener valor duración aceptable para parar track
                 math_ceil_of_bar_length_minus_one_step = self.metronome.get_bars_to_seconds(
-                    math.ceil(track['bars'])
+                    math.ceil( round(track['bars'], 1) )
                 ) -dt
+                track['length'] -dt
                 # Determinar cuando parar
                 real_count_dt = track['count_dt']
                 stopping = real_count_dt >= math_ceil_of_bar_length_minus_one_step

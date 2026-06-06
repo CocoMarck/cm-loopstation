@@ -4,7 +4,7 @@ from core.dt_metronome import DTMetronome
 from core.dt_sound_loopstation import DTSoundLoopstation
 from controllers.dt_sound_loopstation_recorder_controller import DTSoundLoopstationRecorderController
 from core.sound_manager_ffplay import SoundManagerFFPlay
-from core.sound_manager_kivy import SoundManagerKivy
+#from core.sound_manager_kivy import SoundManagerKivy
 
 # Python
 from config.paths import SAMPLE_FILES, ICON
@@ -13,7 +13,7 @@ FPS = 100
 
 # Loopstation
 sound_manager_ffplay = SoundManagerFFPlay()
-sound_manager_kivy = SoundManagerKivy()
+#sound_manager_kivy = SoundManagerKivy()
 metronome = DTMetronome(bpm=120, beats_per_bar=4, bpm_limit=200, beats_limit_per_bar=16,)
 loopstation = DTSoundLoopstation(
     metronome, sound_manager_ffplay, volume=0.05

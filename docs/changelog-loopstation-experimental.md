@@ -27,13 +27,14 @@
     ```python
     # Obtener valor duración aceptable para parar track
     math_ceil_of_bar_length_minus_one_step = self.metronome.get_bars_to_seconds(
-        math.ceil(track['bars'])
+        math.ceil( round(track['bars'], 1) )
     ) -dt
     # Determinar cuando parar
     real_count_dt = track['count_dt']
     stopping = real_count_dt >= math_ceil_of_bar_length_minus_one_step
     ```
     Asi siempre cuando el bar sea `0.1` pasa a `1`. O `3.2`, pos a `4`. Es la lib `math` del python.
+    El `round(float, 1)` es para que las barras nomas un poquillo mas de lo normal, pasen a ser enteros.
 
 - Crear opcion en ajustes de fps: `0, 40, 60, y 100`.
     Listo. Jala bien.

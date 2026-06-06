@@ -96,7 +96,8 @@ Window.size = (9*50, 20*50) # Res 9:20 Celular
 #Window.size = (16*70, 9*70) # Res 16:9 PC
 #loopstation.save_track(path=SAMPLE_FILES[0], loop=True, sample=True)
 #loopstation.save_track(path=SAMPLE_FILES[1], loop=True, sample=True)
-loopstation.save_track(path=SAMPLE_FILES[3], loop=True, sample=True)
+#loopstation.save_track(path=SAMPLE_FILES[3], loop=True, sample=True)
+#loopstation.save_track(path=SAMPLE_FILES[2], loop=True, sample=True)
 screen = DTSoundLoopstationScreen(
     engine=engine,
     vertical_padding_offsets=[0,0.05, 0,0.08], # Margen pa celu
