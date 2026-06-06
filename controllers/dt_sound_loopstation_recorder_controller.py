@@ -71,6 +71,7 @@ class DTSoundLoopstationRecorderController():
         limit_record = self.limit_record and (self.record_bars > 0)
         start_record = (
             metronome_signals['step_before_the_bar'] and self.record and
+            #metronome_signals['is_first_beat'] and self.record and # Solo si graba super sincronizado. El step befor de bar jala bien.
             self.recorder.state == "stop"
         )
         if start_record:
@@ -91,10 +92,12 @@ class DTSoundLoopstationRecorderController():
                 # Determinar limite, y si llego o paso el limite, parar grabación
                 if count_dt >= self.dt_metronome.get_bars_to_seconds(self.record_bars):
                     self.record = False
-                    metronome_signals['step_before_the_bar'] = True # Forzar parar. Para evitar errores por salta de frames.
+                    metronome_signals['step_before_the_bar'] = True # Forzar parar. Para evitar errores por selto de steps.
 
             is_count_dt = self.record
-            stop_record = (not self.record) and (metronome_signals['step_before_the_bar'])
+            stop_record = (
+                (not self.record) and (metronome_signals['step_before_the_bar'])
+            )
             if is_count_dt:
                 # Contar fps
                 self.record_count_dt += dt

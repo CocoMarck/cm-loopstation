@@ -1,25 +1,32 @@
 # Loopstation
 from core.microphone_recorder import MicrophoneRecorder
-from core.fps_sound_loopstation import FPSSoundLoopstation
-from controller.fps_sound_loopstation_recorder_controller import FPSSoundLoopstationRecorderController
+from core.dt_metronome import DTMetronome
+from core.dt_sound_loopstation import DTSoundLoopstation
+from controllers.dt_sound_loopstation_recorder_controller import DTSoundLoopstationRecorderController
+from core.sound_manager_ffplay import SoundManagerFFPlay
+from core.sound_manager_kivy import SoundManagerKivy
+
+# Python
 from config.paths import SAMPLE_FILES, ICON
 
-FPS = 20
-FRAME_TIME = 1.0 / FPS
+FPS = 100
 
 # Loopstation
-loopstation = FPSSoundLoopstation(
-    fps=FPS, volume=0.05, play_beat=True, beat_play_mode='emphasis_on_first'
+sound_manager_ffplay = SoundManagerFFPlay()
+sound_manager_kivy = SoundManagerKivy()
+metronome = DTMetronome(bpm=120, beats_per_bar=4, bpm_limit=200, beats_limit_per_bar=16,)
+loopstation = DTSoundLoopstation(
+    metronome, sound_manager_ffplay, volume=0.05
 )
-metronome = loopstation.fps_metronome
-recorder_controller = FPSSoundLoopstationRecorderController(
-    fps_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
+recorder_controller = DTSoundLoopstationRecorderController(
+    dt_sound_loopstation=loopstation, recorder=MicrophoneRecorder()
 )
 #recorder_controller.record = True
 recorder_controller.limit_record = True
-recorder_controller.record_bars = 1
-#loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
-#loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+recorder_controller.record_bars = 4
+loopstation.save_track( path=SAMPLE_FILES[0], sample=True )
+loopstation.save_track( path=SAMPLE_FILES[1], sample=True )
+loopstation.save_track( path=SAMPLE_FILES[3], sample=True )
 
 # Constantes
 SCREEN_SIZE = (960, 540)
@@ -166,11 +173,8 @@ class SpriteCircle(SpriteSurf):
         self.NUMBER = number
 
     def paint_circle_by_metronome(self, signals):
-        if self.NUMBER == signals["metronome"]["current_beat"]:
-            if signals['emphasis_of_beat']['emphasis']:
-                mask = pygame.mask.from_surface( self.surf )
-                self.surf = mask.to_surface(setcolor="green", unsetcolor=(0, 0, 0, 0))
-            elif signals['emphasis_of_beat']['neutral']:
+        if self.NUMBER == signals["current_beat"]-1:
+            if signals['first_step_of_beat']:
                 mask = pygame.mask.from_surface( self.surf )
                 self.surf = mask.to_surface(setcolor="red", unsetcolor=(0, 0, 0, 0))
         else:
@@ -332,7 +336,7 @@ def create_circles(number=1):
         sprite_layer.add( circle, layer=0 )
         circle_group.add( circle )
 
-create_circles( number=loopstation.get_beats_per_bar()+1 )
+create_circles( number=loopstation.get_beats_per_bar() )
 
 
 # Método, textos
@@ -475,6 +479,9 @@ def get_screen_multiplier(screen_size=[0,0]):
 while running:
     current_screen_size = pygame.display.get_surface().get_size()
 
+    fps_tick = clock.tick(FPS)  # limits FPS
+    dt = fps_tick / 1000.0
+
     # poll for events
     # pygame.QUIT event means the user clicked X to close your window
     mouse_click = False
@@ -491,10 +498,9 @@ while running:
     screen.fill("green")
 
     # Loopstation events
-    loopstation_signals = loopstation.update()
-    recorder_controller_signals = recorder_controller.update(
-        metronome_signals=loopstation_signals['metronome']
-    )
+    metronome_signals = metronome.update(dt)
+    loopstation_signals = loopstation.update(dt, metronome_signals)
+    recorder_controller_signals = recorder_controller.update(dt, metronome_signals)
     if recorder_controller_signals["stop_record"]:
         get_track_options()
 
@@ -559,7 +565,7 @@ while running:
                     if is_play:
                         loopstation.play_loop_of_all_tracks()
                     if is_stop:
-                        loopstation.stop_loop_of_all_tracks()
+                        loopstation.break_loop_of_all_tracks()
                     if is_reset:
                         loopstation.reset_loop_of_all_tracks()
                     if is_play or is_stop or is_reset:
@@ -580,7 +586,5 @@ while running:
     scale_scene = pygame.transform.scale( scene, current_screen_size )
     screen.blit(scale_scene, (0,0))
     pygame.display.flip()
-
-    clock.tick(FPS)  # limits FPS
 
 pygame.quit()

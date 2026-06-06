@@ -206,10 +206,16 @@ class DTSoundLoopstation():
                     self.sound_manager.play_sound( track['sound'] )
 
                 real_count_dt = track['count_dt']
-                stopping = real_count_dt >= track['length']-dt
+                bars_to_rounded_seconds_minus_one_step = self.metronome.get_bars_to_seconds( round(track['bars']) )-dt
+                stopping = real_count_dt >= bars_to_rounded_seconds_minus_one_step
+                '''
+                Ahora con bars directos, ahora si es mejor, mas preciso. Porque redondeo valor.
+                El -dt es para restarle un step/frame
+                '''
                 if stopping:
                     self.sound_manager.stop_sound( track['sound'] )
 
+                # Contar dt seconds
                 playing = self.sound_manager.is_sound_playing( track['sound'] )
                 if playing:
                     track['count_dt'] += dt
@@ -218,9 +224,13 @@ class DTSoundLoopstation():
 
                 # Agregar ids de track iniciando o parando
                 if starting:
-                    ids_track_starting.append( [track_id, real_count_dt] )
+                    ids_track_starting.append(
+                        [track_id, real_count_dt, bars_to_rounded_seconds_minus_one_step]
+                    )
                 if stopping:
-                    ids_track_stopping.append( [track_id, real_count_dt] )
+                    ids_track_stopping.append(
+                        [track_id, real_count_dt, bars_to_rounded_seconds_minus_one_step]
+                    )
 
         return {
             'track_starting': ids_track_starting,
@@ -229,11 +239,12 @@ class DTSoundLoopstation():
 
     def debug_playback_track(self, playback_track_signals={}):
         for signal in playback_track_signals.keys():
-            for track_id, count_dt in playback_track_signals[signal]:
+            for track_id, count_dt, bars_to_rounded_seconds_minus_one_step in playback_track_signals[signal]:
                 track = self.dict_track[track_id]
                 text = (
                  f"{signal}: {track_id} | sample {track['sample']} | `{track['source']}` | "
-                 f"length: `{count_dt}`/`{track['length']}`"
+                 f"length: `{count_dt}`/ `{track['length']} | "
+                 f"bars to rounded seconds minus one step: `{bars_to_rounded_seconds_minus_one_step}`"
                 )
                 self.logging.log( message=text, log_type="debug" )
 

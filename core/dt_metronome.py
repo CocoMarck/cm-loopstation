@@ -140,6 +140,14 @@ class DTMetronome():
             (self._current_beat == self._beats_per_bar) and
             (real_count_dt_of_beat >= self.get_beat_interval()-dt)
         )
+        near_end_of_bar = (
+            self._current_beat == self._beats_per_bar and
+            real_count_dt_of_beat >= self.get_beat_interval()*0.95
+        )
+        '''
+        near_end_of_bar: Un 95% antes de que acabe la barra.
+        step_before_the_bar: Una barra -dt.
+        '''
 
         # Sumar dt
         self._count_dt_of_beat += dt
@@ -152,6 +160,7 @@ class DTMetronome():
             "is_last_beat": is_last_beat,
             "is_another_beat": is_another_beat,
             "step_before_the_bar": step_before_the_bar,
+            "near_end_of_bar": near_end_of_bar,
             "current_beat": self._current_beat,
             "count_dt": real_count_dt_of_beat
         }
