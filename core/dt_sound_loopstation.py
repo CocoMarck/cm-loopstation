@@ -1,3 +1,7 @@
+# Python
+import math
+
+# Controllers
 from controllers.logging_controller import LoggingController
 
 # Uso de para loopstation
@@ -180,7 +184,6 @@ class DTSoundLoopstation():
         )
         self.logging.log( message=message, log_type=log_type )
 
-
     def playback_track(self, dt, metronome_signals):
         '''
         Reproduce las pistas, de manera sincronizada, y con comases determinados, por la duración en segundos del sonido.
@@ -205,9 +208,13 @@ class DTSoundLoopstation():
                 if starting:
                     self.sound_manager.play_sound( track['sound'] )
 
+                # Obtener valor duración aceptable para parar track
+                math_ceil_of_bar_length_minus_one_step = self.metronome.get_bars_to_seconds(
+                    math.ceil(track['bars'])
+                ) -dt
+                # Determinar cuando parar
                 real_count_dt = track['count_dt']
-                bars_to_rounded_seconds_minus_one_step = self.metronome.get_bars_to_seconds( round(track['bars']) )-dt
-                stopping = real_count_dt >= bars_to_rounded_seconds_minus_one_step
+                stopping = real_count_dt >= math_ceil_of_bar_length_minus_one_step
                 '''
                 Ahora con bars directos, ahora si es mejor, mas preciso. Porque redondeo valor.
                 El -dt es para restarle un step/frame
@@ -225,11 +232,11 @@ class DTSoundLoopstation():
                 # Agregar ids de track iniciando o parando
                 if starting:
                     ids_track_starting.append(
-                        [track_id, real_count_dt, bars_to_rounded_seconds_minus_one_step]
+                        [track_id, real_count_dt, math_ceil_of_bar_length_minus_one_step ]
                     )
                 if stopping:
                     ids_track_stopping.append(
-                        [track_id, real_count_dt, bars_to_rounded_seconds_minus_one_step]
+                        [track_id, real_count_dt, math_ceil_of_bar_length_minus_one_step ]
                     )
 
         return {
@@ -239,12 +246,12 @@ class DTSoundLoopstation():
 
     def debug_playback_track(self, playback_track_signals={}):
         for signal in playback_track_signals.keys():
-            for track_id, count_dt, bars_to_rounded_seconds_minus_one_step in playback_track_signals[signal]:
+            for track_id, count_dt, math_ceil_of_bar_length_minus_one_step  in playback_track_signals[signal]:
                 track = self.dict_track[track_id]
                 text = (
                  f"{signal}: {track_id} | sample {track['sample']} | `{track['source']}` | "
                  f"length: `{count_dt}`/ `{track['length']} | "
-                 f"bars to rounded seconds minus one step: `{bars_to_rounded_seconds_minus_one_step}`"
+                 f"math ceil of bar length minus one step: `{math_ceil_of_bar_length_minus_one_step }`"
                 )
                 self.logging.log( message=text, log_type="debug" )
 

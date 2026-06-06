@@ -8,6 +8,10 @@ from utils.text_util import ignore_text_filter, PREFIX_NUMBER
 from core.dt_sound_loopstation_engine import DTSoundLoopstationEngine
 from config.constants import VERSION, DEVELOPER, WEBSITE, NAME, HELP
 
+# Controllers
+from controllers.fps_sound_loopstation.config_gui_controller import ConfigGUIController
+from controllers.fps_sound_loopstation.config_engine_controller import ConfigEngineController
+
 # Metronome
 from controllers.beat_controller import BeatController
 
@@ -40,6 +44,7 @@ from kivy.graphics import Color, Rectangle
 # PyKivy Estilo molon
 from views.kvstring import kv
 from kivy.lang import Builder
+from kivy.clock import Clock
 Builder.load_string( kv )
 
 # Colors
@@ -76,7 +81,7 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
     El tempo de preferencia que sea un entero.
     '''
     def __init__(
-        self, engine: DTSoundLoopstationEngine=None, config_controller=None, beat_controller: BeatController=None, play_metronome_beat=True, *args, **kwargs
+        self, engine: DTSoundLoopstationEngine, config_engine_controller: ConfigEngineController, config_controller:ConfigGUIController, beat_controller: BeatController, play_metronome_beat=True, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
@@ -88,6 +93,7 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
 
         # Config controller
         self.config_controller = config_controller
+        self.config_engine_controller = config_engine_controller
         self.config = self.config_controller.config
 
         # Colors
@@ -338,7 +344,7 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
     def on_settings(self, button):
         popup = PopupGridLayout(
             title=get_text("settings"),
-            cols=2, rows=2, row_default_height=self.height*0.1,
+            cols=2, rows=3, row_default_height=self.height*0.1,
             size_hint=(0.8, 0.8), text_ok=get_text('ok')
         )
         popup.second_container.add_widget( Label( text=get_text("numerical-view") ) )
@@ -354,6 +360,14 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
         spinner.bind(text=lambda inst, val: self.on_theme_selected(val))
         popup.second_container.add_widget( spinner )
 
+        popup.second_container.add_widget( Label( text="FPS" ) )
+        spinner_fps = Spinner(
+            text=str(self.config_engine_controller.config.fps),
+            values=["0", "40", "60", "100"]
+        )
+        spinner_fps.bind(text=lambda inst, val: self.on_fps_selected(val))
+        popup.second_container.add_widget( spinner_fps )
+
         popup.open()
 
     def on_numeric_metronome(self, widget, active):
@@ -363,6 +377,15 @@ class DTSoundLoopstationScreen(ScreenAndroidReady):
         if self.config_controller.update_theme(name):
             rgba = self.config_controller.get_rgba_theme( name )
             self.set_colors(rgba)
+
+    def on_fps_selected(self, val):
+        fps = int(val)
+        self.config_engine_controller.update_fps(fps)
+        self.stop_work()
+        Clock.unschedule(self.update)
+        Clock.schedule_interval(self.update, 1/fps if fps > 0 else 0)
+        self.start_work()
+
 
     # Init widgets
     def init_slider_bpm(self):

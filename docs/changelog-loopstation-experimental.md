@@ -23,7 +23,17 @@
     En otros loops mas precizos y con fps fijos respetados, 100 fps basta.
 
 - Ahora el `DTSoundLoopstation`. Paso a determinar el stop a `round( get_bars_to_seconds( track['bars']) ) -dt`. Le meti un `-dt`, para asegurar que se rompa el bucle. Pasa mas en kivy loop.
-    Var clave: `bars_to_rounded_seconds_minus_one_step`
+    Ya lo cambie y pase a hace esto:
+    ```python
+    # Obtener valor duración aceptable para parar track
+    math_ceil_of_bar_length_minus_one_step = self.metronome.get_bars_to_seconds(
+        math.ceil(track['bars'])
+    ) -dt
+    # Determinar cuando parar
+    real_count_dt = track['count_dt']
+    stopping = real_count_dt >= math_ceil_of_bar_length_minus_one_step
+    ```
+    Asi siempre cuando el bar sea `0.1` pasa a `1`. O `3.2`, pos a `4`. Es la lib `math` del python.
 
-- Crear opcion en ajustes de fps: `Sin limite, 40, 60, y 100`.
-    Aun no lo hago, pero ya esta todo listo para hacerlo, solo seria full gui code.
+- Crear opcion en ajustes de fps: `0, 40, 60, y 100`.
+    Listo. Jala bien.
