@@ -1,56 +1,34 @@
 from entities.isound_manager import ISoundManager
-
-from jnius import autoclass
-
-
-MediaPlayer = autoclass("android.media.MediaPlayer")
-
+from core.android_media_player import AndroidMediaPlayer
+import pathlib
 
 class SoundManagerAndroid(ISoundManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_sound(self, path: str):
-        '''
-        Debe aguantar path, y url directa.
-        '''
-        mp = MediaPlayer()
-        mp.setDataSource(path)
-        mp.prepare()
-
-        return mp
+    def get_sound(self, path: pathlib.Path):
+        sound = AndroidMediaPlayer( path )
+        sound.set_volume( self._DEFAULT_VOLUME )
+        return sound
 
     def play_sound(self, sound):
-        if sound:
-            sound.start()
-            return True
-        return False
+        return sound.play()
 
     def stop_sound(self, sound):
-        if sound:
-            sound.pause()
-            sound.seekTo(0)
-            return True
-        return False
+        return sound.stop()
 
     def is_sound_playing(self, sound):
-        return sound.isPlaying()
+        return sound.is_playing()
 
     def set_sound_volume(self, sound, volume):
-        if sound:
-            volume = self.validate_volume(volume)
-            sound.setVolume(float(volume), float(volume))
-            return True
-        return False
+        return sound.set_volume( volume )
 
     def set_sound_default_volume(self, sound):
-        return self.set_sound_volume( sound, self._DEFAULT_VOLUME )
+        return sound.set_volume( self._DEFAULT_VOLUME )
 
     def mute_sound(self, sound):
-        return self.set_sound_volume( sound, 0.0 )
+        return sound.set_volume( 0.0 )
 
     def get_sound_length(self, sound):
-        if sound:
-            return sound.getDuration() / 1000.0  # segundos
-        return 0.0
+        return sound.get_length()
 

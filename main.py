@@ -9,6 +9,7 @@ from controllers.beat_controller import BeatController
 
 # Sound Manager
 from core.sound_manager_kivy import SoundManagerKivy
+from core.sound_manager_android import SoundManagerAndroid
 
 # Paths
 from config.paths import (
@@ -41,6 +42,7 @@ config_gui_controller = ConfigGUIController(
 FPS_GUI = float(config_engine.fps)
 
 sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
+sound_manager_android = SoundManagerAndroid(volume=config_engine.volume)
 
 # Beat controller
 beat_controller = BeatController( sound_manager_kivy )
@@ -90,7 +92,7 @@ from android import api_version
 
 ## Forzar FPS
 Config.set('graphics', 'vsync', '0')
-Config.set('graphics', 'maxfps', str(FPS_GUI))
+#Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
 vertical_padding_offsets = [0,0,0,0]
@@ -105,7 +107,9 @@ screen = DTSoundLoopstationScreen(
     engine=engine,
     vertical_padding_offsets=vertical_padding_offsets,
     horizontal_padding_offsets=horizontal_padding_offsets,
-    config_controller=config_gui_controller, beat_controller=beat_controller,
+    config_engine_controller=config_engine_controller,
+    config_controller=config_gui_controller,
+    beat_controller=beat_controller,
     play_metronome_beat=config_engine.play_beat
 )
 class FPSSoundLoopstationApp(App):

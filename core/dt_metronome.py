@@ -136,10 +136,15 @@ class DTMetronome():
             is_another_beat = (not is_another_beat) and (not is_last_beat)
 
         # Paso antes de la barra
-        step_before_the_bar = (
-            (self._current_beat == self._beats_per_bar) and
-            (real_count_dt_of_beat >= self.get_beat_interval()-dt)
-        )
+        step_before_the_bar, near_end_of_bar = False, False
+        if (self._current_beat == self._beats_per_bar):
+            beat_interval = self.get_beat_interval()
+            step_before_the_bar = (real_count_dt_of_beat >= beat_interval-dt)
+            near_end_of_bar = (real_count_dt_of_beat >= beat_interval*0.95)
+            '''
+            near_end_of_bar: Un 95% antes de que acabe la barra.
+            step_before_the_bar: Una barra -dt.
+            '''
 
         # Sumar dt
         self._count_dt_of_beat += dt
@@ -152,6 +157,7 @@ class DTMetronome():
             "is_last_beat": is_last_beat,
             "is_another_beat": is_another_beat,
             "step_before_the_bar": step_before_the_bar,
+            "near_end_of_bar": near_end_of_bar,
             "current_beat": self._current_beat,
             "count_dt": real_count_dt_of_beat
         }
@@ -168,6 +174,10 @@ class DTMetronome():
         if signals['reset_bar']:
             self.logging.log(
                 message=f"reset-bar | seconds {self.get_beats_per_bar_interval()}", log_type="debug"
+            )
+        if signals['near_end_of_bar']:
+            self.logging.log(
+                message=f"near end of bar | count dt {signals['count_dt']}", log_type="debug"
             )
         if signals['step_before_the_bar']:
             self.logging.log(
