@@ -43,7 +43,7 @@ sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
 sound_manager_android = SoundManagerAndroid(volume=config_engine.volume)
 
 # Beat controller
-beat_controller = BeatController( sound_manager_android )
+beat_controller = BeatController( sound_manager_kivy )
 
 # FPSLoopstation Engine
 metronome = DTMetronome(
@@ -52,7 +52,6 @@ metronome = DTMetronome(
 )
 loopstation = DTSoundLoopstation(
     dt_metronome=metronome, sound_manager=sound_manager_kivy, volume=config_engine.volume
-
 )
 microphone_recorder = AndroidMicrophoneRecorder()
 recorder_controller = DTSoundLoopstationRecorderController(

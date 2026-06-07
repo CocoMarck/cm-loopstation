@@ -7,4 +7,4 @@ play_beat = true
 fps = 40
 limit_record = true
 record_bars = 1
-seconds = 0
+seconds = 10
