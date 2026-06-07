@@ -38,9 +38,7 @@ config_gui_controller = ConfigGUIController(
     config_gui, ANDROID_CONFIG_GUI_FILE, ANDROID_THEMES_FILE
 )
 
-# Constantes necesarias
-FPS_GUI = float(config_engine.fps)
-
+# Sound managers
 sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
 sound_manager_android = SoundManagerAndroid(volume=config_engine.volume)
 
@@ -92,7 +90,6 @@ from android import api_version
 
 ## Forzar FPS
 Config.set('graphics', 'vsync', '0')
-#Config.set('graphics', 'maxfps', str(FPS_GUI))
 
 ## Screen
 vertical_padding_offsets = [0,0,0,0]
@@ -129,7 +126,7 @@ class FPSSoundLoopstationApp(App):
         _screen.build()
 
         # Delta Time, GUI loop
-        Clock.schedule_interval(_screen.update, 1.0/FPS_GUI)
+        Clock.schedule_interval(_screen.update, 1/config_engine.fps if config_engine.fps > 0 else 0)
 
         return _screen
 
