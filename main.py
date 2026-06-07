@@ -51,7 +51,7 @@ metronome = DTMetronome(
     bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 loopstation = DTSoundLoopstation(
-    dt_metronome=metronome, sound_manager=sound_manager_android, volume=config_engine.volume
+    dt_metronome=metronome, sound_manager=sound_manager_kivy, volume=config_engine.volume
 
 )
 microphone_recorder = AndroidMicrophoneRecorder()
