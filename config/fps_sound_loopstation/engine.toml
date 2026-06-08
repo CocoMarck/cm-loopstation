@@ -1,6 +1,6 @@
 beats = 4
 beats_limit = 10
-bpm = 140
+bpm = 120
 bpm_limit = 200
 volume = 1.0
 play_beat = false
