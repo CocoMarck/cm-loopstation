@@ -44,7 +44,7 @@ class ConfigEngineController():
         return save( self.config, self.path )
 
     def update_fps(self, fps: int):
-        self.config.fps = self.number_one_or_more(fps)
+        self.config.fps = self.positive_or_zero_number(fps)
         return save( self.config, self.path )
 
     def update_volume(self, volume: float):

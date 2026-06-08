@@ -46,7 +46,7 @@
 
         # Seccion 1 | Name. Information. App Config
         BoxLayout:
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            padding: (Window.width*0.01, Window.height*0.01)
             orientation: "horizontal"
             size_hint: (1.0, 0.05)
             valign: "top"
@@ -65,7 +65,7 @@
 
         # Seccion 2 | Metronomo
         BoxLayout:
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            padding: (Window.width*0.01, Window.height*0.01)
             orientation: "horizontal"
             size_hint: (1.0, 0.10)
             valign: "top"
@@ -73,7 +73,7 @@
 
         # Seccion 3 | Configurar Ritmo
         BoxLayout:
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            padding: (Window.width*0.01, Window.height*0.01)
             orientation: "vertical"
             size_hint: (1.0, 0.20)
             valign: "top"
@@ -176,7 +176,7 @@
             orientation: "horizontal"
             size_hint: (1.0, 0.15)
             valign: "top"
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            padding: (Window.width*0.01, Window.height*0.01)
 
             GridLayout:
                 cols: 3
@@ -220,7 +220,7 @@
             valign: "bottom"
             do_scroll_x: True
             do_scroll_y: True
-            padding: (self.size[0]*0.025, self.size[1]*0.025)
+            padding: (Window.width*0.01, Window.height*0.01)
 
             # Scroll | Contenedor de Pistas
             GridLayout:
