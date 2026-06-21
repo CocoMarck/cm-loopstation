@@ -67,8 +67,6 @@ class AndroidMicrophoneRecorder:
             buffer_size
         )
 
-        FRAME_SIZE = self.channels * 2
-
         pcm_buffer = bytearray(buffer_size)
 
         with open(str(self.output_filename), "wb") as f:
@@ -81,11 +79,10 @@ class AndroidMicrophoneRecorder:
             has_audio = False
 
             while True:
-                read_frames = self._audio_record.read(pcm_buffer, 0, len(pcm_buffer))
+                bytes_read = self._audio_record.read(pcm_buffer, 0, len(pcm_buffer))
 
-                has_audio = read_frames > 0
+                has_audio = bytes_read > 0
                 if has_audio:
-                    bytes_read = read_frames * FRAME_SIZE
                     f.write(pcm_buffer[:bytes_read])
                     data_size += bytes_read
 
@@ -104,7 +101,7 @@ class AndroidMicrophoneRecorder:
 
             self._write_wav_header(f, data_size)
 
-        Logger.info(f"WAV guardado: {self.output_filename}")
+        Logger.info(f"Saved WAV: {self.output_filename}")
 
         self.state = self._states[0]
         self._recording = False
