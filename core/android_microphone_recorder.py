@@ -67,8 +67,6 @@ class AndroidMicrophoneRecorder:
             buffer_size
         )
 
-        FRAME_SIZE = self.channels * 2
-
         pcm_buffer = bytearray(buffer_size)
 
         with open(str(self.output_filename), "wb") as f:
@@ -81,15 +79,14 @@ class AndroidMicrophoneRecorder:
             has_audio = False
 
             while True:
-                read_frames = self._audio_record.read(pcm_buffer, 0, len(pcm_buffer))
+                bytes_read = self._audio_record.read(pcm_buffer, 0, len(pcm_buffer))
 
-                if read_frames > 0:
-                    bytes_read = read_frames * FRAME_SIZE
+                has_audio = bytes_read > 0
+                if has_audio:
                     f.write(pcm_buffer[:bytes_read])
                     data_size += bytes_read
-                    has_audio = True
 
-                if self._stop_event.is_set() and has_audio:
+                if self._stop_event.is_set():
                     break
 
                 if self.record_seconds > 0:
@@ -104,32 +101,40 @@ class AndroidMicrophoneRecorder:
 
             self._write_wav_header(f, data_size)
 
-        Logger.info(f"WAV guardado: {self.output_filename}")
+        Logger.info(f"Saved WAV: {self.output_filename}")
 
-        self.state = "stop"
+        self.state = self._states[0]
         self._recording = False
 
     def record(self):
         self._stop_event.clear()
-        if self.state == "record":
+        if self.state == self._states[1]:
             Logger.warning("Ya está grabando")
             return
 
         Logger.info(f"Grabando WAV: {self.output_filename}")
         self._recording = True
-        self.state = "record"
+        self.state = self._states[1]
 
         self._thread = threading.Thread(target=self._record_loop, daemon=True)
         self._thread.start()
 
     def stop(self):
-        if self.state == "stop":
+        if self.state == self._states[0]:
             return
 
         Logger.info("Deteniendo grabación")
         self._stop_event.set()
 
+        if self._audio_record:
+            try:
+                self._audio_record.stop()
+            except Exception as e:
+                Logger.warning(f"Error al forzar stopRecording: {e}")
+
         if self._thread:
             self._thread.join()
+            self._thread = None
 
-        self.state = "stop"
+        self.state = self._states[0]
+        self._recording = False
