@@ -7,7 +7,7 @@ class SoundManagerAndroidPoolAlone(ISoundManager):
         super().__init__(*args, **kwargs)
 
     def get_sound(self, path: pathlib.Path):
-        sound = AndroidSoundPoolAlone( path )
+        sound = AndroidSoundPoolAlone( source=path )
         sound.set_volume( self._DEFAULT_VOLUME )
         return sound
 
