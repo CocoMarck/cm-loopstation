@@ -10,6 +10,7 @@ from controllers.beat_controller import BeatController
 # Sound Manager
 from core.sound_manager_kivy import SoundManagerKivy
 from core.sound_manager_android import SoundManagerAndroid
+from core.sound_manager_android_pool_alone import SoundManagerAndroidPoolAlone
 
 # Paths
 from config.paths import (
@@ -41,9 +42,10 @@ config_gui_controller = ConfigGUIController(
 # Sound managers
 sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
 sound_manager_android = SoundManagerAndroid(volume=config_engine.volume)
+sound_manager_android_pool_alone = SoundManagerAndroidPoolAlone
 
 # Beat controller
-beat_controller = BeatController( sound_manager_kivy )
+beat_controller = BeatController( sound_manager_android_pool_alone )
 
 # FPSLoopstation Engine
 metronome = DTMetronome(
@@ -51,7 +53,9 @@ metronome = DTMetronome(
     bpm=config_engine.bpm, bpm_limit=config_engine.bpm_limit
 )
 loopstation = DTSoundLoopstation(
-    dt_metronome=metronome, sound_manager=sound_manager_kivy, volume=config_engine.volume
+    dt_metronome=metronome,
+    sound_manager=sound_manager_android_pool_alone,
+    volume=config_engine.volume
 )
 microphone_recorder = AndroidMicrophoneRecorder()
 recorder_controller = DTSoundLoopstationRecorderController(
