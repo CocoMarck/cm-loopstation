@@ -42,7 +42,7 @@ config_gui_controller = ConfigGUIController(
 # Sound managers
 sound_manager_kivy = SoundManagerKivy(volume=config_engine.volume)
 sound_manager_android = SoundManagerAndroid(volume=config_engine.volume)
-sound_manager_android_pool_alone = SoundManagerAndroidPoolAlone
+sound_manager_android_pool_alone = SoundManagerAndroidPoolAlone(volume=config_engine.volume)
 
 # Beat controller
 beat_controller = BeatController( sound_manager_android_pool_alone )
