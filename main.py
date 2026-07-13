@@ -54,7 +54,7 @@ metronome = DTMetronome(
 )
 loopstation = DTSoundLoopstation(
     dt_metronome=metronome,
-    sound_manager=sound_manager_android_pool_alone,
+    sound_manager=sound_manager_android,
     volume=config_engine.volume
 )
 microphone_recorder = AndroidMicrophoneRecorder()
